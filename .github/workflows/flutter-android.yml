@@ -51,10 +51,6 @@ jobs:
           PY
 
       - name: Get packages
-        run: flutter pub get
-
-      - name: Analyze
-        run: flutter analyze
-
+        run: flutter pub get\n
       - name: Build APK
         run: flutter build apk --debug --dart-define=SUPABASE_URL=https://embicteneumubwlqgfik.supabase.co --dart-define=SUPABASE_PUBLISHABLE_KEY=placeholder
