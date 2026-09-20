@@ -85,7 +85,11 @@ class AppStore extends ChangeNotifier {
       };
       currentUserRole = memberRoles[uid] ?? MemberRole.member;
 
-      DateTime? date(dynamic v) => v == null ? null : DateTime.tryParse(v.toString());
+      DateTime? date(dynamic v) {
+        if (v == null) return null;
+        final parsed = DateTime.tryParse(v.toString());
+        return parsed?.isUtc == true ? parsed!.toLocal() : parsed;
+      }
 
       members = profiles.map<Member>((p) {
         final id = p['id'].toString();
