@@ -12,6 +12,9 @@ final class AppStore: ObservableObject {
     @Published var eventParticipantNames: [UUID: [String]] = [:]
     @Published var currentUserRole: MemberRole = .member
     @Published var memberRoles: [UUID: MemberRole] = [:]
+    @Published var alerts: [HUNORAlert] = []
+    @Published var alertResponses: [UUID: String] = [:]
+    @Published var alertResponseCounts: [UUID: [String: Int]] = [:]
     @Published var isAuthenticated = false
     @Published var isLoading = false
     @Published var errorMessage: String?
@@ -46,6 +49,9 @@ final class AppStore: ObservableObject {
             eventResponses = [:]
             eventParticipantCounts = [:]
             eventParticipantNames = [:]
+            alerts = []
+            alertResponses = [:]
+            alertResponseCounts = [:]
             currentUserRole = .member
             memberRoles = [:]
         } catch {
@@ -69,6 +75,8 @@ final class AppStore: ObservableObject {
 
             let participants: [EventParticipantRow] = try await supabase.from("event_participants").select().eq("member_id", value: userID.uuidString).execute().value
             let allParticipants: [EventParticipantRow] = try await supabase.from("event_participants").select().eq("response", value: "going").execute().value
+            let dbAlerts: [AlertRow] = try await supabase.from("alerts").select().order("created_at", ascending: false).execute().value
+            let dbAlertResponses: [AlertResponseRow] = try await supabase.from("alert_responses").select().execute().value
 
             let today = Calendar.current.startOfDay(for: .now)
 
@@ -118,10 +126,52 @@ final class AppStore: ObservableObject {
             eventParticipantCounts = Dictionary(grouping: allParticipants, by: { $0.eventId }).mapValues { $0.count }
             let profileNames = Dictionary(uniqueKeysWithValues: profiles.map { ($0.id, $0.name) })
             eventParticipantNames = Dictionary(grouping: allParticipants, by: { $0.eventId }).mapValues { rows in rows.compactMap { profileNames[$0.memberId] }.sorted() }
+            alerts = dbAlerts.map { HUNORAlert(id: $0.id, title: $0.title, message: $0.message, priority: $0.priority, status: $0.status, createdAt: $0.createdAt, expiresAt: $0.expiresAt) }
+            alertResponses = Dictionary(uniqueKeysWithValues: dbAlertResponses.filter { $0.memberId == userID }.map { ($0.alertId, $0.response) })
+            alertResponseCounts = Dictionary(grouping: dbAlertResponses, by: { $0.alertId }).mapValues { rows in
+                Dictionary(grouping: rows, by: { $0.response }).mapValues { $0.count }
+            }
         } catch {
             errorMessage = error.localizedDescription
         }
         isLoading = false
+    }
+
+    func createAlert(title: String, message: String, priority: String, expiresAt: Date? = nil) {
+        Task {
+            do {
+                try await supabase.from("alerts").insert(
+                    AlertInsert(title: title, message: message, priority: priority, status: "active", createdBy: currentUser.id, expiresAt: expiresAt)
+                ).execute()
+                await loadData()
+            } catch { errorMessage = error.localizedDescription }
+        }
+    }
+
+    func closeAlert(_ alertID: UUID) {
+        Task {
+            do {
+                try await supabase.from("alerts")
+                    .update(AlertStatusUpdate(status: "closed"))
+                    .eq("id", value: alertID.uuidString)
+                    .execute()
+                await loadData()
+            } catch { errorMessage = error.localizedDescription }
+        }
+    }
+
+    func respondToAlert(_ alertID: UUID, available: Bool) {
+        let response = available ? "available" : "unavailable"
+        alertResponses[alertID] = response
+        Task {
+            do {
+                try await supabase.from("alert_responses").upsert(
+                    AlertResponseInsert(alertId: alertID, memberId: currentUser.id, response: response),
+                    onConflict: "alert_id,member_id"
+                ).execute()
+                await loadData()
+            } catch { errorMessage = error.localizedDescription }
+        }
     }
 
     func createEvent(title: String, date: Date, location: String, details: String) {
@@ -295,6 +345,61 @@ private struct EventRow: Decodable {
     let startsAt: Date
     let endsAt: Date?
     enum CodingKeys: String, CodingKey { case id; case title; case location; case description; case startsAt = "starts_at"; case endsAt = "ends_at" }
+}
+
+private struct AlertRow: Decodable {
+    let id: UUID
+    let title: String
+    let message: String
+    let priority: String
+    let status: String
+    let createdAt: Date
+    let expiresAt: Date?
+    enum CodingKeys: String, CodingKey {
+        case id, title, message, priority, status
+        case createdAt = "created_at"
+        case expiresAt = "expires_at"
+    }
+}
+
+private struct AlertResponseRow: Decodable {
+    let alertId: UUID
+    let memberId: UUID
+    let response: String
+    enum CodingKeys: String, CodingKey {
+        case alertId = "alert_id"
+        case memberId = "member_id"
+        case response
+    }
+}
+
+private struct AlertInsert: Encodable {
+    let title: String
+    let message: String
+    let priority: String
+    let status: String
+    let createdBy: UUID
+    let expiresAt: Date?
+    enum CodingKeys: String, CodingKey {
+        case title, message, priority, status
+        case createdBy = "created_by"
+        case expiresAt = "expires_at"
+    }
+}
+
+private struct AlertStatusUpdate: Encodable {
+    let status: String
+}
+
+private struct AlertResponseInsert: Encodable {
+    let alertId: UUID
+    let memberId: UUID
+    let response: String
+    enum CodingKeys: String, CodingKey {
+        case alertId = "alert_id"
+        case memberId = "member_id"
+        case response
+    }
 }
 
 private struct EventParticipantRow: Decodable {
