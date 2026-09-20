@@ -126,7 +126,7 @@ final class AppStore: ObservableObject {
             eventParticipantCounts = Dictionary(grouping: allParticipants, by: { $0.eventId }).mapValues { $0.count }
             let profileNames = Dictionary(uniqueKeysWithValues: profiles.map { ($0.id, $0.name) })
             eventParticipantNames = Dictionary(grouping: allParticipants, by: { $0.eventId }).mapValues { rows in rows.compactMap { profileNames[$0.memberId] }.sorted() }
-            alerts = dbAlerts.map { HUNORAlert(id: $0.id, title: $0.title, message: $0.message, priority: $0.priority, status: $0.status, createdAt: $0.createdAt, expiresAt: $0.expiresAt) }
+            alerts = dbAlerts.map { HUNORAlert(id: $0.id, title: $0.title, message: $0.message, type: $0.type, status: $0.status, createdAt: $0.createdAt, expiresAt: $0.expiresAt) }
             alertResponses = Dictionary(uniqueKeysWithValues: dbAlertResponses.filter { $0.memberId == userID }.map { ($0.alertId, $0.response) })
             alertResponseCounts = Dictionary(grouping: dbAlertResponses, by: { $0.alertId }).mapValues { rows in
                 Dictionary(grouping: rows, by: { $0.response }).mapValues { $0.count }
@@ -137,11 +137,11 @@ final class AppStore: ObservableObject {
         isLoading = false
     }
 
-    func createAlert(title: String, message: String, priority: String, expiresAt: Date? = nil) {
+    func createAlert(title: String, message: String, type: String, expiresAt: Date? = nil) {
         Task {
             do {
                 try await supabase.from("alerts").insert(
-                    AlertInsert(title: title, message: message, priority: priority, status: "active", createdBy: currentUser.id, expiresAt: expiresAt)
+                    AlertInsert(title: title, message: message, type: type, status: "active", createdBy: currentUser.id, expiresAt: expiresAt)
                 ).execute()
                 await loadData()
             } catch { errorMessage = error.localizedDescription }
@@ -351,12 +351,12 @@ private struct AlertRow: Decodable {
     let id: UUID
     let title: String
     let message: String
-    let priority: String
+    let type: String
     let status: String
     let createdAt: Date
     let expiresAt: Date?
     enum CodingKeys: String, CodingKey {
-        case id, title, message, priority, status
+        case id, title, message, type, status
         case createdAt = "created_at"
         case expiresAt = "expires_at"
     }
@@ -381,7 +381,7 @@ private struct AlertInsert: Encodable {
     let createdBy: UUID
     let expiresAt: Date?
     enum CodingKeys: String, CodingKey {
-        case title, message, priority, status
+        case title, message, type, status
         case createdBy = "created_by"
         case expiresAt = "expires_at"
     }
