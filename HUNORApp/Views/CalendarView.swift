@@ -39,6 +39,8 @@ private struct EventDetailView: View {
                 Text(event.details)
             }
             Section("Részvétel") {
+                LabeledContent("Résztvevők", value: String(store.eventParticipantCounts[event.id, default: 0]) + " fő")
+
                 Button {
                     store.respondToEvent(event.id, going: true)
                 } label: {
