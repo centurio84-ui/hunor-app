@@ -19,6 +19,7 @@ targets:
         INFOPLIST_KEY_CFBundleDisplayName: HUNOR
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.utilities
         SWIFT_VERSION: "5.0"
+        GENERATE_INFOPLIST_FILE: YES
     dependencies:
       - package: Supabase
         product: Supabase
