@@ -11,6 +11,7 @@ final class AppStore: ObservableObject {
     @Published var eventParticipantCounts: [UUID: Int] = [:]
     @Published var eventParticipantNames: [UUID: [String]] = [:]
     @Published var currentUserRole: MemberRole = .member
+    @Published var memberRoles: [UUID: MemberRole] = [:]
     @Published var isAuthenticated = false
     @Published var isLoading = false
     @Published var errorMessage: String?
@@ -46,6 +47,7 @@ final class AppStore: ObservableObject {
             eventParticipantCounts = [:]
             eventParticipantNames = [:]
             currentUserRole = .member
+            memberRoles = [:]
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -61,8 +63,9 @@ final class AppStore: ObservableObject {
             let skills: [SkillRow] = try await supabase.from("skills").select().execute().value
             let availability: [AvailabilityRow] = try await supabase.from("availability").select().execute().value
             let dbEvents: [EventRow] = try await supabase.from("events").select().order("starts_at", ascending: true).execute().value
-            let roles: [RoleRow] = try await supabase.from("member_roles").select().eq("member_id", value: userID.uuidString).execute().value
-            currentUserRole = roles.first?.role == "admin" ? .admin : .member
+            let roles: [RoleRow] = try await supabase.from("member_roles").select().execute().value
+            memberRoles = Dictionary(uniqueKeysWithValues: roles.map { ($0.memberId, $0.role == "admin" ? .admin : .member) })
+            currentUserRole = memberRoles[userID] ?? .member
 
             let participants: [EventParticipantRow] = try await supabase.from("event_participants").select().eq("member_id", value: userID.uuidString).execute().value
             let allParticipants: [EventParticipantRow] = try await supabase.from("event_participants").select().eq("response", value: "going").execute().value
