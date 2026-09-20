@@ -25,6 +25,7 @@ struct CalendarView: View {
 }
 
 private struct EventDetailView: View {
+    @EnvironmentObject private var store: AppStore
     let event: HUNOREvent
 
     var body: some View {
@@ -37,8 +38,23 @@ private struct EventDetailView: View {
             Section("Leírás") {
                 Text(event.details)
             }
-            Section {
-                Button("Részt veszek") {}
+            Section("Részvétel") {
+                Button {
+                    store.respondToEvent(event.id, going: true)
+                } label: {
+                    Label(
+                        store.eventResponse(for: event.id) == "going" ? "Részvétel jelezve" : "Részt veszek",
+                        systemImage: store.eventResponse(for: event.id) == "going" ? "checkmark.circle.fill" : "checkmark.circle"
+                    )
+                }
+                Button {
+                    store.respondToEvent(event.id, going: false)
+                } label: {
+                    Label(
+                        store.eventResponse(for: event.id) == "not_going" ? "Távolmaradás jelezve" : "Nem veszek részt",
+                        systemImage: store.eventResponse(for: event.id) == "not_going" ? "xmark.circle.fill" : "xmark.circle"
+                    )
+                }
             }
         }
         .navigationTitle("Esemény")
