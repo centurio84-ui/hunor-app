@@ -34,6 +34,7 @@ final class AppStore: ObservableObject {
             try await supabase.auth.signIn(email: email, password: password)
             isAuthenticated = true
             await loadData()
+            PushNotificationService.shared.registerPendingTokenIfNeeded()
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -376,7 +377,7 @@ private struct AlertResponseRow: Decodable {
 private struct AlertInsert: Encodable {
     let title: String
     let message: String
-    let priority: String
+    let type: String
     let status: String
     let createdBy: UUID
     let expiresAt: Date?
