@@ -11,6 +11,21 @@ class CalendarPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = context.watch<AppStore>();
+    if (s.events.isEmpty) {
+      return RefreshIndicator(
+        onRefresh: s.loadData,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(24),
+          children: const [
+            SizedBox(height: 80),
+            Icon(Icons.event_available_outlined, size: 48, color: HunorColors.success),
+            SizedBox(height: 12),
+            Center(child: Text('Nincs rögzített esemény', style: TextStyle(fontWeight: FontWeight.w700))),
+          ],
+        ),
+      );
+    }
     return RefreshIndicator(
       onRefresh: s.loadData,
       child: ListView.builder(
@@ -46,17 +61,19 @@ class CalendarPage extends StatelessWidget {
                           const SizedBox(height: 14),
                           Text(e.details, style: const TextStyle(height: 1.4)),
                         ],
-                        const SizedBox(height: 20),
-                        FilledButton.icon(
+                        if (!past) ...[
+                          const SizedBox(height: 20),
+                          FilledButton.icon(
                           onPressed: () { Navigator.pop(c); s.respondToEvent(e.id, true); },
                           icon: Icon(r == 'going' ? Icons.check_circle : Icons.check_circle_outline),
                           label: Text(r == 'going' ? 'Részt veszek ✓' : 'Részt veszek'),
                         ),
-                        OutlinedButton.icon(
-                          onPressed: () { Navigator.pop(c); s.respondToEvent(e.id, false); },
-                          icon: Icon(r == 'not_going' ? Icons.cancel : Icons.cancel_outlined),
-                          label: Text(r == 'not_going' ? 'Nem veszek részt ✓' : 'Nem veszek részt'),
-                        ),
+                          OutlinedButton.icon(
+                            onPressed: () { Navigator.pop(c); s.respondToEvent(e.id, false); },
+                            icon: Icon(r == 'not_going' ? Icons.cancel : Icons.cancel_outlined),
+                            label: Text(r == 'not_going' ? 'Nem veszek részt ✓' : 'Nem veszek részt'),
+                          ),
+                        ],
                       ],
                     ),
                   ),
