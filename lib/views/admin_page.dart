@@ -49,7 +49,9 @@ class AdminPage extends StatelessWidget {
           Card(child: Column(children: [
             Padding(padding: const EdgeInsets.all(14), child: SizedBox(width: double.infinity, child: FilledButton.icon(onPressed: () => _editAlert(context), icon: const Icon(Icons.add_alert), label: const Text('Új riasztás')))),
             for (final a in s.alerts.where((a) => a.status == 'active').take(10))
-              ListTile(leading: Icon(a.type == 'alert' ? Icons.warning_amber_rounded : Icons.notifications_active, color: a.type == 'standby' ? HunorColors.warning : HunorColors.red), title: Text(a.title, style: const TextStyle(fontWeight: FontWeight.w700)), subtitle: Text(a.typeLabel + ' • ' + a.message, maxLines: 2, overflow: TextOverflow.ellipsis)),
+              _AdminAlertTile(alert: a, onResponses: () => _showAlertResponses(context, a), onClose: () async {
+                await s.closeAlert(a.id);
+              }),
           ])),
           const SizedBox(height: 14),
           _SectionHeader('ESEMÉNYEK', Icons.calendar_month_outlined),
@@ -59,6 +61,57 @@ class AdminPage extends StatelessWidget {
               ListTile(title: Text(e.title, style: const TextStyle(fontWeight: FontWeight.w700)), subtitle: Text(e.location, style: const TextStyle(color: HunorColors.muted)), trailing: IconButton(icon: const Icon(Icons.delete_outline), onPressed: () => s.deleteEvent(e.id)), onTap: () => _editEvent(context, e)),
           ])),
         ],
+      ),
+    );
+  }
+
+  void _showAlertResponses(BuildContext context, HunorAlert alert) {
+    final s = context.read<AppStore>();
+    final responses = s.alertResponseByMember[alert.id] ?? {};
+    final available = s.members.where((m) => responses[m.id] == 'available').toList();
+    final unavailable = s.members.where((m) => responses[m.id] == 'unavailable').toList();
+    final unanswered = s.members.where((m) => !responses.containsKey(m.id)).toList();
+
+    showModalBottomSheet(
+      context: context,
+      showDragHandle: true,
+      backgroundColor: HunorColors.surface,
+      isScrollControlled: true,
+      builder: (_) => SafeArea(
+        child: SizedBox(
+          height: MediaQuery.of(context).size.height * .78,
+          child: DefaultTabController(
+            length: 3,
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(alert.title, style: Theme.of(context).textTheme.titleLarge),
+                      const SizedBox(height: 4),
+                      Text('${available.length} elérhető • ${unavailable.length} nem elérhető • ${unanswered.length} nem válaszolt',
+                          style: const TextStyle(color: HunorColors.muted)),
+                    ],
+                  ),
+                ),
+                const TabBar(tabs: [
+                  Tab(text: 'Elérhető'),
+                  Tab(text: 'Nem'),
+                  Tab(text: 'Nincs válasz'),
+                ]),
+                Expanded(
+                  child: TabBarView(children: [
+                    _ResponseList(members: available, empty: 'Nincs elérhetőnek jelölt tag.'),
+                    _ResponseList(members: unavailable, empty: 'Nincs nem elérhetőnek jelölt tag.'),
+                    _ResponseList(members: unanswered, empty: 'Minden tag válaszolt.'),
+                  ]),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -143,6 +196,67 @@ class AdminPage extends StatelessWidget {
         }, child: const Text('Küldés')),
       ],
     )));
+  }
+}
+
+class _AdminAlertTile extends StatelessWidget {
+  final HunorAlert alert;
+  final VoidCallback onResponses;
+  final VoidCallback onClose;
+  const _AdminAlertTile({required this.alert, required this.onResponses, required this.onClose});
+
+  @override
+  Widget build(BuildContext context) {
+    final s = context.read<AppStore>();
+    final responses = s.alertResponseByMember[alert.id] ?? {};
+    final available = responses.values.where((x) => x == 'available').length;
+    final unavailable = responses.values.where((x) => x == 'unavailable').length;
+    final color = alert.type == 'standby' ? HunorColors.warning : alert.type == 'exercise' ? HunorColors.exercise : HunorColors.red;
+
+    return ListTile(
+      leading: Icon(alert.type == 'alert' ? Icons.warning_amber_rounded : Icons.notifications_active, color: color),
+      title: Text(alert.title, style: const TextStyle(fontWeight: FontWeight.w700)),
+      subtitle: Text('${alert.typeLabel} • $available elérhető • $unavailable nem • ${s.members.length - responses.length} nincs válasz',
+          maxLines: 2, overflow: TextOverflow.ellipsis),
+      onTap: onResponses,
+      trailing: PopupMenuButton<String>(
+        onSelected: (v) {
+          if (v == 'responses') onResponses();
+          if (v == 'close') onClose();
+        },
+        itemBuilder: (_) => const [
+          PopupMenuItem(value: 'responses', child: Text('Válaszok megtekintése')),
+          PopupMenuItem(value: 'close', child: Text('Riasztás lezárása')),
+        ],
+      ),
+    );
+  }
+}
+
+class _ResponseList extends StatelessWidget {
+  final List<Member> members;
+  final String empty;
+  const _ResponseList({required this.members, required this.empty});
+
+  @override
+  Widget build(BuildContext context) {
+    if (members.isEmpty) return Center(child: Text(empty, style: const TextStyle(color: HunorColors.muted)));
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
+      itemCount: members.length,
+      itemBuilder: (_, i) {
+        final m = members[i];
+        return ListTile(
+          leading: CircleAvatar(
+            backgroundColor: HunorColors.surface2,
+            child: Text(m.name.isEmpty ? '?' : m.name.substring(0, 1).toUpperCase()),
+          ),
+          title: Text(m.name, style: const TextStyle(fontWeight: FontWeight.w700)),
+          subtitle: Text(m.rank + (m.position.isEmpty ? '' : ' • ' + m.position),
+              style: const TextStyle(color: HunorColors.muted)),
+        );
+      },
+    );
   }
 }
 
