@@ -54,3 +54,9 @@ jobs:
         run: flutter pub get
       - name: Build APK
         run: flutter build apk --debug --dart-define=SUPABASE_URL=https://embicteneumubwlqgfik.supabase.co --dart-define=SUPABASE_PUBLISHABLE_KEY=placeholder
+
+      - name: Upload Android APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: hunor-android-debug
+          path: build/app/outputs/flutter-apk/app-debug.apk
