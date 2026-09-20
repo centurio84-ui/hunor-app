@@ -20,6 +20,36 @@ jobs:
       - name: Generate platform folders
         run: flutter create --platforms=android .
 
+      - name: Configure Google Services plugin
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p = Path("android/app/build.gradle")
+          if p.exists():
+              s = p.read_text()
+              if "com.google.gms.google-services" not in s:
+                  s = s.replace(
+                      "plugins {",
+                      "plugins {\n    id 'com.google.gms.google-services'",
+                      1,
+                  )
+                  p.write_text(s)
+
+          p = Path("android/settings.gradle")
+          if p.exists():
+              s = p.read_text()
+              if "com.google.gms.google-services" not in s:
+                  marker = "plugins {"
+                  idx = s.find(marker)
+                  if idx >= 0:
+                      end = s.find("\n}", idx)
+                      if end >= 0:
+                          s = s[:end] + "\n    id 'com.google.gms.google-services' version '4.4.4' apply false" + s[end:]
+                          p.write_text(s)
+          PY
+
       - name: Get packages
         run: flutter pub get
 
