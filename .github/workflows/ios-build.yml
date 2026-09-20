@@ -1,4 +1,4 @@
-name: iOS build
+name: Flutter iOS build
 
 on:
   push:
@@ -12,17 +12,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Select Xcode
-        uses: maxim-lobanov/setup-xcode@v1
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
         with:
-          xcode-version: "latest-stable"
+          channel: stable
 
-      - name: Install XcodeGen
-        run: brew install xcodegen
+      - name: Generate iOS platform
+        run: flutter create --platforms=ios .
 
-      - name: Generate Xcode project
-        run: xcodegen generate
+      - name: Get packages
+        run: flutter pub get
 
-      - name: Build for iOS Simulator
-        run: |
-          xcodebuild             -project HUNOR.xcodeproj             -scheme HUNOR             -sdk iphonesimulator             -destination 'platform=iOS Simulator,name=iPhone 16'             CODE_SIGNING_ALLOWED=NO             build
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Build iOS Simulator
+        run: flutter build ios --simulator --no-codesign
