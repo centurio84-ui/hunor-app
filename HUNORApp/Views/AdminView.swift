@@ -79,7 +79,7 @@ struct AdminView: View {
                 EventEditorView(event: nil)
             }
             .sheet(item: $editingMember) { member in
-                MemberEditorView(member: member)
+                MemberEditorView(member: member, role: store.memberRoles[member.id] ?? .member)
             }
         }
     }
@@ -90,6 +90,7 @@ private struct MemberEditorView: View {
     @Environment(\.dismiss) private var dismiss
 
     let member: Member
+    let initialRole: MemberRole
 
     @State private var name: String
     @State private var rank: String
@@ -98,14 +99,15 @@ private struct MemberEditorView: View {
     @State private var phone: String
     @State private var role: MemberRole
 
-    init(member: Member) {
+    init(member: Member, role: MemberRole) {
         self.member = member
+        self.initialRole = role
         _name = State(initialValue: member.name)
         _rank = State(initialValue: member.rank)
         _workplace = State(initialValue: member.workplace)
         _position = State(initialValue: member.position)
         _phone = State(initialValue: member.phone)
-        _role = State(initialValue: .member)
+        _role = State(initialValue: role)
     }
 
     var body: some View {
