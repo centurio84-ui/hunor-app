@@ -41,7 +41,7 @@ struct AdminView: View {
                     ForEach(store.alerts.filter { $0.isActive }.prefix(10)) { alert in
                         VStack(alignment: .leading, spacing: 4) {
                             HStack {
-                                Text(alert.priorityLabel).font(.caption.bold())
+                                Text(alert.typeLabel).font(.caption.bold())
                                 Spacer()
                                 Text("\(store.alertResponseCounts[alert.id, default: [:]]["available", default: 0]) elérhető")
                                     .font(.caption)
@@ -239,14 +239,13 @@ private struct EventEditorView: View {
     }
 }
 
-
 private struct AlertEditorView: View {
     @EnvironmentObject private var store: AppStore
     @Environment(\.dismiss) private var dismiss
 
     @State private var title = ""
     @State private var message = ""
-    @State private var priority = "normal"
+    @State private var type = "alert"
     @State private var hasExpiry = false
     @State private var expiresAt = Calendar.current.date(byAdding: .hour, value: 2, to: .now) ?? .now
 
@@ -257,10 +256,10 @@ private struct AlertEditorView: View {
                     TextField("Cím", text: $title)
                     TextField("Üzenet", text: $message, axis: .vertical)
                         .lineLimit(4...10)
-                    Picker("Prioritás", selection: $priority) {
-                        Text("Normál").tag("normal")
-                        Text("Magas").tag("high")
-                        Text("Kritikus").tag("critical")
+                    Picker("Típus", selection: $type) {
+                        Text("Gyakorlat").tag("exercise")
+                        Text("Készenlétbe helyezés").tag("standby")
+                        Text("Riasztás").tag("alert")
                     }
                 }
 
@@ -281,7 +280,7 @@ private struct AlertEditorView: View {
                         let cleanTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
                         let cleanMessage = message.trimmingCharacters(in: .whitespacesAndNewlines)
                         guard !cleanTitle.isEmpty, !cleanMessage.isEmpty else { return }
-                        store.createAlert(title: cleanTitle, message: cleanMessage, priority: priority, expiresAt: hasExpiry ? expiresAt : nil)
+                        store.createAlert(title: cleanTitle, message: cleanMessage, type: type, expiresAt: hasExpiry ? expiresAt : nil)
                         dismiss()
                     }
                 }
