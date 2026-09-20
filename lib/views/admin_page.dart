@@ -67,7 +67,7 @@ class AdminPage extends StatelessWidget {
     final s = context.read<AppStore>();
     final name = TextEditingController(text: member.name), rank = TextEditingController(text: member.rank);
     final workplace = TextEditingController(text: member.workplace), position = TextEditingController(text: member.position), phone = TextEditingController(text: member.phone);
-    var role = s.currentUserRole;
+    var role = s.roleForMember(member.id);
     showDialog(context: context, builder: (_) => StatefulBuilder(builder: (c, set) => AlertDialog(
       title: const Text('Tag szerkesztése'),
       content: SingleChildScrollView(child: Column(children: [
