@@ -16,6 +16,7 @@ struct Member: Identifiable, Hashable {
     var rank: String
     var workplace: String
     var position: String
+    var phone: String
     var skills: [String]
     var status: AvailabilityStatus
 }
