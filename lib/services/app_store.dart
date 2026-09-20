@@ -32,6 +32,7 @@ class AppStore extends ChangeNotifier {
   Map<String, String> eventResponses = {};
   Map<String, String> alertResponses = {};
   MemberRole currentUserRole = MemberRole.member;
+  Map<String, MemberRole> memberRoles = {};
   bool isAuthenticated = false, isLoading = false, initialized = false;
   String? errorMessage;
 
@@ -78,8 +79,11 @@ class AppStore extends ChangeNotifier {
       final dbAlerts = await supabase.from('alerts').select().order('created_at', ascending: false);
       final ownAlerts = await supabase.from('alert_responses').select().eq('member_id', uid);
 
-      currentUserRole = roles.any((r) => r['member_id'] == uid && r['role'] == 'admin')
-          ? MemberRole.admin : MemberRole.member;
+      memberRoles = {
+        for (final r in roles)
+          r['member_id'].toString(): r['role'] == 'admin' ? MemberRole.admin : MemberRole.member,
+      };
+      currentUserRole = memberRoles[uid] ?? MemberRole.member;
 
       DateTime? date(dynamic v) => v == null ? null : DateTime.tryParse(v.toString());
 
@@ -121,6 +125,8 @@ class AppStore extends ChangeNotifier {
     }
   }
 
+  MemberRole roleForMember(String memberId) => memberRoles[memberId] ?? MemberRole.member;
+
   Future<void> updateMember(Member member, {required String name, required String rank, required String workplace, required String position, required String phone}) async {
     await supabase.from('profiles').update({
       'name': name, 'rank': rank, 'workplace': workplace, 'position': position, 'phone': phone,
@@ -132,6 +138,40 @@ class AppStore extends ChangeNotifier {
     await supabase.from('member_roles').upsert({
       'member_id': memberId, 'role': role == MemberRole.admin ? 'admin' : 'member',
     }, onConflict: 'member_id');
+    await loadData();
+  }
+
+  Future<void> setAvailability(AvailabilityStatus status, {DateTime? startDate, DateTime? endDate}) async {
+    final uid = currentUser?.id;
+    if (uid == null) return;
+    final start = startDate ?? DateTime.now();
+    await supabase.from('availability').insert({
+      'member_id': uid,
+      'status': switch (status) {
+        AvailabilityStatus.available => 'available',
+        AvailabilityStatus.vacation => 'vacation',
+        AvailabilityStatus.sick => 'sick',
+        AvailabilityStatus.training => 'training',
+        AvailabilityStatus.unavailable => 'unavailable',
+      },
+      'start_date': DateTime(start.year, start.month, start.day).toIso8601String(),
+      'end_date': endDate == null
+          ? null
+          : DateTime(endDate.year, endDate.month, endDate.day).toIso8601String(),
+    });
+    await loadData();
+  }
+
+  Future<void> replaceOwnSkills(List<String> skillNames) async {
+    final uid = currentUser?.id;
+    if (uid == null) return;
+    final clean = skillNames.map((x) => x.trim()).where((x) => x.isNotEmpty).toSet().toList();
+    await supabase.from('skills').delete().eq('member_id', uid);
+    if (clean.isNotEmpty) {
+      await supabase.from('skills').insert([
+        for (final name in clean) {'member_id': uid, 'name': name},
+      ]);
+    }
     await loadData();
   }
 
