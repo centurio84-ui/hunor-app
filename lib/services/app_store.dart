@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/member.dart';
+import 'push_notification_service.dart';
 
 final supabase = Supabase.instance.client;
 
@@ -47,6 +48,7 @@ class AppStore extends ChangeNotifier {
       await supabase.auth.signInWithPassword(email: email, password: password);
       isAuthenticated = true;
       await loadData();
+      await PushNotificationService.registerCurrentDevice();
     } catch (e) {
       errorMessage = e.toString();
     } finally {
@@ -111,6 +113,7 @@ class AppStore extends ChangeNotifier {
       )).toList();
       eventResponses = {for (final r in ownEvents) r['event_id'].toString(): r['response'].toString()};
       alertResponses = {for (final r in ownAlerts) r['alert_id'].toString(): r['response'].toString()};
+      await PushNotificationService.registerCurrentDevice();
     } catch (e) {
       errorMessage = e.toString();
     } finally {
