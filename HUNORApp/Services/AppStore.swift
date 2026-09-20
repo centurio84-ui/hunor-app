@@ -121,6 +121,38 @@ final class AppStore: ObservableObject {
         isLoading = false
     }
 
+    func createEvent(title: String, date: Date, location: String, details: String) {
+        Task {
+            do {
+                try await supabase.from("events").insert(
+                    EventInsert(title: title, location: location, description: details, startsAt: date)
+                ).execute()
+                await loadData()
+            } catch { errorMessage = error.localizedDescription }
+        }
+    }
+
+    func updateEvent(_ eventID: UUID, title: String, date: Date, location: String, details: String) {
+        Task {
+            do {
+                try await supabase.from("events")
+                    .update(EventUpdate(title: title, location: location, description: details, startsAt: date))
+                    .eq("id", value: eventID.uuidString)
+                    .execute()
+                await loadData()
+            } catch { errorMessage = error.localizedDescription }
+        }
+    }
+
+    func deleteEvent(_ eventID: UUID) {
+        Task {
+            do {
+                try await supabase.from("events").delete().eq("id", value: eventID.uuidString).execute()
+                await loadData()
+            } catch { errorMessage = error.localizedDescription }
+        }
+    }
+
     func updateStatus(_ status: AvailabilityStatus, startDate: Date? = nil, endDate: Date? = nil) {
         currentUser.status = status
         Task {
@@ -257,6 +289,32 @@ private struct EventParticipantInsert: Encodable {
         case memberId = "member_id"
         case response
         case respondedAt = "responded_at"
+    }
+}
+
+private struct EventInsert: Encodable {
+    let title: String
+    let location: String
+    let description: String
+    let startsAt: Date
+    enum CodingKeys: String, CodingKey {
+        case title
+        case location
+        case description
+        case startsAt = "starts_at"
+    }
+}
+
+private struct EventUpdate: Encodable {
+    let title: String
+    let location: String
+    let description: String
+    let startsAt: Date
+    enum CodingKeys: String, CodingKey {
+        case title
+        case location
+        case description
+        case startsAt = "starts_at"
     }
 }
 
