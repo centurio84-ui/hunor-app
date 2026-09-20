@@ -15,7 +15,7 @@ struct AlertsView: View {
                 } label: {
                     VStack(alignment: .leading, spacing: 5) {
                         HStack {
-                            Text(alert.priorityLabel)
+                            Text(alert.typeLabel)
                                 .font(.caption.bold())
                             Spacer()
                             Text(alert.createdAt.formatted(date: .abbreviated, time: .shortened))
@@ -50,7 +50,7 @@ private struct AlertDetailView: View {
             Section("Riasztás") {
                 Text(alert.title).font(.headline)
                 Text(alert.message)
-                LabeledContent("Prioritás", value: alert.priorityLabel)
+                LabeledContent("Típus", value: alert.typeLabel)
                 LabeledContent("Kiadva", value: alert.createdAt.formatted(date: .long, time: .shortened))
                 if let expiresAt = alert.expiresAt {
                     LabeledContent("Lejár", value: expiresAt.formatted(date: .long, time: .shortened))
