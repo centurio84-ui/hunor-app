@@ -21,6 +21,6 @@ jobs:
         run: flutter create --platforms=ios .
 
       - name: Get packages
-        run: flutter pub get\n
+        run: flutter pub get
       - name: Build iOS Simulator
         run: flutter build ios --simulator --no-codesign
