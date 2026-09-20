@@ -39,7 +39,11 @@ private struct EventDetailView: View {
                 Text(event.details)
             }
             Section("Részvétel") {
-                LabeledContent("Résztvevők", value: String(store.eventParticipantCounts[event.id, default: 0]) + " fő")
+                NavigationLink {
+                    ParticipantListView(names: store.eventParticipantNames[event.id, default: []])
+                } label: {
+                    LabeledContent("Résztvevők", value: String(store.eventParticipantCounts[event.id, default: 0]) + " fő")
+                }
 
                 Button {
                     store.respondToEvent(event.id, going: true)
@@ -60,5 +64,23 @@ private struct EventDetailView: View {
             }
         }
         .navigationTitle("Esemény")
+    }
+}
+
+
+private struct ParticipantListView: View {
+    let names: [String]
+
+    var body: some View {
+        List {
+            if names.isEmpty {
+                ContentUnavailableView("Nincs résztvevő", systemImage: "person.2.slash")
+            } else {
+                ForEach(names, id: \.self) { name in
+                    Label(name, systemImage: "person.fill")
+                }
+            }
+        }
+        .navigationTitle("Résztvevők")
     }
 }
