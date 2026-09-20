@@ -9,6 +9,8 @@ struct ContentView: View {
                 TabView {
                     HomeView()
                         .tabItem { Label("Kezdőlap", systemImage: "house.fill") }
+                    AlertsView()
+                        .tabItem { Label("Riasztások", systemImage: "bell.fill") }
                     CalendarView()
                         .tabItem { Label("Naptár", systemImage: "calendar") }
                     MembersView()
