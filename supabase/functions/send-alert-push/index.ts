@@ -1,7 +1,8 @@
 import { withSupabase } from "npm:@supabase/server@^1";
 import { SignJWT, importPKCS8 } from "npm:jose@^6";
 
-const APNS_HOST = "https://api.push.apple.com";
+const FCM_TOKEN_URL = "https://oauth2.googleapis.com/token";
+const FCM_SCOPE = "https://www.googleapis.com/auth/firebase.messaging";
 
 interface AlertRecord {
   id: string;
@@ -18,76 +19,110 @@ interface WebhookPayload {
   record: AlertRecord;
 }
 
+interface DeviceToken {
+  id: string;
+  token: string;
+  platform: "ios" | "android";
+}
+
 function typeLabel(type: AlertRecord["type"]): string {
   switch (type) {
-    case "exercise":
-      return "GYAKORLAT";
-    case "standby":
-      return "KÉSZENLÉTBE HELYEZÉS";
-    case "alert":
-      return "RIASZTÁS";
+    case "exercise": return "GYAKORLAT";
+    case "standby": return "KÉSZENLÉTBE HELYEZÉS";
+    case "alert": return "RIASZTÁS";
   }
 }
 
-async function createProviderToken(): Promise<string> {
-  const keyId = Deno.env.get("APNS_KEY_ID");
-  const teamId = Deno.env.get("APNS_TEAM_ID");
-  const privateKey = Deno.env.get("APNS_P8_KEY");
+async function createGoogleAccessToken(): Promise<string> {
+  const clientEmail = Deno.env.get("FIREBASE_CLIENT_EMAIL");
+  const privateKeyValue = Deno.env.get("FIREBASE_PRIVATE_KEY");
 
-  if (!keyId || !teamId || !privateKey) {
-    throw new Error("APNs secrets are not configured.");
+  if (!clientEmail || !privateKeyValue) {
+    throw new Error("Firebase service-account secrets are not configured.");
   }
 
-  const pem = privateKey.replace(/\\n/g, "\n");
-  const key = await importPKCS8(pem, "ES256");
+  const privateKey = privateKeyValue.replace(/\\n/g, "\n");
+  const key = await importPKCS8(privateKey, "RS256");
+  const now = Math.floor(Date.now() / 1000);
 
-  return await new SignJWT({})
-    .setProtectedHeader({ alg: "ES256", kid: keyId })
-    .setIssuer(teamId)
-    .setIssuedAt()
+  const assertion = await new SignJWT({ scope: FCM_SCOPE })
+    .setProtectedHeader({ alg: "RS256", typ: "JWT" })
+    .setIssuer(clientEmail)
+    .setSubject(clientEmail)
+    .setAudience(FCM_TOKEN_URL)
+    .setIssuedAt(now)
+    .setExpirationTime(now + 3600)
     .sign(key);
-}
 
-async function sendToDevice(
-  token: string,
-  providerToken: string,
-  topic: string,
-  alert: AlertRecord,
-): Promise<{ ok: boolean; status: number; reason?: string }> {
-  const response = await fetch(`${APNS_HOST}/3/device/${token}`, {
+  const response = await fetch(FCM_TOKEN_URL, {
     method: "POST",
-    headers: {
-      authorization: `bearer ${providerToken}`,
-      "apns-topic": topic,
-      "apns-push-type": "alert",
-      "apns-priority": "10",
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      aps: {
-        alert: {
-          title: `HUNOR • ${typeLabel(alert.type)}`,
-          body: alert.message,
-        },
-        sound: "default",
-        badge: 1,
-      },
-      alert_id: alert.id,
-      alert_type: alert.type,
+    headers: { "content-type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
+      assertion,
     }),
   });
 
-  if (response.ok) {
-    return { ok: true, status: response.status };
+  if (!response.ok) {
+    throw new Error(`Google OAuth token exchange failed: ${response.status} ${await response.text()}`);
   }
+
+  const data = await response.json();
+  if (!data.access_token) throw new Error("No access_token returned by Google OAuth.");
+
+  return data.access_token as string;
+}
+
+async function sendToDevice(
+  device: DeviceToken,
+  accessToken: string,
+  alert: AlertRecord,
+  projectId: string,
+): Promise<{ ok: boolean; status: number; reason?: string }> {
+  const title = `HUNOR • ${typeLabel(alert.type)}`;
+
+  const message = {
+    token: device.token,
+    notification: { title, body: alert.message },
+    data: { alert_id: alert.id, alert_type: alert.type },
+    android: {
+      priority: "HIGH",
+      notification: { channel_id: "hunor_alerts", sound: "default" },
+    },
+    apns: {
+      headers: { "apns-push-type": "alert", "apns-priority": "10" },
+      payload: {
+        aps: {
+          alert: { title, body: alert.message },
+          sound: "default",
+          badge: 1,
+        },
+      },
+    },
+  };
+
+  const response = await fetch(
+    `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json; charset=UTF-8",
+      },
+      body: JSON.stringify({ message }),
+    },
+  );
+
+  if (response.ok) return { ok: true, status: response.status };
 
   let reason = response.statusText;
   try {
     const body = await response.json();
-    reason = body.reason ?? reason;
-  } catch {
-    // Keep the HTTP status text.
-  }
+    reason = body?.error?.details?.[0]?.errorCode ??
+      body?.error?.status ??
+      body?.error?.message ??
+      reason;
+  } catch {}
 
   return { ok: false, status: response.status, reason };
 }
@@ -99,50 +134,49 @@ export default {
     }
 
     const payload = (await req.json()) as WebhookPayload;
-
     if (payload.table !== "alerts" || payload.type !== "INSERT" || !payload.record?.id) {
       return Response.json({ ignored: true });
     }
 
     const alert = payload.record;
-
     if (alert.status !== "active") {
       return Response.json({ ignored: true, reason: "alert_not_active" });
     }
 
-    const topic = Deno.env.get("APNS_BUNDLE_ID");
-    if (!topic) {
-      return Response.json({ error: "APNS_BUNDLE_ID is not configured" }, { status: 500 });
+    const projectId = Deno.env.get("FIREBASE_PROJECT_ID");
+    if (!projectId) {
+      return Response.json({ error: "FIREBASE_PROJECT_ID is not configured" }, { status: 500 });
     }
 
     const { data: devices, error } = await ctx.supabaseAdmin
       .from("device_tokens")
-      .select("id, token")
-      .eq("platform", "ios");
+      .select("id, token, platform");
 
-    if (error) {
-      return Response.json({ error: error.message }, { status: 500 });
-    }
-
+    if (error) return Response.json({ error: error.message }, { status: 500 });
     if (!devices || devices.length === 0) {
-      return Response.json({ sent: 0, invalid: 0, message: "No registered iOS devices." });
+      return Response.json({ sent: 0, invalid: 0, message: "No registered devices." });
     }
 
-    const providerToken = await createProviderToken();
+    const accessToken = await createGoogleAccessToken();
     let sent = 0;
     let invalid = 0;
 
-    for (const device of devices) {
-      const result = await sendToDevice(device.token, providerToken, topic, alert);
+    for (const device of devices as DeviceToken[]) {
+      try {
+        const result = await sendToDevice(device, accessToken, alert, projectId);
 
-      if (result.ok) {
-        sent += 1;
-      } else if (result.status === 410 || result.reason === "BadDeviceToken" || result.reason === "DeviceTokenNotForTopic") {
-        invalid += 1;
-        await ctx.supabaseAdmin
-          .from("device_tokens")
-          .delete()
-          .eq("id", device.id);
+        if (result.ok) {
+          sent += 1;
+        } else if (
+          result.status === 404 ||
+          result.reason === "UNREGISTERED" ||
+          result.reason === "INVALID_ARGUMENT"
+        ) {
+          invalid += 1;
+          await ctx.supabaseAdmin.from("device_tokens").delete().eq("id", device.id);
+        }
+      } catch (error) {
+        console.error("FCM send failed", device.id, error);
       }
     }
 
