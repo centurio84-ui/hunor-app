@@ -38,6 +38,11 @@ struct MembersView: View {
 private struct MemberDetailView: View {
     let member: Member
 
+    private var phoneURL: URL? {
+        let cleaned = member.phone.filter { $0.isNumber || $0 == "+" }
+        return cleaned.isEmpty ? nil : URL(string: "tel:\(cleaned)")
+    }
+
     var body: some View {
         List {
             Section("Adatok") {
@@ -45,7 +50,14 @@ private struct MemberDetailView: View {
                 LabeledContent("Munkahely", value: member.workplace)
                 LabeledContent("Beosztás", value: member.position)
                 LabeledContent("Státusz", value: member.status.rawValue)
+
+                if let phoneURL {
+                    Link(destination: phoneURL) {
+                        Label(member.phone, systemImage: "phone.fill")
+                    }
+                }
             }
+
             Section("Képességek") {
                 ForEach(member.skills, id: \.self) { skill in
                     Text(skill)
