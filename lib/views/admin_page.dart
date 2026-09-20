@@ -2,43 +2,71 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/member.dart';
 import '../services/app_store.dart';
+import '../theme/hunor_theme.dart';
 
 class AdminPage extends StatelessWidget {
   const AdminPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     final s = context.watch<AppStore>();
     return Scaffold(
-      appBar: AppBar(title: const Text('Admin')),
-      body: ListView(padding: const EdgeInsets.all(12), children: [
-        Card(child: ListTile(title: const Text('Tagok'), trailing: Text(s.members.length.toString()))),
-        Card(child: ListTile(title: const Text('Események'), trailing: Text(s.events.length.toString()))),
-        ListTile(title: const Text('Tagok'), leading: const Icon(Icons.people)),
-        ...s.members.map((m) => ListTile(
-          title: Text(m.name), subtitle: Text((m.rank.isEmpty ? m.position : m.rank) + ' • ' + m.status.label),
-          onTap: () => _editMember(context, m),
-        )),
-        const Divider(),
-        ListTile(title: const Text('Riasztások'), leading: const Icon(Icons.notifications),
-          trailing: FilledButton.icon(onPressed: () => _editAlert(context), icon: const Icon(Icons.add), label: const Text('Új'))),
-        ...s.alerts.where((a) => a.status == 'active').take(10).map((a) => ListTile(
-          title: Text(a.title), subtitle: Text(a.typeLabel + ' • ' + a.message),
-        )),
-        const Divider(),
-        ListTile(title: const Text('Események'), leading: const Icon(Icons.calendar_month),
-          trailing: FilledButton.icon(onPressed: () => _editEvent(context), icon: const Icon(Icons.add), label: const Text('Új'))),
-        ...s.events.map((e) => ListTile(title: Text(e.title), subtitle: Text(e.location),
-          trailing: IconButton(icon: const Icon(Icons.delete_outline), onPressed: () => s.deleteEvent(e.id)),
-          onTap: () => _editEvent(context, e))),
-      ]),
+      backgroundColor: HunorColors.graphite,
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 10, 16, 28),
+        children: [
+          Row(children: [
+            Container(width: 42, height: 42, decoration: BoxDecoration(color: HunorColors.redDark, borderRadius: BorderRadius.circular(12)), child: const Icon(Icons.admin_panel_settings_outlined)),
+            const SizedBox(width: 12),
+            const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('Adminisztráció', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
+              Text('HUNOR műveleti rendszer', style: TextStyle(color: HunorColors.muted)),
+            ])),
+          ]),
+          const SizedBox(height: 18),
+          Row(children: [
+            Expanded(child: _MetricCard(Icons.people_alt_outlined, s.members.length.toString(), 'Tag')),
+            const SizedBox(width: 10),
+            Expanded(child: _MetricCard(Icons.calendar_month_outlined, s.events.length.toString(), 'Esemény')),
+            const SizedBox(width: 10),
+            Expanded(child: _MetricCard(Icons.warning_amber_rounded, s.alerts.where((a) => a.status == 'active').length.toString(), 'Aktív')),
+          ]),
+          const SizedBox(height: 18),
+          _SectionHeader('ÁLLOMÁNY', Icons.people_outline),
+          Card(child: Column(children: [
+            for (final m in s.members)
+              ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+                leading: CircleAvatar(backgroundColor: HunorColors.surface2, child: Text(m.name.isEmpty ? '?' : m.name.substring(0, 1).toUpperCase())),
+                title: Text(m.name, style: const TextStyle(fontWeight: FontWeight.w700)),
+                subtitle: Text((m.rank.isEmpty ? m.position : m.rank) + ' • ' + m.status.label, style: const TextStyle(color: HunorColors.muted)),
+                trailing: const Icon(Icons.chevron_right, color: HunorColors.muted),
+                onTap: () => _editMember(context, m),
+              ),
+          ])),
+          const SizedBox(height: 14),
+          _SectionHeader('RIASZTÁSOK', Icons.notifications_active_outlined),
+          Card(child: Column(children: [
+            Padding(padding: const EdgeInsets.all(14), child: SizedBox(width: double.infinity, child: FilledButton.icon(onPressed: () => _editAlert(context), icon: const Icon(Icons.add_alert), label: const Text('Új riasztás')))),
+            for (final a in s.alerts.where((a) => a.status == 'active').take(10))
+              ListTile(leading: Icon(a.type == 'alert' ? Icons.warning_amber_rounded : Icons.notifications_active, color: a.type == 'standby' ? HunorColors.warning : HunorColors.red), title: Text(a.title, style: const TextStyle(fontWeight: FontWeight.w700)), subtitle: Text(a.typeLabel + ' • ' + a.message, maxLines: 2, overflow: TextOverflow.ellipsis)),
+          ])),
+          const SizedBox(height: 14),
+          _SectionHeader('ESEMÉNYEK', Icons.calendar_month_outlined),
+          Card(child: Column(children: [
+            Padding(padding: const EdgeInsets.all(14), child: SizedBox(width: double.infinity, child: FilledButton.icon(onPressed: () => _editEvent(context), icon: const Icon(Icons.add), label: const Text('Új esemény')))),
+            for (final e in s.events)
+              ListTile(title: Text(e.title, style: const TextStyle(fontWeight: FontWeight.w700)), subtitle: Text(e.location, style: const TextStyle(color: HunorColors.muted)), trailing: IconButton(icon: const Icon(Icons.delete_outline), onPressed: () => s.deleteEvent(e.id)), onTap: () => _editEvent(context, e)),
+          ])),
+        ],
+      ),
     );
   }
 
   void _editMember(BuildContext context, Member member) {
     final s = context.read<AppStore>();
     final name = TextEditingController(text: member.name), rank = TextEditingController(text: member.rank);
-    final workplace = TextEditingController(text: member.workplace), position = TextEditingController(text: member.position);
-    final phone = TextEditingController(text: member.phone);
+    final workplace = TextEditingController(text: member.workplace), position = TextEditingController(text: member.position), phone = TextEditingController(text: member.phone);
     var role = s.currentUserRole;
     showDialog(context: context, builder: (_) => StatefulBuilder(builder: (c, set) => AlertDialog(
       title: const Text('Tag szerkesztése'),
@@ -67,8 +95,7 @@ class AdminPage extends StatelessWidget {
 
   void _editEvent(BuildContext context, [HunorEvent? event]) {
     final s = context.read<AppStore>();
-    final title = TextEditingController(text: event?.title ?? ''), location = TextEditingController(text: event?.location ?? '');
-    final details = TextEditingController(text: event?.details ?? '');
+    final title = TextEditingController(text: event?.title ?? ''), location = TextEditingController(text: event?.location ?? ''), details = TextEditingController(text: event?.details ?? '');
     var date = event?.date ?? DateTime.now().add(const Duration(days: 1));
     showDialog(context: context, builder: (_) => StatefulBuilder(builder: (c, set) => AlertDialog(
       title: Text(event == null ? 'Új esemény' : 'Esemény szerkesztése'),
@@ -85,8 +112,7 @@ class AdminPage extends StatelessWidget {
         TextButton(onPressed: () => Navigator.pop(c), child: const Text('Mégse')),
         FilledButton(onPressed: () async {
           if (title.text.trim().isEmpty) return;
-          if (event == null) await s.createEvent(title.text.trim(), date, location.text, details.text);
-          else await s.updateEvent(event.id, title.text.trim(), date, location.text, details.text);
+          if (event == null) await s.createEvent(title.text.trim(), date, location.text, details.text); else await s.updateEvent(event.id, title.text.trim(), date, location.text, details.text);
           if (c.mounted) Navigator.pop(c);
         }, child: const Text('Mentés')),
       ],
@@ -118,4 +144,18 @@ class AdminPage extends StatelessWidget {
       ],
     )));
   }
+}
+
+class _MetricCard extends StatelessWidget {
+  final IconData icon; final String value, label;
+  const _MetricCard(this.icon, this.value, this.label);
+  @override Widget build(BuildContext context) => Card(child: Padding(padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8), child: Column(children: [
+    Icon(icon, color: HunorColors.red), const SizedBox(height: 5), Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900)), Text(label, style: const TextStyle(fontSize: 11, color: HunorColors.muted)),
+  ])));
+}
+
+class _SectionHeader extends StatelessWidget {
+  final String title; final IconData icon;
+  const _SectionHeader(this.title, this.icon);
+  @override Widget build(BuildContext context) => Padding(padding: const EdgeInsets.fromLTRB(4, 4, 4, 6), child: Row(children: [Icon(icon, size: 17, color: HunorColors.muted), const SizedBox(width: 7), Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 1.1, color: HunorColors.muted))]));
 }
