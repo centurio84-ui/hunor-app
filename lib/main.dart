@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'config.dart';
 import 'services/app_store.dart';
 import 'services/push_notification_service.dart';
+import 'theme/hunor_theme.dart';
 import 'views/app_shell.dart';
 import 'views/login_page.dart';
 
@@ -38,15 +39,14 @@ class HunorApp extends StatelessWidget {
     return MaterialApp(
       title: 'HUNOR',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-        useMaterial3: true,
-      ),
+      theme: HunorTheme.dark,
       home: Consumer<AppStore>(
         builder: (context, store, _) {
           if (!store.initialized) {
             return const Scaffold(
-              body: Center(child: CircularProgressIndicator()),
+              body: Center(
+                child: CircularProgressIndicator(color: HunorColors.red),
+              ),
             );
           }
           return store.isAuthenticated ? const AppShell() : const LoginPage();
