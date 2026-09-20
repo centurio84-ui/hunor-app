@@ -13,6 +13,9 @@ struct ProfileView: View {
                     LabeledContent("Rendfokozat", value: store.currentUser.rank)
                     LabeledContent("Munkahely", value: store.currentUser.workplace)
                     LabeledContent("Beosztás", value: store.currentUser.position)
+                    if !store.currentUser.phone.isEmpty {
+                        LabeledContent("Telefon", value: store.currentUser.phone)
+                    }
                 }
 
                 Section("Elérhetőség") {
@@ -48,6 +51,14 @@ struct ProfileView: View {
                             newSkill = ""
                         }
                         .disabled(newSkill.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    }
+                }
+
+                Section {
+                    Button(role: .destructive) {
+                        Task { await store.signOut() }
+                    } label: {
+                        Text("Kijelentkezés")
                     }
                 }
             }
