@@ -5,6 +5,7 @@ struct AdminView: View {
     @State private var showingEventEditor = false
     @State private var editingEvent: HUNOREvent?
     @State private var editingMember: Member?
+    @State private var showingAlertEditor = false
 
     var body: some View {
         NavigationStack {
@@ -36,6 +37,22 @@ struct AdminView: View {
                     }
                 }
 
+                Section("Riasztások") {
+                    ForEach(store.alerts.filter { $0.isActive }.prefix(10)) { alert in
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack {
+                                Text(alert.priorityLabel).font(.caption.bold())
+                                Spacer()
+                                Text("\(store.alertResponseCounts[alert.id, default: [:]]["available", default: 0]) elérhető")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Text(alert.title).font(.headline)
+                            Text(alert.message).font(.subheadline).foregroundStyle(.secondary)
+                        }
+                    }
+                }
+
                 Section("Események") {
                     ForEach(store.events.sorted(by: { $0.date < $1.date })) { event in
                         Button {
@@ -63,6 +80,13 @@ struct AdminView: View {
             }
             .navigationTitle("Admin")
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        showingAlertEditor = true
+                    } label: {
+                        Label("Új riasztás", systemImage: "bell.badge.fill")
+                    }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         editingEvent = nil
@@ -80,6 +104,9 @@ struct AdminView: View {
             }
             .sheet(item: $editingMember) { member in
                 MemberEditorView(member: member, role: store.memberRoles[member.id] ?? .member)
+            }
+            .sheet(isPresented: $showingAlertEditor) {
+                AlertEditorView()
             }
         }
     }
@@ -204,6 +231,57 @@ private struct EventEditorView: View {
                         } else {
                             store.createEvent(title: cleanTitle, date: date, location: location, details: details)
                         }
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+private struct AlertEditorView: View {
+    @EnvironmentObject private var store: AppStore
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var title = ""
+    @State private var message = ""
+    @State private var priority = "normal"
+    @State private var hasExpiry = false
+    @State private var expiresAt = Calendar.current.date(byAdding: .hour, value: 2, to: .now) ?? .now
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Riasztás") {
+                    TextField("Cím", text: $title)
+                    TextField("Üzenet", text: $message, axis: .vertical)
+                        .lineLimit(4...10)
+                    Picker("Prioritás", selection: $priority) {
+                        Text("Normál").tag("normal")
+                        Text("Magas").tag("high")
+                        Text("Kritikus").tag("critical")
+                    }
+                }
+
+                Section("Lejárat") {
+                    Toggle("Automatikus lejárat", isOn: $hasExpiry)
+                    if hasExpiry {
+                        DatePicker("Lejárat", selection: $expiresAt, in: .now...)
+                    }
+                }
+            }
+            .navigationTitle("Új riasztás")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Mégse") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Küldés") {
+                        let cleanTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+                        let cleanMessage = message.trimmingCharacters(in: .whitespacesAndNewlines)
+                        guard !cleanTitle.isEmpty, !cleanMessage.isEmpty else { return }
+                        store.createAlert(title: cleanTitle, message: cleanMessage, priority: priority, expiresAt: hasExpiry ? expiresAt : nil)
                         dismiss()
                     }
                 }
