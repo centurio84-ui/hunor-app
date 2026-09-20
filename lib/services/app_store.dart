@@ -118,6 +118,52 @@ class AppStore extends ChangeNotifier {
     }
   }
 
+  Future<void> updateMember(Member member, {required String name, required String rank, required String workplace, required String position, required String phone}) async {
+    await supabase.from('profiles').update({
+      'name': name, 'rank': rank, 'workplace': workplace, 'position': position, 'phone': phone,
+    }).eq('id', member.id);
+    await loadData();
+  }
+
+  Future<void> updateMemberRole(String memberId, MemberRole role) async {
+    await supabase.from('member_roles').upsert({
+      'member_id': memberId, 'role': role == MemberRole.admin ? 'admin' : 'member',
+    }, onConflict: 'member_id');
+    await loadData();
+  }
+
+  Future<void> createEvent(String title, DateTime date, String location, String details) async {
+    await supabase.from('events').insert({
+      'title': title, 'starts_at': date.toIso8601String(),
+      'location': location, 'description': details,
+    });
+    await loadData();
+  }
+
+  Future<void> updateEvent(String id, String title, DateTime date, String location, String details) async {
+    await supabase.from('events').update({
+      'title': title, 'starts_at': date.toIso8601String(),
+      'location': location, 'description': details,
+    }).eq('id', id);
+    await loadData();
+  }
+
+  Future<void> deleteEvent(String id) async {
+    await supabase.from('events').delete().eq('id', id);
+    await loadData();
+  }
+
+  Future<void> createAlert(String title, String message, String type, DateTime? expiresAt) async {
+    final uid = currentUser?.id;
+    if (uid == null) return;
+    await supabase.from('alerts').insert({
+      'title': title, 'message': message, 'type': type,
+      'status': 'active', 'created_by': uid,
+      'expires_at': expiresAt?.toIso8601String(),
+    });
+    await loadData();
+  }
+
   Future<void> respondToEvent(String id, bool going) async {
     final uid = currentUser?.id; if (uid == null) return;
     final response = going ? 'going' : 'not_going';
