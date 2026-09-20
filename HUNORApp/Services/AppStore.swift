@@ -9,6 +9,7 @@ final class AppStore: ObservableObject {
     @Published var events: [HUNOREvent] = []
     @Published var eventResponses: [UUID: String] = [:]
     @Published var eventParticipantCounts: [UUID: Int] = [:]
+    @Published var eventParticipantNames: [UUID: [String]] = [:]
     @Published var isAuthenticated = false
     @Published var isLoading = false
     @Published var errorMessage: String?
@@ -42,6 +43,7 @@ final class AppStore: ObservableObject {
             events = []
             eventResponses = [:]
             eventParticipantCounts = [:]
+            eventParticipantNames = [:]
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -106,6 +108,8 @@ final class AppStore: ObservableObject {
             events = dbEvents.map { HUNOREvent(id: $0.id, title: $0.title, date: $0.startsAt, location: $0.location ?? "", details: $0.description ?? "") }
             eventResponses = Dictionary(uniqueKeysWithValues: participants.map { ($0.eventId, $0.response) })
             eventParticipantCounts = Dictionary(grouping: allParticipants, by: { $0.eventId }).mapValues { $0.count }
+            let profileNames = Dictionary(uniqueKeysWithValues: profiles.map { ($0.id, $0.name) })
+            eventParticipantNames = Dictionary(grouping: allParticipants, by: { $0.eventId }).mapValues { rows in rows.compactMap { profileNames[$0.memberId] }.sorted() }
         } catch {
             errorMessage = error.localizedDescription
         }
