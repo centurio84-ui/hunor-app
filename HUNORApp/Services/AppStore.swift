@@ -8,6 +8,7 @@ final class AppStore: ObservableObject {
     @Published var members: [Member] = []
     @Published var events: [HUNOREvent] = []
     @Published var eventResponses: [UUID: String] = [:]
+    @Published var eventParticipantCounts: [UUID: Int] = [:]
     @Published var isAuthenticated = false
     @Published var isLoading = false
     @Published var errorMessage: String?
@@ -40,6 +41,7 @@ final class AppStore: ObservableObject {
             members = []
             events = []
             eventResponses = [:]
+            eventParticipantCounts = [:]
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -56,6 +58,7 @@ final class AppStore: ObservableObject {
             let availability: [AvailabilityRow] = try await supabase.from("availability").select().execute().value
             let dbEvents: [EventRow] = try await supabase.from("events").select().order("starts_at", ascending: true).execute().value
             let participants: [EventParticipantRow] = try await supabase.from("event_participants").select().eq("member_id", value: userID.uuidString).execute().value
+            let allParticipants: [EventParticipantRow] = try await supabase.from("event_participants").select().eq("response", value: "going").execute().value
 
             let today = Calendar.current.startOfDay(for: .now)
 
@@ -102,6 +105,7 @@ final class AppStore: ObservableObject {
 
             events = dbEvents.map { HUNOREvent(id: $0.id, title: $0.title, date: $0.startsAt, location: $0.location ?? "", details: $0.description ?? "") }
             eventResponses = Dictionary(uniqueKeysWithValues: participants.map { ($0.eventId, $0.response) })
+            eventParticipantCounts = Dictionary(grouping: allParticipants, by: { $0.eventId }).mapValues { $0.count }
         } catch {
             errorMessage = error.localizedDescription
         }
