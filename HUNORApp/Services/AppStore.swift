@@ -153,6 +153,29 @@ final class AppStore: ObservableObject {
         }
     }
 
+    func updateMember(_ member: Member, name: String, rank: String, workplace: String, position: String, phone: String) {
+        Task {
+            do {
+                try await supabase.from("profiles")
+                    .update(ProfileUpdate(name: name, rank: rank, workplace: workplace, position: position, phone: phone))
+                    .eq("id", value: member.id.uuidString)
+                    .execute()
+                await loadData()
+            } catch { errorMessage = error.localizedDescription }
+        }
+    }
+
+    func updateMemberRole(_ memberID: UUID, role: MemberRole) {
+        Task {
+            do {
+                try await supabase.from("member_roles")
+                    .upsert(RoleUpdate(memberId: memberID, role: role.rawValue), onConflict: "member_id")
+                    .execute()
+                await loadData()
+            } catch { errorMessage = error.localizedDescription }
+        }
+    }
+
     func updateStatus(_ status: AvailabilityStatus, startDate: Date? = nil, endDate: Date? = nil) {
         currentUser.status = status
         Task {
@@ -214,6 +237,20 @@ final class AppStore: ObservableObject {
     func eventResponse(for eventID: UUID) -> String? {
         eventResponses[eventID]
     }
+}
+
+private struct ProfileUpdate: Encodable {
+    let name: String
+    let rank: String
+    let workplace: String
+    let position: String
+    let phone: String
+}
+
+private struct RoleUpdate: Encodable {
+    let memberId: UUID
+    let role: String
+    enum CodingKeys: String, CodingKey { case memberId = "member_id"; case role }
 }
 
 private struct RoleRow: Decodable {
