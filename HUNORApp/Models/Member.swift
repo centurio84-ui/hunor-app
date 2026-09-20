@@ -18,25 +18,4 @@ struct Member: Identifiable, Hashable {
     var position: String
     var skills: [String]
     var status: AvailabilityStatus
-
-    static let sampleMembers: [Member] = [
-        Member(
-            id: UUID(),
-            name: "Kovács Péter",
-            rank: "tűzoltó őrnagy",
-            workplace: "Somogy Vármegyei Katasztrófavédelmi Igazgatóság",
-            position: "HUNOR tag",
-            skills: ["Kötéltechnikai mentés", "USAR", "Műszaki mentés"],
-            status: .available
-        ),
-        Member(
-            id: UUID(),
-            name: "Nagy András",
-            rank: "tűzoltó százados",
-            workplace: "Fővárosi Katasztrófavédelmi Igazgatóság",
-            position: "HUNOR tag",
-            skills: ["Romkutatás", "Drónkezelés"],
-            status: .vacation
-        )
-    ]
 }
