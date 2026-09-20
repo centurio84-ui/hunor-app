@@ -4,6 +4,9 @@ struct ProfileView: View {
     @EnvironmentObject private var store: AppStore
     @State private var newSkill = ""
     @State private var showingStatus = false
+    @State private var selectedStatus: AvailabilityStatus = .available
+    @State private var statusStartDate = Calendar.current.startOfDay(for: .now)
+    @State private var statusEndDate = Calendar.current.date(byAdding: .day, value: 1, to: .now) ?? .now
 
     var body: some View {
         NavigationStack {
@@ -20,6 +23,9 @@ struct ProfileView: View {
 
                 Section("Elérhetőség") {
                     Button {
+                        selectedStatus = store.currentUser.status
+                        statusStartDate = Calendar.current.startOfDay(for: .now)
+                        statusEndDate = Calendar.current.date(byAdding: .day, value: 1, to: statusStartDate) ?? statusStartDate
                         showingStatus = true
                     } label: {
                         HStack {
@@ -63,12 +69,40 @@ struct ProfileView: View {
                 }
             }
             .navigationTitle("Profil")
-            .confirmationDialog("Elérhetőségi státusz", isPresented: $showingStatus) {
-                ForEach(AvailabilityStatus.allCases) { status in
-                    Button(status.rawValue) {
-                        store.updateStatus(status)
+            .sheet(isPresented: $showingStatus) {
+                NavigationStack {
+                    Form {
+                        Section("Státusz") {
+                            Picker("Státusz", selection: $selectedStatus) {
+                                ForEach(AvailabilityStatus.allCases) { status in
+                                    Text(status.rawValue).tag(status)
+                                }
+                            }
+                        }
+
+                        if selectedStatus == .vacation || selectedStatus == .training {
+                            Section("Időszak") {
+                                DatePicker("Kezdete", selection: $statusStartDate, displayedComponents: .date)
+                                DatePicker("Vége", selection: $statusEndDate, in: statusStartDate..., displayedComponents: .date)
+                            }
+                        }
+
+                        Section {
+                            Button("Mentés") {
+                                let datedStatus = selectedStatus == .vacation || selectedStatus == .training
+                                store.updateStatus(selectedStatus, startDate: statusStartDate, endDate: datedStatus ? statusEndDate : nil)
+                                showingStatus = false
+                            }
+                        }
+                    }
+                    .navigationTitle("Elérhetőség")
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Mégse") { showingStatus = false }
+                        }
                     }
                 }
+                .presentationDetents([.medium])
             }
         }
     }
