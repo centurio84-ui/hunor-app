@@ -6,6 +6,7 @@ import 'alerts_page.dart';
 import 'calendar_page.dart';
 import 'members_page.dart';
 import 'profile_page.dart';
+import 'admin_page.dart';
 
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
@@ -15,9 +16,9 @@ class _AppShellState extends State<AppShell> {
   int index = 0;
   @override Widget build(BuildContext context) {
     final admin = context.watch<AppStore>().currentUserRole == MemberRole.admin;
-    final pages = <Widget>[const HomePage(), const AlertsPage(), const CalendarPage(), const MembersPage(), const ProfilePage()];
-    final labels = ['Kezdőlap','Riasztások','Naptár','Tagok','Profil'];
-    final icons = [Icons.home,Icons.notifications,Icons.calendar_month,Icons.people,Icons.person];
+    final pages = <Widget>[const HomePage(), const AlertsPage(), const CalendarPage(), const MembersPage(), const ProfilePage(), if (admin) const AdminPage()];
+    final labels = ['Kezdőlap','Riasztások','Naptár','Tagok','Profil', if (admin) 'Admin'];
+    final icons = [Icons.home,Icons.notifications,Icons.calendar_month,Icons.people,Icons.person, if (admin) Icons.settings];
     return Scaffold(
       appBar: AppBar(title: const Text('HUNOR')),
       body: IndexedStack(index:index, children:pages),
