@@ -10,6 +10,7 @@ final class AppStore: ObservableObject {
     @Published var eventResponses: [UUID: String] = [:]
     @Published var eventParticipantCounts: [UUID: Int] = [:]
     @Published var eventParticipantNames: [UUID: [String]] = [:]
+    @Published var currentUserRole: MemberRole = .member
     @Published var isAuthenticated = false
     @Published var isLoading = false
     @Published var errorMessage: String?
@@ -44,6 +45,7 @@ final class AppStore: ObservableObject {
             eventResponses = [:]
             eventParticipantCounts = [:]
             eventParticipantNames = [:]
+            currentUserRole = .member
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -59,6 +61,9 @@ final class AppStore: ObservableObject {
             let skills: [SkillRow] = try await supabase.from("skills").select().execute().value
             let availability: [AvailabilityRow] = try await supabase.from("availability").select().execute().value
             let dbEvents: [EventRow] = try await supabase.from("events").select().order("starts_at", ascending: true).execute().value
+            let roles: [RoleRow] = try await supabase.from("member_roles").select().eq("member_id", value: userID.uuidString).execute().value
+            currentUserRole = roles.first?.role == "admin" ? .admin : .member
+
             let participants: [EventParticipantRow] = try await supabase.from("event_participants").select().eq("member_id", value: userID.uuidString).execute().value
             let allParticipants: [EventParticipantRow] = try await supabase.from("event_participants").select().eq("response", value: "going").execute().value
 
@@ -177,6 +182,12 @@ final class AppStore: ObservableObject {
     func eventResponse(for eventID: UUID) -> String? {
         eventResponses[eventID]
     }
+}
+
+private struct RoleRow: Decodable {
+    let memberId: UUID
+    let role: String
+    enum CodingKeys: String, CodingKey { case memberId = "member_id"; case role }
 }
 
 private struct ProfileRow: Decodable {
