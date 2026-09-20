@@ -108,12 +108,20 @@ final class AppStore: ObservableObject {
         isLoading = false
     }
 
-    func updateStatus(_ status: AvailabilityStatus) {
+    func updateStatus(_ status: AvailabilityStatus, startDate: Date? = nil, endDate: Date? = nil) {
         currentUser.status = status
         Task {
             do {
-                let start = Calendar.current.startOfDay(for: .now)
-                let end: Date? = status == .available ? start : nil
+                let start = Calendar.current.startOfDay(for: startDate ?? .now)
+                let end: Date?
+                switch status {
+                case .available:
+                    end = start
+                case .vacation, .training:
+                    end = Calendar.current.startOfDay(for: endDate ?? start)
+                case .sick, .unavailable:
+                    end = endDate.map { Calendar.current.startOfDay(for: $0) }
+                }
                 try await supabase.from("availability")
                     .insert(AvailabilityInsert(memberId: currentUser.id, status: status.databaseValue, startDate: start, endDate: end))
                     .execute()
