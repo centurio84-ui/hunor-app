@@ -31,6 +31,7 @@ class AppStore extends ChangeNotifier {
   List<HunorAlert> alerts = [];
   Map<String, String> eventResponses = {};
   Map<String, String> alertResponses = {};
+  Map<String, Map<String, String>> alertResponseByMember = {};
   MemberRole currentUserRole = MemberRole.member;
   Map<String, MemberRole> memberRoles = {};
   bool isAuthenticated = false, isLoading = false, initialized = false;
@@ -77,7 +78,8 @@ class AppStore extends ChangeNotifier {
       final roles = await supabase.from('member_roles').select();
       final ownEvents = await supabase.from('event_participants').select().eq('member_id', uid);
       final dbAlerts = await supabase.from('alerts').select().order('created_at', ascending: false);
-      final ownAlerts = await supabase.from('alert_responses').select().eq('member_id', uid);
+      final ownAlerts = await supabase.from('alert_responses').select();
+      final ownAlertResponses = ownAlerts.where((r) => r['member_id'].toString() == uid).toList();
 
       memberRoles = {
         for (final r in roles)
@@ -120,7 +122,13 @@ class AppStore extends ChangeNotifier {
         createdAt: date(a['created_at']) ?? DateTime.now(),
       )).toList();
       eventResponses = {for (final r in ownEvents) r['event_id'].toString(): r['response'].toString()};
-      alertResponses = {for (final r in ownAlerts) r['alert_id'].toString(): r['response'].toString()};
+      alertResponses = {for (final r in ownAlertResponses) r['alert_id'].toString(): r['response'].toString()};
+      alertResponseByMember = {};
+      for (final r in ownAlerts) {
+        final alertId = r['alert_id'].toString();
+        final memberId = r['member_id'].toString();
+        alertResponseByMember.putIfAbsent(alertId, () => {})[memberId] = r['response'].toString();
+      }
       await PushNotificationService.registerCurrentDevice();
     } catch (e) {
       errorMessage = e.toString();
@@ -218,6 +226,11 @@ class AppStore extends ChangeNotifier {
       'event_id': id, 'member_id': uid, 'response': response,
       'responded_at': DateTime.now().toIso8601String(),
     }, onConflict: 'event_id,member_id');
+    await loadData();
+  }
+
+  Future<void> closeAlert(String id) async {
+    await supabase.from('alerts').update({'status': 'closed'}).eq('id', id);
     await loadData();
   }
 
