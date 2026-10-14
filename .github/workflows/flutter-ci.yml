@@ -1,0 +1,56 @@
+name: Flutter CI/CD és Tesztelés
+
+on:
+  push:
+    branches:
+      - main
+      - 'gemini/**'
+      - 'infra/**'
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  flutter-test:
+    name: Flutter Statikus Elemzés és Egységtesztek
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Forráskód letöltése (Checkout)
+        uses: actions/checkout@v4
+
+      - name: Flutter SDK beállítása
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Környezet ellenőrzése
+        run: |
+          flutter --version
+          dart --version
+
+      - name: Függőségek letöltése (flutter pub get)
+        run: flutter pub get
+
+      - name: Kódformázás ellenőrzése (dart format)
+        run: |
+          echo "### Kódformázási ellenőrzés (dart format)" >> $GITHUB_STEP_SUMMARY
+          if dart format --output=none --set-exit-if-changed lib test; then
+            echo "✅ Kódformázás megfelelő." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Formázási eltérések találhatók, automatikus javítás ajánlott." >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Statikus kódelemzés (flutter analyze)
+        run: flutter analyze --no-fatal-infos
+
+      - name: Egység- és Widget-tesztek futtatása (flutter test)
+        run: |
+          echo "### Teszteredmények összefoglalója" >> $GITHUB_STEP_SUMMARY
+          flutter test --reporter expanded
+          echo "✅ Minden Flutter és Dart egységteszt sikeresen lefutott!" >> $GITHUB_STEP_SUMMARY
