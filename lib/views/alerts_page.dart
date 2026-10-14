@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../models/api_error.dart';
+import '../models/rescue_alert.dart';
 import '../services/app_store.dart';
 import '../theme/hunor_theme.dart';
 
@@ -9,8 +11,8 @@ class AlertsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = context.watch<AppStore>();
-    final active = s.alerts.where((a) => a.status == 'active').toList();
-    final archived = s.alerts.where((a) => a.status != 'active').toList();
+    final active = s.alerts.where((a) => a.isActive).toList();
+    final archived = s.alerts.where((a) => !a.isActive).toList();
 
     return RefreshIndicator(
       onRefresh: s.loadData,
@@ -42,7 +44,7 @@ class AlertsPage extends StatelessWidget {
                     SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'Jelenleg nincs aktív riasztás.',
+                        'Jelenleg nincs aktív riasztás ebben a szervezetben.',
                         style: TextStyle(fontWeight: FontWeight.w700),
                       ),
                     ),
@@ -54,7 +56,7 @@ class AlertsPage extends StatelessWidget {
             const Padding(
               padding: EdgeInsets.fromLTRB(4, 18, 4, 8),
               child: Text(
-                'KORÁBBI',
+                'KORÁBBI VAGY LEJÁRT RIASZTÁSOK',
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w900,
@@ -72,7 +74,7 @@ class AlertsPage extends StatelessWidget {
 }
 
 class _AlertCard extends StatelessWidget {
-  final HunorAlert alert;
+  final RescueAlert alert;
   final bool muted;
 
   const _AlertCard({
@@ -109,7 +111,7 @@ class _AlertCard extends StatelessWidget {
                 width: 52,
                 height: 64,
                 decoration: BoxDecoration(
-                  color: accent.withOpacity(.14),
+                  color: accent.withAlpha(35),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
@@ -154,9 +156,7 @@ class _AlertCard extends StatelessWidget {
               if (response != null)
                 Icon(
                   response == 'available' ? Icons.check_circle : Icons.cancel,
-                  color: response == 'available'
-                      ? HunorColors.success
-                      : HunorColors.muted,
+                  color: response == 'available' ? HunorColors.success : HunorColors.muted,
                 ),
             ],
           ),
@@ -198,29 +198,52 @@ class _AlertCard extends StatelessWidget {
               const SizedBox(height: 20),
               if (response != null)
                 Text(
-                  response == 'available'
-                      ? 'Válaszod: ELÉRHETŐ'
-                      : 'Válaszod: NEM ELÉRHETŐ',
+                  response == 'available' ? 'Válaszod: ELÉRHETŐ' : 'Válaszod: NEM ELÉRHETŐ',
                   style: TextStyle(
-                    color: response == 'available'
-                        ? HunorColors.success
-                        : HunorColors.muted,
+                    color: response == 'available' ? HunorColors.success : HunorColors.muted,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
               const SizedBox(height: 12),
               FilledButton.icon(
-                onPressed: () {
+                onPressed: () async {
                   Navigator.pop(context);
-                  s.respondToAlert(alert.id, true);
+                  try {
+                    await s.respondToAlert(alert.id, true);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Válasz rögzítve: Elérhető')),
+                      );
+                    }
+                  } on ConflictException catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Hiba: ${e.message}'), backgroundColor: HunorColors.red),
+                      );
+                    }
+                  }
                 },
                 icon: const Icon(Icons.check),
                 label: const Text('Elérhető vagyok'),
               ),
+              const SizedBox(height: 8),
               OutlinedButton.icon(
-                onPressed: () {
+                onPressed: () async {
                   Navigator.pop(context);
-                  s.respondToAlert(alert.id, false);
+                  try {
+                    await s.respondToAlert(alert.id, false);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Válasz rögzítve: Nem elérhető')),
+                      );
+                    }
+                  } on ConflictException catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Hiba: ${e.message}'), backgroundColor: HunorColors.red),
+                      );
+                    }
+                  }
                 },
                 icon: const Icon(Icons.close),
                 label: const Text('Nem vagyok elérhető'),

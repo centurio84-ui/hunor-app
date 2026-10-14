@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/app_store.dart';
 import '../theme/hunor_theme.dart';
-import 'home_page.dart';
 import 'alerts_page.dart';
 import 'calendar_page.dart';
-import 'members_page.dart';
+import 'home_page.dart';
+import 'organization_switcher_view.dart';
 import 'profile_page.dart';
-import 'admin_page.dart';
 
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
+
   @override
   State<AppShell> createState() => _AppShellState();
 }
@@ -20,52 +20,93 @@ class _AppShellState extends State<AppShell> {
 
   @override
   Widget build(BuildContext context) {
-    final admin = context.watch<AppStore>().currentUserRole == MemberRole.admin;
+    final store = context.watch<AppStore>();
+    final currentOrg = store.currentOrganization;
+    final coin = store.coinBalance;
+
     final pages = <Widget>[
       const HomePage(),
       const AlertsPage(),
       const CalendarPage(),
-      const MembersPage(),
       const ProfilePage(),
-      if (admin) const AdminPage(),
+      OrganizationSwitcherView(
+        api: store.api,
+        onOrganizationChanged: () => store.loadData(),
+      ),
     ];
+
     final labels = [
       'Főoldal',
       'Riasztások',
       'Naptár',
-      'Állomány',
       'Profil',
-      if (admin) 'Admin',
+      'Szervezetek',
     ];
+
     final icons = [
       Icons.home_rounded,
       Icons.warning_amber_rounded,
       Icons.calendar_month_rounded,
-      Icons.groups_rounded,
       Icons.person_rounded,
-      if (admin) Icons.admin_panel_settings_rounded,
+      Icons.business_rounded,
     ];
 
     return Scaffold(
       appBar: AppBar(
-        titleSpacing: 18,
-        title: Row(
-          children: [
-            Container(
-              width: 8,
-              height: 28,
-              decoration: BoxDecoration(
-                color: HunorColors.red,
-                borderRadius: BorderRadius.circular(4),
+        titleSpacing: 16,
+        title: InkWell(
+          borderRadius: BorderRadius.circular(8),
+          onTap: () => setState(() => index = 4), // Szervezetválasztó
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: HunorColors.redDark,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    currentOrg?.code ?? 'RESCUE',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 13,
+                      letterSpacing: 1.1,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    currentOrg?.name ?? 'Rescue Platform',
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                  ),
+                ),
+                const Icon(Icons.arrow_drop_down, color: HunorColors.muted),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          if (coin != null)
+            Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: Chip(
+                avatar: const Icon(Icons.monetization_on_outlined, size: 16, color: HunorColors.warning),
+                label: Text(
+                  '${coin.balance} ${coin.unit}',
+                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
+                ),
+                backgroundColor: HunorColors.surface2,
+                side: BorderSide.none,
+                padding: const EdgeInsets.symmetric(horizontal: 4),
               ),
             ),
-            const SizedBox(width: 10),
-            const Text(
-              'HUNOR',
-              style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.2),
-            ),
-          ],
-        ),
+        ],
       ),
       body: IndexedStack(index: index, children: pages),
       bottomNavigationBar: NavigationBar(
@@ -80,24 +121,6 @@ class _AppShellState extends State<AppShell> {
             ),
         ],
       ),
-      floatingActionButton: admin
-          ? FloatingActionButton(
-              backgroundColor: HunorColors.red,
-              foregroundColor: Colors.white,
-              onPressed: () => _adminInfo(context),
-              child: const Icon(Icons.admin_panel_settings_rounded),
-            )
-          : null,
     );
   }
-
-  void _adminInfo(BuildContext c) => showDialog(
-        context: c,
-        builder: (_) => const AlertDialog(
-          title: Text('Admin'),
-          content: Text(
-            'Az admin felület következő fejlesztési lépésként kerül továbbépítésre.',
-          ),
-        ),
-      );
 }

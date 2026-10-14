@@ -6,7 +6,8 @@ import '../theme/hunor_theme.dart';
 class CalendarPage extends StatelessWidget {
   const CalendarPage({super.key});
 
-  String _date(DateTime d) => '${d.year}.${d.month.toString().padLeft(2,'0')}.${d.day.toString().padLeft(2,'0')} • ${d.hour.toString().padLeft(2,'0')}:${d.minute.toString().padLeft(2,'0')}';
+  String _date(DateTime d) =>
+      '${d.year}.${d.month.toString().padLeft(2, '0')}.${d.day.toString().padLeft(2, '0')} • ${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +22,7 @@ class CalendarPage extends StatelessWidget {
             SizedBox(height: 80),
             Icon(Icons.event_available_outlined, size: 48, color: HunorColors.success),
             SizedBox(height: 12),
-            Center(child: Text('Nincs rögzített esemény', style: TextStyle(fontWeight: FontWeight.w700))),
+            Center(child: Text('Nincs rögzített esemény ebben a szervezetben.', style: TextStyle(fontWeight: FontWeight.w700))),
           ],
         ),
       );
@@ -64,12 +65,19 @@ class CalendarPage extends StatelessWidget {
                         if (!past) ...[
                           const SizedBox(height: 20),
                           FilledButton.icon(
-                          onPressed: () { Navigator.pop(c); s.respondToEvent(e.id, true); },
-                          icon: Icon(r == 'going' ? Icons.check_circle : Icons.check_circle_outline),
-                          label: Text(r == 'going' ? 'Részt veszek ✓' : 'Részt veszek'),
-                        ),
+                            onPressed: () {
+                              Navigator.pop(c);
+                              s.respondToEvent(e.id, true);
+                            },
+                            icon: Icon(r == 'going' ? Icons.check_circle : Icons.check_circle_outline),
+                            label: Text(r == 'going' ? 'Részt veszek ✓' : 'Részt veszek'),
+                          ),
+                          const SizedBox(height: 8),
                           OutlinedButton.icon(
-                            onPressed: () { Navigator.pop(c); s.respondToEvent(e.id, false); },
+                            onPressed: () {
+                              Navigator.pop(c);
+                              s.respondToEvent(e.id, false);
+                            },
                             icon: Icon(r == 'not_going' ? Icons.cancel : Icons.cancel_outlined),
                             label: Text(r == 'not_going' ? 'Nem veszek részt ✓' : 'Nem veszek részt'),
                           ),
@@ -87,7 +95,7 @@ class CalendarPage extends StatelessWidget {
                       width: 54,
                       height: 64,
                       decoration: BoxDecoration(
-                        color: past ? HunorColors.surface2 : HunorColors.exercise.withOpacity(.14),
+                        color: past ? HunorColors.surface2 : HunorColors.exercise.withAlpha(35),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Column(

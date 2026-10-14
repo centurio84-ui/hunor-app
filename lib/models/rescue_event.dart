@@ -21,6 +21,10 @@ class RescueEvent {
     this.version = 1,
   });
 
+  /// Kompatibilitási getterek
+  DateTime get date => startsAt;
+  String get details => description;
+
   factory RescueEvent.fromJson(Map<String, dynamic> json) {
     return RescueEvent(
       id: json['id']?.toString() ?? '',

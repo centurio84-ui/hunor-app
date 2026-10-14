@@ -11,11 +11,16 @@ class ProfilePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = context.watch<AppStore>();
     final u = s.currentUser;
-    if (u == null) return const Center(child: CircularProgressIndicator());
+    final org = s.currentOrganization;
+    final membership = s.currentMembership;
+    final coin = s.coinBalance;
+
+    if (u == null) return const Center(child: CircularProgressIndicator(color: HunorColors.red));
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
       children: [
+        // Felhasználói kártya
         Card(
           child: Padding(
             padding: const EdgeInsets.all(20),
@@ -24,18 +29,28 @@ class ProfilePage extends StatelessWidget {
                 const CircleAvatar(
                   radius: 34,
                   backgroundColor: HunorColors.redDark,
-                  child: Icon(Icons.person, size: 34),
+                  child: Icon(Icons.person, size: 34, color: Colors.white),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(u.name, style: Theme.of(context).textTheme.titleLarge),
+                      Text(u.name, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
                       const SizedBox(height: 4),
-                      Text(u.rank, style: const TextStyle(color: HunorColors.red, fontWeight: FontWeight.w800)),
-                      Text(u.position, style: const TextStyle(color: HunorColors.muted)),
-                      Text(u.workplace, style: const TextStyle(color: HunorColors.muted)),
+                      Text(
+                        org?.name ?? 'Szervezet',
+                        style: const TextStyle(color: HunorColors.red, fontWeight: FontWeight.w800),
+                      ),
+                      Text(
+                        'Státusz: ${membership?.membershipStatus.label ?? "Ismeretlen"}',
+                        style: const TextStyle(color: HunorColors.muted),
+                      ),
+                      if (membership != null && membership.positions.isNotEmpty)
+                        Text(
+                          'Beosztás: ${membership.positions.join(", ")}',
+                          style: const TextStyle(color: HunorColors.muted),
+                        ),
                     ],
                   ),
                 ),
@@ -44,6 +59,31 @@ class ProfilePage extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 10),
+
+        // Rescue Coin Egyenleg kártya
+        if (coin != null)
+          Card(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            child: ListTile(
+              leading: const Icon(Icons.monetization_on_outlined, color: HunorColors.warning, size: 28),
+              title: const Text('Rescue Coin egyenleg', style: TextStyle(fontWeight: FontWeight.w800)),
+              subtitle: Text('${coin.balance} ${coin.unit} • Főkönyvi verzió: ${coin.ledgerVersion}'),
+              trailing: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: HunorColors.warning.withAlpha(40),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '${coin.balance} ${coin.unit}',
+                  style: const TextStyle(fontWeight: FontWeight.w900, color: HunorColors.warning),
+                ),
+              ),
+            ),
+          ),
+        const SizedBox(height: 10),
+
+        // Elérhetőség kártya
         Card(
           child: ListTile(
             leading: Icon(
@@ -61,6 +101,8 @@ class ProfilePage extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 10),
+
+        // Képességek kártya
         Text('Képességek', style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 6),
         Card(
@@ -87,11 +129,18 @@ class ProfilePage extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 20),
+
+        // Kijelentkezés
         OutlinedButton.icon(
           onPressed: s.signOut,
+          style: OutlinedButton.styleFrom(
+            foregroundColor: HunorColors.red,
+            side: const BorderSide(color: HunorColors.red),
+            padding: const EdgeInsets.symmetric(vertical: 14),
+          ),
           icon: const Icon(Icons.logout),
-          label: const Text('Kijelentkezés'),
+          label: const Text('Kijelentkezés és gyorsítótár ürítése'),
         ),
       ],
     );
@@ -115,7 +164,7 @@ class ProfilePage extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               DropdownButtonFormField<AvailabilityStatus>(
-                value: status,
+                initialValue: status,
                 decoration: const InputDecoration(labelText: 'Állapot'),
                 items: const [
                   DropdownMenuItem(value: AvailabilityStatus.available, child: Text('Elérhető')),
@@ -191,7 +240,7 @@ class ProfilePage extends StatelessWidget {
           maxLines: 5,
           decoration: const InputDecoration(
             labelText: 'Képességek',
-            hintText: 'pl. Shoring, Medic, Alpine',
+            hintText: 'pl. USAR, Shoring, Medic, Alpine',
             helperText: 'Vesszővel válaszd el a képességeket.',
           ),
         ),
@@ -202,7 +251,7 @@ class ProfilePage extends StatelessWidget {
           ),
           FilledButton(
             onPressed: () async {
-              final values = controller.text.split(',');
+              final values = controller.text.split(',').map((x) => x.trim()).where((x) => x.isNotEmpty).toList();
               await s.replaceOwnSkills(values);
               if (c.mounted) Navigator.pop(c);
             },
