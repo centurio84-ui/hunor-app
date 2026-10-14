@@ -1,4 +1,3 @@
-import '../models/api_error.dart';
 import '../models/coin_balance.dart';
 import '../models/installation.dart';
 import '../models/organization.dart';

@@ -178,7 +178,7 @@ class _OrganizationSwitcherViewState extends State<OrganizationSwitcherView> {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: isSelected ? HunorColors.red.withOpacity(.18) : HunorColors.surface2,
+                      color: isSelected ? HunorColors.red.withAlpha(46) : HunorColors.surface2,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Center(
