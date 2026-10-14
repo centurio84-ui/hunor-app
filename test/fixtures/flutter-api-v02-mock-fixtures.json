@@ -1,0 +1,393 @@
+﻿{
+  "contract_version": "0.2.0-draft",
+  "mode": "offline-only",
+  "base_url": "https://api.rescue-platform.invalid/v1",
+  "real_data": false,
+  "identity": {
+    "organization_a": "11111111-1111-4111-8111-111111111111",
+    "organization_b": "22222222-2222-4222-8222-222222222222",
+    "user": "33333333-3333-4333-8333-333333333333",
+    "membership": "44444444-4444-4444-8444-444444444444",
+    "event": "55555555-5555-4555-8555-555555555555",
+    "alert": "66666666-6666-4666-8666-666666666666",
+    "installation": "77777777-7777-4777-8777-777777777777"
+  },
+  "scenarios": [
+    {
+      "id": "F01-own-profile",
+      "operationId": "getMyProfile",
+      "response": {
+        "status": 200,
+        "schema": "Profile",
+        "body": {
+          "user": {
+            "id": "33333333-3333-4333-8333-333333333333",
+            "email": "mock@example.invalid",
+            "display_name": "Mock Tag"
+          },
+          "contact_phone": null,
+          "version": 1
+        }
+      }
+    },
+    {
+      "id": "F02-cross-tenant",
+      "operationId": "getEvent",
+      "response": {
+        "status": 404,
+        "schema": "Error",
+        "body": {
+          "code": "NOT_FOUND",
+          "message": "Az er┼Ĺforr├ís nem tal├ílhat├│.",
+          "request_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"
+        }
+      },
+      "context": {
+        "current_organization": "11111111-1111-4111-8111-111111111111",
+        "requested_organization": "22222222-2222-4222-8222-222222222222",
+        "membership_in_requested_organization": false
+      }
+    },
+    {
+      "id": "F03-missing-session",
+      "operationId": "getMyProfile",
+      "response": {
+        "status": 401,
+        "schema": "Error",
+        "body": {
+          "code": "UNAUTHENTICATED",
+          "message": "Jelentkezz be ├║jra.",
+          "request_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"
+        }
+      }
+    },
+    {
+      "id": "F04-revoked-membership",
+      "operationId": "dispatchAlert",
+      "response": {
+        "status": 403,
+        "schema": "Error",
+        "body": {
+          "code": "MEMBERSHIP_NOT_APPROVED",
+          "message": "J├│v├íhagyott tags├íg sz├╝ks├ęges.",
+          "request_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"
+        }
+      }
+    },
+    {
+      "id": "F05-stale-version",
+      "operationId": "setMyAlertResponse",
+      "response": {
+        "status": 412,
+        "schema": "Error",
+        "body": {
+          "code": "VERSION_CONFLICT",
+          "message": "Az adat megv├íltozott.",
+          "request_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"
+        }
+      }
+    },
+    {
+      "id": "F06-response-confirmed",
+      "operationId": "setMyAlertResponse",
+      "response": {
+        "status": 200,
+        "schema": "AlertResponse",
+        "body": {
+          "alert_id": "66666666-6666-4666-8666-666666666666",
+          "membership_id": "44444444-4444-4444-8444-444444444444",
+          "response": "going",
+          "responded_at": "2026-10-14T12:00:00Z",
+          "version": 1
+        }
+      },
+      "request": {
+        "body": {
+          "response": "going"
+        },
+        "schema": "AlertResponseRequest"
+      },
+      "client_state": {
+        "before": "pending",
+        "after": "confirmed"
+      }
+    },
+    {
+      "id": "F07-idempotent-replay",
+      "operationId": "setMyAlertResponse",
+      "response": {
+        "status": 200,
+        "schema": "AlertResponse",
+        "body": {
+          "alert_id": "66666666-6666-4666-8666-666666666666",
+          "membership_id": "44444444-4444-4444-8444-444444444444",
+          "response": "going",
+          "responded_at": "2026-10-14T12:00:00Z",
+          "version": 1
+        }
+      },
+      "response_headers": {
+        "Idempotency-Replayed": "true"
+      },
+      "assertion": "Az F06-tal azonos t├Ârzs ├ęs kulcs; nincs ├║j v├ílaszid┼Ĺ vagy mell├ękhat├ís."
+    },
+    {
+      "id": "F08-key-body-mismatch",
+      "operationId": "setMyAlertResponse",
+      "response": {
+        "status": 409,
+        "schema": "Error",
+        "body": {
+          "code": "IDEMPOTENCY_CONFLICT",
+          "message": "A k├ęr├ęsazonos├şt├│ m├ísik k├ęr├ęshez tartozik.",
+          "request_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"
+        }
+      }
+    },
+    {
+      "id": "F09-expired-alert",
+      "operationId": "setMyAlertResponse",
+      "response": {
+        "status": 409,
+        "schema": "Error",
+        "body": {
+          "code": "ALERT_EXPIRED",
+          "message": "A riaszt├ís lej├írt.",
+          "request_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"
+        }
+      },
+      "client_state": {
+        "before": "pending",
+        "after": "rejected"
+      }
+    },
+    {
+      "id": "F10-replaced-invitation",
+      "operationId": "acknowledgeAlert",
+      "response": {
+        "status": 409,
+        "schema": "Error",
+        "body": {
+          "code": "INVITATION_REPLACED",
+          "message": "A megh├şv├ís helyettes├ştve lett.",
+          "request_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"
+        }
+      }
+    },
+    {
+      "id": "F11-fcm-installation",
+      "operationId": "registerMyInstallation",
+      "response": {
+        "status": 201,
+        "schema": "Installation",
+        "body": {
+          "id": "77777777-7777-4777-8777-777777777777",
+          "platform": "ios",
+          "provider": "fcm",
+          "environment": "development",
+          "label": "Mock iPhone",
+          "active": true,
+          "version": 1
+        }
+      },
+      "request": {
+        "schema": "InstallationRegistration",
+        "body": {
+          "installation_id": "77777777-7777-4777-8777-777777777777",
+          "platform": "ios",
+          "environment": "development",
+          "label": "Mock iPhone",
+          "credential": {
+            "provider": "fcm",
+            "token": "FAKE_FCM_TOKEN_FOR_OFFLINE_FIXTURE_ONLY"
+          }
+        }
+      }
+    },
+    {
+      "id": "F12-incompatible-provider",
+      "operationId": "registerMyInstallation",
+      "response": {
+        "status": 422,
+        "schema": "Error",
+        "body": {
+          "code": "INVALID_DEVICE_PROVIDER",
+          "message": "A platform ├ęs a provider nem kompatibilis.",
+          "request_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"
+        }
+      },
+      "request": {
+        "schema": "InstallationRegistration",
+        "body": {
+          "installation_id": "77777777-7777-4777-8777-777777777777",
+          "platform": "android",
+          "environment": "development",
+          "label": "Mock Android",
+          "credential": {
+            "provider": "apns",
+            "token": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "apns_environment": "sandbox",
+            "bundle_id": "hu.example.mock"
+          }
+        }
+      },
+      "assertion": "JSON s├ęma szerint alakhelyes, ├╝zleti keresztellen┼Ĺrz├ęs utas├ştja el."
+    },
+    {
+      "id": "F13-device-receipt",
+      "operationId": "confirmDeviceReceipt",
+      "response": {
+        "status": 200,
+        "schema": "DeviceReceipt",
+        "body": {
+          "received": true,
+          "received_at": "2026-10-14T12:00:00Z"
+        }
+      },
+      "request": {
+        "schema": "DeviceReceiptRequest",
+        "body": {
+          "delivery_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          "receipt_token": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        }
+      },
+      "assertion": "Emberi ack tov├íbbra is null; r├ęszv├ętel pending marad."
+    },
+    {
+      "id": "F14-admin-replacement",
+      "operationId": "replaceAlertRecipient",
+      "response": {
+        "status": 202,
+        "schema": "ReplacementAccepted",
+        "body": {
+          "old_recipient": {
+            "id": "88888888-8888-4888-8888-888888888888",
+            "alert_id": "66666666-6666-4666-8666-666666666666",
+            "membership_id": "44444444-4444-4444-8444-444444444444",
+            "position_key": "technical_rescuer",
+            "slot": 1,
+            "delivery_state": "device_received",
+            "acknowledged_at": null,
+            "participation_response": "not_going",
+            "responded_at": "2026-10-14T12:00:00Z",
+            "replaced_by_recipient_id": "99999999-9999-4999-8999-999999999999",
+            "replaces_recipient_id": null,
+            "version": 3
+          },
+          "new_recipient": {
+            "id": "99999999-9999-4999-8999-999999999999",
+            "alert_id": "66666666-6666-4666-8666-666666666666",
+            "membership_id": "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+            "position_key": "technical_rescuer",
+            "slot": 1,
+            "delivery_state": "queued",
+            "acknowledged_at": null,
+            "participation_response": "pending",
+            "responded_at": null,
+            "replaced_by_recipient_id": null,
+            "replaces_recipient_id": "88888888-8888-4888-8888-888888888888",
+            "version": 0
+          },
+          "job_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          "status": "queued"
+        }
+      },
+      "request": {
+        "schema": "ReplacementRequest",
+        "body": {
+          "new_membership_id": "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+          "reason": "Mock helyettes├şt├ęs"
+        }
+      }
+    },
+    {
+      "id": "F15-coin-balance",
+      "operationId": "getCoinBalance",
+      "response": {
+        "status": 200,
+        "schema": "CoinBalance",
+        "body": {
+          "organization_id": "11111111-1111-4111-8111-111111111111",
+          "membership_id": "44444444-4444-4444-8444-444444444444",
+          "unit": "RC",
+          "balance": 120,
+          "as_of": "2026-10-14T12:00:00Z",
+          "ledger_version": "fixture-1"
+        }
+      }
+    },
+    {
+      "id": "F16-logout",
+      "operationId": "revokeCurrentSession",
+      "response": {
+        "status": 204,
+        "schema": null,
+        "body": null
+      },
+      "client_state": {
+        "after": "signed_out",
+        "tenant_cache": "cleared",
+        "offline_responses": "discarded",
+        "session_installation_bindings": "inactive"
+      }
+    },
+    {
+      "id": "F17-token-refresh",
+      "operationId": "updateMyInstallation",
+      "response": {
+        "status": 200,
+        "schema": "Installation",
+        "body": {
+          "id": "77777777-7777-4777-8777-777777777777",
+          "platform": "ios",
+          "provider": "fcm",
+          "environment": "development",
+          "label": "Mock iPhone",
+          "active": true,
+          "version": 2
+        }
+      },
+      "request": {
+        "schema": "InstallationPatch",
+        "body": {
+          "credential": {
+            "provider": "fcm",
+            "token": "FAKE_ROTATED_FCM_TOKEN_FOR_OFFLINE_ONLY"
+          }
+        }
+      }
+    },
+    {
+      "id": "F18-own-tenant-switch",
+      "operationId": "getMyOrganizationMembership",
+      "response": {
+        "status": 200,
+        "schema": "OrganizationMember",
+        "body": {
+          "id": "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+          "organization_id": "22222222-2222-4222-8222-222222222222",
+          "user_id": "33333333-3333-4333-8333-333333333333",
+          "display_name": "Mock Tag",
+          "membership_status": "approved",
+          "positions": [],
+          "skills": [],
+          "alertable": false,
+          "permissions": [
+            "organization.read"
+          ],
+          "permissions_version": 1,
+          "version": 1
+        }
+      },
+      "context": {
+        "previous_organization": "11111111-1111-4111-8111-111111111111",
+        "requested_organization": "22222222-2222-4222-8222-222222222222",
+        "membership_in_requested_organization": true
+      },
+      "client_state": {
+        "tenant_cache": "cleared_before_load",
+        "offline_responses": "organization_scoped"
+      }
+    }
+  ]
+}
