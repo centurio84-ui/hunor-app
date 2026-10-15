@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'config.dart';
 import 'services/app_store.dart';
+import 'services/navigation_controller.dart';
 import 'services/push_notification_service.dart';
 import 'theme/hunor_theme.dart';
 import 'views/app_shell.dart';
@@ -24,8 +25,11 @@ Future<void> main() async {
   await PushNotificationService.initialize();
 
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => AppStore()..initialize(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AppStore()..initialize()),
+        ChangeNotifierProvider(create: (_) => NavigationController(Supabase.instance.client)),
+      ],
       child: const HunorApp(),
     ),
   );
@@ -40,6 +44,9 @@ class HunorApp extends StatelessWidget {
       title: 'HUNOR',
       debugShowCheckedModeBanner: false,
       theme: HunorTheme.dark,
+      onGenerateRoute: (settings) => MaterialPageRoute<void>(settings: settings,
+        builder: (context) => Consumer<AppStore>(builder: (context, store, _) =>
+          store.isAuthenticated ? AppShell(initialRoute: settings.name ?? '/') : const LoginPage())),
       home: Consumer<AppStore>(
         builder: (context, store, _) {
           if (!store.initialized) {
