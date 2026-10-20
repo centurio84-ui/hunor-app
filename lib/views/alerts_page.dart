@@ -169,13 +169,14 @@ class _AlertCard extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       showDragHandle: true,
+      isScrollControlled: true,
       backgroundColor: HunorColors.surface,
       builder: (_) => SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
                 alert.typeLabel,
@@ -207,20 +208,17 @@ class _AlertCard extends StatelessWidget {
               const SizedBox(height: 12),
               FilledButton.icon(
                 onPressed: () async {
+                  final messenger = ScaffoldMessenger.maybeOf(context);
                   Navigator.pop(context);
                   try {
                     await s.respondToAlert(alert.id, true);
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Válasz rögzítve: Elérhető')),
-                      );
-                    }
+                    messenger?.showSnackBar(
+                      const SnackBar(content: Text('Válasz rögzítve: Elérhető')),
+                    );
                   } on ConflictException catch (e) {
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Hiba: ${e.message}'), backgroundColor: HunorColors.red),
-                      );
-                    }
+                    messenger?.showSnackBar(
+                      SnackBar(content: Text('Hiba: ${e.message}'), backgroundColor: HunorColors.red),
+                    );
                   }
                 },
                 icon: const Icon(Icons.check),
@@ -229,20 +227,17 @@ class _AlertCard extends StatelessWidget {
               const SizedBox(height: 8),
               OutlinedButton.icon(
                 onPressed: () async {
+                  final messenger = ScaffoldMessenger.maybeOf(context);
                   Navigator.pop(context);
                   try {
                     await s.respondToAlert(alert.id, false);
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Válasz rögzítve: Nem elérhető')),
-                      );
-                    }
+                    messenger?.showSnackBar(
+                      const SnackBar(content: Text('Válasz rögzítve: Nem elérhető')),
+                    );
                   } on ConflictException catch (e) {
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Hiba: ${e.message}'), backgroundColor: HunorColors.red),
-                      );
-                    }
+                    messenger?.showSnackBar(
+                      SnackBar(content: Text('Hiba: ${e.message}'), backgroundColor: HunorColors.red),
+                    );
                   }
                 },
                 icon: const Icon(Icons.close),

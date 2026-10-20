@@ -16,12 +16,18 @@ concurrency:
 
 jobs:
   flutter-test:
-    name: Flutter Statikus Elemzés és Egységtesztek
+    name: Flutter Statikus Elemzés, Tesztek és Mobil Építés
     runs-on: ubuntu-latest
 
     steps:
       - name: Forráskód letöltése (Checkout)
         uses: actions/checkout@v4
+
+      - name: Java JDK 17 beállítása
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
 
       - name: Flutter SDK beállítása
         uses: subosito/flutter-action@v2
@@ -33,6 +39,7 @@ jobs:
         run: |
           flutter --version
           dart --version
+          java -version
 
       - name: Függőségek letöltése (flutter pub get)
         run: flutter pub get
@@ -55,9 +62,22 @@ jobs:
           flutter test --reporter expanded
           echo "✅ Minden Flutter és Dart egységteszt sikeresen lefutott!" >> $GITHUB_STEP_SUMMARY
 
-      - name: Flutter Web platformfájlok biztosítása
+      - name: Android és Web platformfájlok biztosítása
         run: |
-          flutter create --platforms web .
+          flutter create --org hu.hunor --platforms android,web .
+
+      - name: Android Debug APK építése (Mock Tesztverzió)
+        run: |
+          flutter build apk --debug
+          echo "### Android Debug APK Építés" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Android tesztverzió (APK) sikeresen lefordult." >> $GITHUB_STEP_SUMMARY
+
+      - name: Android APK artifact archiválása
+        uses: actions/upload-artifact@v4
+        with:
+          name: rescue-platform-android-apk
+          path: build/app/outputs/flutter-apk/app-debug.apk
+          retention-days: 14
 
       - name: Flutter Web demó építés (Release Web Build)
         run: |

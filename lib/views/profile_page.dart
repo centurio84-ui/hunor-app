@@ -15,7 +15,14 @@ class ProfilePage extends StatelessWidget {
     final membership = s.currentMembership;
     final coin = s.coinBalance;
 
-    if (u == null) return const Center(child: CircularProgressIndicator(color: HunorColors.red));
+    if (u == null) {
+      if (s.isLoading) {
+        return const Center(child: CircularProgressIndicator(color: HunorColors.red));
+      }
+      return const Center(
+        child: Text('Nincs bejelentkezett felhasználó.', style: TextStyle(color: HunorColors.muted)),
+      );
+    }
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),

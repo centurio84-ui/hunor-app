@@ -23,7 +23,7 @@ void main() {
       return ChangeNotifierProvider<AppStore>.value(
         value: store,
         child: MaterialApp(
-          home: home ?? const HunorApp(),
+          home: home != null ? Scaffold(body: home) : const HunorApp(),
         ),
       );
     }
