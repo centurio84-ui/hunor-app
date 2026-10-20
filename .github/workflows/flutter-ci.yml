@@ -81,7 +81,7 @@ jobs:
 
       - name: Flutter Web demó építés (Release Web Build)
         run: |
-          flutter build web --release --base-href "./"
+          flutter build web --release --base-href "/"
           echo "### Flutter Web Demó Építés" >> $GITHUB_STEP_SUMMARY
           echo "✅ Mobilra optimalizált Flutter Web tesztverzió sikeresen lefordult." >> $GITHUB_STEP_SUMMARY
 
