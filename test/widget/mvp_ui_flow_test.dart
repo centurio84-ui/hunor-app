@@ -7,7 +7,6 @@ import 'package:hunor_app/services/app_store.dart';
 import 'package:hunor_app/views/alerts_page.dart';
 import 'package:hunor_app/views/calendar_page.dart';
 import 'package:hunor_app/views/login_page.dart';
-import 'package:hunor_app/views/organization_switcher_view.dart';
 import 'package:hunor_app/views/profile_page.dart';
 
 void main() {

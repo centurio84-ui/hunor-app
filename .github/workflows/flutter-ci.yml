@@ -54,3 +54,20 @@ jobs:
           echo "### Teszteredmények összefoglalója" >> $GITHUB_STEP_SUMMARY
           flutter test --reporter expanded
           echo "✅ Minden Flutter és Dart egységteszt sikeresen lefutott!" >> $GITHUB_STEP_SUMMARY
+
+      - name: Flutter Web platformfájlok biztosítása
+        run: |
+          flutter create --platforms web .
+
+      - name: Flutter Web demó építés (Release Web Build)
+        run: |
+          flutter build web --release --base-href "./"
+          echo "### Flutter Web Demó Építés" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Mobilra optimalizált Flutter Web tesztverzió sikeresen lefordult." >> $GITHUB_STEP_SUMMARY
+
+      - name: Web demó artifact archiválása
+        uses: actions/upload-artifact@v4
+        with:
+          name: rescue-platform-web-demo
+          path: build/web
+          retention-days: 14
