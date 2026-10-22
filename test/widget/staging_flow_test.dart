@@ -24,11 +24,11 @@ void main(){
    if(r.url.path.endsWith('/organizations'))return json({'items':[{'id':orgA,'name':'Fiktív A','slug':'a','status':'active'}],'page':{'next_cursor':null}});
    if(r.url.path.endsWith('/events'))return json({'items':[{'id':'55555555-5555-4555-8555-555555555555','organization_id':orgA,'title':'Teszt esemény','starts_at':'2026-10-22T12:00:00Z'}],'page':{'next_cursor':null}});
    if(r.url.path.endsWith('/alerts'))return json({'items':[{'id':alert,'organization_id':orgA,'title':'Teszt riasztás','kind':'operational','status':'active'}],'page':{'next_cursor':null}});
-   if(r.url.path.endsWith('/balance'))return json({'organization_id':orgA,'membership_id':'44444444-4444-4444-8444-444444444444','unit':'RC','balance':120,'as_of':'2026-10-22T12:00:00Z','ledger_version':'fixture'});
+   if(r.url.path.endsWith('/balance'))throw StateError('Frozen Coins must not be loaded.');
    return defaults(r);
   }));
   final store=AppStore(api:api);await store.initialize();expect(store.isAuthenticated,isFalse);
-  await store.signIn('member@example.invalid','fixture-password');expect(store.errorMessage,isNull);expect(store.isAuthenticated,isTrue);expect(store.currentOrganization!.id,orgA);expect(api.currentOrganizationId,orgA);expect(store.coinBalance!.balance,120);expect(store.events.single.title,'Teszt esemény');expect(store.alerts.single.type,'alert');expect(store.members,isEmpty);
+  await store.signIn('member@example.invalid','fixture-password');expect(store.errorMessage,isNull);expect(store.isAuthenticated,isTrue);expect(store.currentOrganization!.id,orgA);expect(api.currentOrganizationId,orgA);expect(store.coinBalance,isNull);expect(store.showRescueCoins,isFalse);expect(store.events.single.title,'Teszt esemény');expect(store.alerts.single.type,'alert');expect(store.members,isEmpty);expect(store.capabilities,isNull);expect(store.currentUserRole,MemberRole.member);
   expect(store.alertResponses[alert],'available');
   await expectLater(store.createEvent('not supported',DateTime.now(),'',''),throwsA(isA<Exception>()));expect(store.events.length,1);
   final logout=store.signOut();expect(store.currentUser,isNull);expect(store.events,isEmpty);expect(store.isAuthenticated,isFalse);await logout;expect(vault.value,isNull);

@@ -30,7 +30,6 @@ class ProfilePage extends StatelessWidget {
       Text(s.currentUserProfile?.user.email??''),
       Text(org?.name??'Nincs jóváhagyott szervezet'),
       Text('Tagság: ${membership?.membershipStatus.label??"Nincs"}'),
-      Text(coin==null?'Egyenleg nem érhető el':'Egyenleg: ${coin.balance} RC'),
       const SizedBox(height:16),
       const Text('Staging tesztprofil. A profil, készségek és riaszthatóság szerkesztése még nem támogatott. Push és valódi riasztásküldés nincs bekötve.'),
       const SizedBox(height:16),
@@ -81,7 +80,7 @@ class ProfilePage extends StatelessWidget {
         const SizedBox(height: 10),
 
         // Rescue Coin Egyenleg kártya
-        if (coin != null)
+        if (s.showRescueCoins && coin != null)
           Card(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
             child: ListTile(

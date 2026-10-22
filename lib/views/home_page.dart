@@ -98,7 +98,7 @@ class HomePage extends StatelessWidget {
           const SizedBox(height: 12),
 
           // Rescue Coin (RC) Egyenleg kártya
-          if (coin != null)
+          if (s.showRescueCoins && coin != null)
             Card(
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               child: Padding(

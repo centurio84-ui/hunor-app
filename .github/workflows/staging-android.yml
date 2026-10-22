@@ -1,7 +1,7 @@
 name: CODEX-014 Android staging
 on:
   push:
-    branches: [codex/014-flutter-staging-integration]
+    branches: [codex/014-flutter-staging-integration, gemini/codex-016-authz-client]
   workflow_dispatch:
 permissions:
   contents: read

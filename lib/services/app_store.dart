@@ -6,6 +6,7 @@ import '../api/rescue_platform_api.dart';
 import '../models/coin_balance.dart';
 import '../models/member.dart';
 import '../models/organization.dart';
+import '../models/organization_capabilities.dart';
 import '../models/rescue_alert.dart';
 import '../models/rescue_event.dart';
 import '../models/user_profile.dart';
@@ -33,6 +34,9 @@ class AppStore extends ChangeNotifier {
   List<RescueAlert> alerts = [];
   List<Member> members = [];
   CoinBalance? coinBalance;
+  OrganizationCapabilities? capabilities;
+  // Rescue Coins is frozen. Legacy read API/data are preserved, not loaded by the UI.
+  bool get showRescueCoins => false;
 
   Map<String, String> eventResponses = {};
   Map<String, String> alertResponses = {};
@@ -117,6 +121,7 @@ class AppStore extends ChangeNotifier {
     alerts = [];
     members = [];
     coinBalance = null;
+    capabilities = null;
     eventResponses.clear();
     alertResponses.clear();
     alertResponseByMember.clear();
@@ -133,14 +138,16 @@ class AppStore extends ChangeNotifier {
       if(revision!=_revision)return;
       final orgId=api.currentOrganizationId??organizations.firstOrNull?.id;
       Membership? membership;
-      List<RescueEvent> nextEvents=[];List<RescueAlert> nextAlerts=[];CoinBalance? nextCoins;
+      List<RescueEvent> nextEvents=[];List<RescueAlert> nextAlerts=[];
+      OrganizationCapabilities? nextCapabilities;
       final responses=<String,String>{};
       if(orgId!=null){
         if(api.currentOrganizationId!=orgId)await api.switchOrganization(orgId);
         membership=await api.getMyOrganizationMembership(orgId);
-        nextEvents=await api.getEvents();nextAlerts=await api.getAlerts();nextCoins=await api.getCoinBalance();
+        nextEvents=await api.getEvents();nextAlerts=await api.getAlerts();
         if(api is StagingApi){
           final staging=api as StagingApi;
+          nextCapabilities=await staging.getMyCapabilities(membership);
           for(final alert in nextAlerts){
             try{
               final r=await staging.getMyResponse(alert.id);
@@ -152,8 +159,11 @@ class AppStore extends ChangeNotifier {
       if(revision!=_revision)return;
       currentUserProfile=profile;availableOrganizations=organizations;
       currentOrganization=organizations.where((o)=>o.id==orgId).firstOrNull;currentMembership=membership;
-      currentUserRole=(membership?.hasPermission('members.manage_permissions')??false)||(membership?.hasPermission('admin')??false)?MemberRole.admin:MemberRole.member;
-      events=nextEvents;alerts=nextAlerts;coinBalance=nextCoins;alertResponses=responses;
+      capabilities=nextCapabilities;
+      currentUserRole=isStaging
+          ? ((capabilities?.allows('members.manage_permissions')??false)?MemberRole.admin:MemberRole.member)
+          : ((membership?.hasPermission('members.manage_permissions')??false)?MemberRole.admin:MemberRole.member);
+      events=nextEvents;alerts=nextAlerts;coinBalance=null;alertResponses=responses;
       if(api is MockRescuePlatformApi){_loadMembersForCurrentOrganization(orgId??'');}else{members=[];memberRoles.clear();alertResponseByMember.clear();}
       currentUser=Member(id:profile.user.id,name:profile.user.displayName,rank:membership?.positions.firstOrNull??'Tag',workplace:currentOrganization?.name??'',position:membership?.positions.join(', ')??'',phone:profile.contactPhone??'',skills:membership?.skills??const [],status:(membership?.alertable??false)?AvailabilityStatus.available:AvailabilityStatus.unavailable);
       isAuthenticated=true;
@@ -253,6 +263,7 @@ class AppStore extends ChangeNotifier {
     try {
       _revision++;
       currentOrganization=null;currentMembership=null;currentUser=null;currentUserRole=MemberRole.member;memberRoles.clear();
+      capabilities=null;
       // 1. Korábbi adatok ürítése a szivárgás megakadályozására
       events = [];
       alerts = [];

@@ -23,6 +23,7 @@ http.Response defaults(http.Request r){
  if(path=='/me')return json({'user':session()['user'],'version':1});
  if(path.endsWith('/members/me'))return json({'id':'44444444-4444-4444-8444-444444444444','organization_id':path.split('/')[2],'user_id':'user-a','membership_status':'approved'});
  if(path.endsWith('/response/me'))return json({'alert_id':alert,'membership_id':'member-a','response':'going','version':3});
+ if(path.endsWith('/capabilities/me'))return json({'code':'NOT_FOUND'},404);
  return json({'items':<Object>[],'page':{'next_cursor':null}});
 }
 Future<StagingApi> ready({MemoryVault? vault,FutureOr<http.Response> Function(http.Request)? handler}) async{

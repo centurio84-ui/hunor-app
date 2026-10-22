@@ -7,6 +7,7 @@ import '../models/api_error.dart';
 import '../models/coin_balance.dart';
 import '../models/installation.dart';
 import '../models/organization.dart';
+import '../models/organization_capabilities.dart';
 import '../models/rescue_alert.dart';
 import '../models/rescue_event.dart';
 import '../models/user_profile.dart';
@@ -126,6 +127,24 @@ class StagingApi implements RescuePlatformApi {
   @override Future<UserProfile> getMyProfile() async => UserProfile.fromJson(await request('/me'));
   @override Future<List<Organization>> getMyOrganizations() async => (await _pages('/organizations')).map((w) => Organization.fromJson({...w,'code':(w['slug'] as String).toUpperCase(),'active':w['status']=='active'})).toList();
   @override Future<Membership> getMyOrganizationMembership(String organizationId) async { _uuid(organizationId); final w = await request('/organizations/$organizationId/members/me'); return Membership.fromJson({...w,'membership_status':w['membership_status']=='left'?'revoked':w['membership_status']}); }
+  Future<OrganizationCapabilities?> getMyCapabilities(Membership membership) async {
+    final org = _org, generation = _generation;
+    final path = _tenant();
+    if (membership.organizationId != org) throw const ForbiddenException();
+    try {
+      final data = await request('$path/capabilities/me');
+      _same(generation, org);
+      return OrganizationCapabilities.fromJson(data,
+          organizationId: org!, membershipId: membership.id,
+          permissionsVersion: membership.permissionsVersion);
+    } on ApiException catch (e) {
+      _same(generation, org);
+      // The deployed CODEX-013 API does not have this additive route yet.
+      // Preserve member reads, but never infer admin actions from raw grants.
+      if (e.statusCode == 404) return null;
+      rethrow;
+    }
+  }
   @override Future<void> switchOrganization(String organizationId) async { _uuid(organizationId); final generation = _generation; _org=null; clearTenantCache(); final membership=await getMyOrganizationMembership(organizationId); _same(generation); if(!membership.isApproved) throw const ForbiddenException(); _org=organizationId; }
   @override void clearTenantCache() { _versions.clear(); }
   @override Future<List<RescueEvent>> getEvents() async { final org=_org,generation=_generation,path=_tenant(); final rows=await _pages('$path/events'); _same(generation,org); return rows.map(RescueEvent.fromJson).toList(); }

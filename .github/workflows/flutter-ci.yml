@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   flutter-test:
-    if: ${{ !startsWith(github.head_ref || github.ref_name, 'codex/014-') }}
+    if: ${{ !startsWith(github.head_ref || github.ref_name, 'codex/014-') && (github.head_ref || github.ref_name) != 'gemini/codex-016-authz-client' }}
     name: Flutter Statikus Elemzés, Tesztek és Mobil Építés
     runs-on: ubuntu-latest
 

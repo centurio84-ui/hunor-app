@@ -47,7 +47,7 @@ void main() {
       // Sikeres bejelentkezés után a főoldal jelenik meg
       expect(store.isAuthenticated, isTrue);
       expect(find.text('HUNOR Mentőszervezet'), findsWidgets);
-      expect(find.text('120 RC'), findsWidgets);
+      expect(find.text('120 RC'), findsNothing);
     });
 
     testWidgets('2. Cross-tenant adatelkülönítés a felületen (HUNOR vs BMSZ)', (tester) async {

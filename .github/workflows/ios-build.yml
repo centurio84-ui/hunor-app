@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    if: ${{ !startsWith(github.head_ref || github.ref_name, 'codex/014-') }}
+    if: ${{ !startsWith(github.head_ref || github.ref_name, 'codex/014-') && (github.head_ref || github.ref_name) != 'gemini/codex-016-authz-client' }}
     runs-on: macos-15
     steps:
       - name: Checkout

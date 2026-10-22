@@ -97,7 +97,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
           ),
         ),
         actions: [
-          if (coin != null)
+          if (store.showRescueCoins && coin != null)
             Padding(
               padding: const EdgeInsets.only(right: 12),
               child: Chip(
