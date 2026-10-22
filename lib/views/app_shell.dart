@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/app_store.dart';
@@ -15,7 +16,11 @@ class AppShell extends StatefulWidget {
   State<AppShell> createState() => _AppShellState();
 }
 
-class _AppShellState extends State<AppShell> {
+class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
+  Timer? _timer;
+  @override void initState(){super.initState();WidgetsBinding.instance.addObserver(this);_timer=Timer.periodic(const Duration(seconds:30),(_){if(mounted)context.read<AppStore>().syncPendingResponses();});}
+  @override void dispose(){_timer?.cancel();WidgetsBinding.instance.removeObserver(this);super.dispose();}
+  @override void didChangeAppLifecycleState(AppLifecycleState state){if(state==AppLifecycleState.resumed)context.read<AppStore>().syncPendingResponses();}
   int index = 0;
 
   @override
@@ -108,7 +113,13 @@ class _AppShellState extends State<AppShell> {
             ),
         ],
       ),
-      body: IndexedStack(index: index, children: pages),
+      body: Column(children:[
+        if(store.isStaging) const MaterialBanner(content:Text('STAGING TESZT · fiktív adatok · nincs valódi riasztásküldés'),actions:[SizedBox.shrink()]),
+        if(store.errorMessage!=null) Padding(padding:const EdgeInsets.all(8),child:Text(store.errorMessage!,style:const TextStyle(color:HunorColors.warning))),
+        if(store.isStaging) Row(mainAxisAlignment:MainAxisAlignment.center,children:[Text('Várakozó válaszok: ${store.pendingResponses.length}'),TextButton(onPressed:store.syncPendingResponses,child:const Text('Szinkronizálás'))]),
+        for(final q in store.pendingResponses) ListTile(dense:true,title:Text(q['blocked']==true?'Nem küldhető: ${q['error']}':'Szerveres megerősítésre vár'),trailing:TextButton(onPressed:()=>store.discardPendingResponse(q['key'] as String),child:const Text('Elvetés'))),
+        Expanded(child:IndexedStack(index:index,children:pages)),
+      ]),
       bottomNavigationBar: NavigationBar(
         selectedIndex: index,
         onDestinationSelected: (i) => setState(() => index = i),

@@ -213,9 +213,9 @@ class _AlertCard extends StatelessWidget {
                   try {
                     await s.respondToAlert(alert.id, true);
                     messenger?.showSnackBar(
-                      const SnackBar(content: Text('Válasz rögzítve: Elérhető')),
+                      SnackBar(content: Text(s.lastResponseMessage)),
                     );
-                  } on ConflictException catch (e) {
+                  } on ApiException catch (e) {
                     messenger?.showSnackBar(
                       SnackBar(content: Text('Hiba: ${e.message}'), backgroundColor: HunorColors.red),
                     );
@@ -232,7 +232,7 @@ class _AlertCard extends StatelessWidget {
                   try {
                     await s.respondToAlert(alert.id, false);
                     messenger?.showSnackBar(
-                      const SnackBar(content: Text('Válasz rögzítve: Nem elérhető')),
+                      SnackBar(content: Text(s.lastResponseMessage)),
                     );
                   } on ConflictException catch (e) {
                     messenger?.showSnackBar(

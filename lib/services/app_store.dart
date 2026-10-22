@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../api/mock_rescue_platform_api.dart';
+import '../api/staging_api.dart';
 import '../api/rescue_platform_api.dart';
 import '../models/coin_balance.dart';
 import '../models/member.dart';
@@ -18,6 +19,10 @@ class AppStore extends ChangeNotifier {
 
   AppStore({RescuePlatformApi? api}) : api = api ?? MockRescuePlatformApi();
 
+  int _revision = 0;
+  bool get isStaging => api is StagingApi;
+  String lastResponseMessage = '';
+  List<Map<String,dynamic>> get pendingResponses => api is StagingApi ? (api as StagingApi).pendingResponses : [];
   UserProfile? currentUserProfile;
   Member? currentUser;
   Organization? currentOrganization;
@@ -44,6 +49,7 @@ class AppStore extends ChangeNotifier {
     notifyListeners();
 
     try {
+      if(api is StagingApi) await (api as StagingApi).restore();
       isAuthenticated = api.isAuthenticated;
       if (isAuthenticated) {
         await loadData();
@@ -66,7 +72,8 @@ class AppStore extends ChangeNotifier {
       if (api is MockRescuePlatformApi) {
         (api as MockRescuePlatformApi).setAuthenticated(true);
       }
-      isAuthenticated = true;
+      if(api is StagingApi) await (api as StagingApi).login(email,password);
+      isAuthenticated = api.isAuthenticated;
       await loadData();
     } catch (e) {
       errorMessage = e.toString();
@@ -111,80 +118,46 @@ class AppStore extends ChangeNotifier {
   }
 
   Future<void> loadData() async {
-    if (!api.isAuthenticated) {
-      isAuthenticated = false;
-      notifyListeners();
-      return;
-    }
-
-    isLoading = true;
-    errorMessage = null;
-    notifyListeners();
-
+    final revision=++_revision;
+    if(!api.isAuthenticated) { _clearLocalData();isAuthenticated=false;notifyListeners();return; }
+    isLoading=true;errorMessage=null;notifyListeners();
     try {
-      // 1. Felhasználói profil
-      currentUserProfile = await api.getMyProfile();
-
-      // 2. Elérhető szervezetek
-      availableOrganizations = await api.getMyOrganizations();
-
-      // 3. Aktuális szervezet beállítása
-      final activeOrgId = api.currentOrganizationId ?? availableOrganizations.firstOrNull?.id;
-      if (activeOrgId != null) {
-        currentOrganization = availableOrganizations.where((o) => o.id == activeOrgId).firstOrNull;
-        if (currentOrganization != null) {
-          try {
-            currentMembership = await api.getMyOrganizationMembership(activeOrgId);
-          } catch (_) {
-            currentMembership = null;
+      final profile=await api.getMyProfile();
+      final organizations=await api.getMyOrganizations();
+      if(revision!=_revision)return;
+      final orgId=api.currentOrganizationId??organizations.firstOrNull?.id;
+      Membership? membership;
+      List<RescueEvent> nextEvents=[];List<RescueAlert> nextAlerts=[];CoinBalance? nextCoins;
+      final responses=<String,String>{};
+      if(orgId!=null){
+        if(api.currentOrganizationId!=orgId)await api.switchOrganization(orgId);
+        membership=await api.getMyOrganizationMembership(orgId);
+        nextEvents=await api.getEvents();nextAlerts=await api.getAlerts();nextCoins=await api.getCoinBalance();
+        if(api is StagingApi){
+          final staging=api as StagingApi;
+          for(final alert in nextAlerts){
+            final r=await staging.getMyResponse(alert.id);
+            if(r.response=='going'||r.response=='not_going')responses[alert.id]=r.response=='going'?'available':'unavailable';
           }
         }
       }
-
-      // 4. Szerepkör meghatározása
-      currentUserRole = (currentMembership?.hasPermission('admin') ?? false)
-          ? MemberRole.admin
-          : MemberRole.member;
-
-      // 5. Szervezetre szűrt események, riasztások és egyenleg
-      if (api.currentOrganizationId != null) {
-        events = await api.getEvents();
-        alerts = await api.getAlerts();
-        try {
-          coinBalance = await api.getCoinBalance();
-        } catch (_) {
-          coinBalance = null;
-        }
-
-        // 6. Szervezeti állomány (members) betöltése a multi-tenant izoláció szerint
-        _loadMembersForCurrentOrganization(activeOrgId ?? '');
-      } else {
-        events = [];
-        alerts = [];
-        members = [];
-        coinBalance = null;
-      }
-
-      // 7. Kompatibilitási tagmodell felépítése az aktuális felhasználóhoz
-      if (currentUserProfile != null) {
-        currentUser = Member(
-          id: currentUserProfile!.user.id,
-          name: currentUserProfile!.user.displayName,
-          rank: currentMembership?.positions.firstOrNull ?? 'Tag',
-          workplace: currentOrganization?.name ?? '',
-          position: currentMembership?.positions.join(', ') ?? '',
-          phone: currentUserProfile!.contactPhone ?? '',
-          skills: currentMembership?.skills ?? const [],
-          status: AvailabilityStatus.available,
-        );
-      }
-    } catch (e) {
-      errorMessage = e.toString();
-    } finally {
-      isLoading = false;
-      notifyListeners();
-    }
+      if(revision!=_revision)return;
+      currentUserProfile=profile;availableOrganizations=organizations;
+      currentOrganization=organizations.where((o)=>o.id==orgId).firstOrNull;currentMembership=membership;
+      currentUserRole=(membership?.hasPermission('members.manage_permissions')??false)||(membership?.hasPermission('admin')??false)?MemberRole.admin:MemberRole.member;
+      events=nextEvents;alerts=nextAlerts;coinBalance=nextCoins;alertResponses=responses;
+      if(api is MockRescuePlatformApi){_loadMembersForCurrentOrganization(orgId??'');}else{members=[];memberRoles.clear();alertResponseByMember.clear();}
+      currentUser=Member(id:profile.user.id,name:profile.user.displayName,rank:membership?.positions.firstOrNull??'Tag',workplace:currentOrganization?.name??'',position:membership?.positions.join(', ')??'',phone:profile.contactPhone??'',skills:membership?.skills??const [],status:(membership?.alertable??false)?AvailabilityStatus.available:AvailabilityStatus.unavailable);
+      isAuthenticated=true;
+    } catch(e){if(revision!=_revision)return;_clearLocalData();isAuthenticated=api.isAuthenticated;errorMessage=e.toString();}
+    finally{if(revision==_revision){isLoading=false;notifyListeners();}}
   }
+
+  Future<void> syncPendingResponses() async {
+    if(api is! StagingApi||!api.isAuthenticated)return;
+    try{await (api as StagingApi).syncResponses();await loadData();}catch(e){if(!api.isAuthenticated){_clearLocalData();isAuthenticated=false;}errorMessage=e.toString();notifyListeners();}
+  }
+  Future<void> discardPendingResponse(String key) async {if(api is StagingApi){await (api as StagingApi).discardPending(key);notifyListeners();}}
 
   void _loadMembersForCurrentOrganization(String orgId) {
     if (orgId == MockRescuePlatformApi.orgAId) {
@@ -270,6 +243,8 @@ class AppStore extends ChangeNotifier {
     notifyListeners();
 
     try {
+      _revision++;
+      currentOrganization=null;currentMembership=null;currentUser=null;currentUserRole=MemberRole.member;memberRoles.clear();
       // 1. Korábbi adatok ürítése a szivárgás megakadályozására
       events = [];
       alerts = [];
@@ -299,12 +274,15 @@ class AppStore extends ChangeNotifier {
         alertId: alertId,
         response: responseText,
       );
+      lastResponseMessage='Válasz a szerveren rögzítve.';
       alertResponses[alertId] = available ? 'available' : 'unavailable';
       if (currentUser != null) {
         alertResponseByMember.putIfAbsent(alertId, () => {})[currentUser!.id] =
             available ? 'available' : 'unavailable';
       }
       notifyListeners();
+    } on ResponsePending catch(e) {
+      lastResponseMessage=e.message;errorMessage=e.message;notifyListeners();
     } catch (e) {
       errorMessage = e.toString();
       notifyListeners();
@@ -313,6 +291,7 @@ class AppStore extends ChangeNotifier {
   }
 
   Future<void> respondToEvent(String eventId, bool going) async {
+    if(isStaging) throw unsupportedStaging;
     eventResponses[eventId] = going ? 'going' : 'not_going';
     notifyListeners();
   }
@@ -344,6 +323,7 @@ class AppStore extends ChangeNotifier {
   }
 
   Future<void> updateMemberRole(String memberId, MemberRole role) async {
+    if(isStaging) throw unsupportedStaging;
     memberRoles[memberId] = role;
     notifyListeners();
   }
@@ -355,6 +335,7 @@ class AppStore extends ChangeNotifier {
   }
 
   Future<void> closeAlert(String id) async {
+    if(isStaging) throw unsupportedStaging;
     final idx = alerts.indexWhere((a) => a.id == id);
     if (idx >= 0) {
       final old = alerts[idx];
@@ -374,6 +355,7 @@ class AppStore extends ChangeNotifier {
   }
 
   Future<void> createEvent(String title, DateTime date, String location, String details) async {
+    if(isStaging) throw unsupportedStaging;
     final newEvent = RescueEvent(
       id: 'event-${DateTime.now().millisecondsSinceEpoch}',
       organizationId: currentOrganization?.id ?? '',
@@ -388,6 +370,7 @@ class AppStore extends ChangeNotifier {
   }
 
   Future<void> updateEvent(String id, String title, DateTime date, String location, String details) async {
+    if(isStaging) throw unsupportedStaging;
     final idx = events.indexWhere((e) => e.id == id);
     if (idx >= 0) {
       events[idx] = RescueEvent(
@@ -404,11 +387,13 @@ class AppStore extends ChangeNotifier {
   }
 
   Future<void> deleteEvent(String id) async {
+    if(isStaging) throw unsupportedStaging;
     events.removeWhere((e) => e.id == id);
     notifyListeners();
   }
 
   Future<void> setAvailability(AvailabilityStatus status, {DateTime? startDate, DateTime? endDate}) async {
+    if(isStaging) throw unsupportedStaging;
     if (currentUser != null) {
       currentUser = Member(
         id: currentUser!.id,
@@ -425,6 +410,7 @@ class AppStore extends ChangeNotifier {
   }
 
   Future<void> replaceOwnSkills(List<String> skillNames) async {
+    if(isStaging) throw unsupportedStaging;
     if (currentUser != null) {
       currentUser = Member(
         id: currentUser!.id,

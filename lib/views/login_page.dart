@@ -11,8 +11,8 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final email = TextEditingController(text: 'mock@example.invalid');
-  final password = TextEditingController(text: 'mockpassword123');
+  final email = TextEditingController();
+  final password = TextEditingController();
 
   @override
   void dispose() {
@@ -92,7 +92,7 @@ class _LoginPageState extends State<LoginPage> {
                         : const Text('Bejelentkezés', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
                   ),
                   const SizedBox(height: 12),
-                  OutlinedButton.icon(
+                  if(!store.isStaging) OutlinedButton.icon(
                     onPressed: store.isLoading
                         ? null
                         : () => store.signIn('mock@example.invalid', 'password'),

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../services/app_store.dart';
 import '../api/rescue_platform_api.dart';
 import '../models/organization.dart';
 import '../theme/hunor_theme.dart';
@@ -71,7 +73,10 @@ class _OrganizationSwitcherViewState extends State<OrganizationSwitcherView> {
     if (widget.api.currentOrganizationId == org.id) return;
 
     try {
-      await widget.api.switchOrganization(org.id);
+      await context.read<AppStore>().switchOrganization(org.id);
+      if(!mounted)return;
+      final store=context.read<AppStore>();
+      if(store.errorMessage!=null)throw StateError(store.errorMessage!);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
