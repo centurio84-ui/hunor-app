@@ -16,6 +16,7 @@ class ProfilePage extends StatelessWidget {
     final coin = s.coinBalance;
 
     if (u == null) {
+      if(s.isStaging) return Center(child:FilledButton(onPressed:s.signOut,child:const Text('Kijelentkezés')));
       if (s.isLoading) {
         return const Center(child: CircularProgressIndicator(color: HunorColors.red));
       }
@@ -23,6 +24,18 @@ class ProfilePage extends StatelessWidget {
         child: Text('Nincs bejelentkezett felhasználó.', style: TextStyle(color: HunorColors.muted)),
       );
     }
+
+    if(s.isStaging) return ListView(padding:const EdgeInsets.all(20),children:[
+      Text(u.name,style:Theme.of(context).textTheme.headlineSmall),
+      Text(s.currentUserProfile?.user.email??''),
+      Text(org?.name??'Nincs jóváhagyott szervezet'),
+      Text('Tagság: ${membership?.membershipStatus.label??"Nincs"}'),
+      Text(coin==null?'Egyenleg nem érhető el':'Egyenleg: ${coin.balance} RC'),
+      const SizedBox(height:16),
+      const Text('Staging tesztprofil. A profil, készségek és riaszthatóság szerkesztése még nem támogatott. Push és valódi riasztásküldés nincs bekötve.'),
+      const SizedBox(height:16),
+      FilledButton(onPressed:s.signOut,child:const Text('Kijelentkezés')),
+    ]);
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),

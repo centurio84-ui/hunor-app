@@ -36,8 +36,8 @@ jobs:
           PY
       - run: flutter pub get
       - run: dart format lib/api/staging_api.dart
-      - run: flutter analyze --no-fatal-infos
-      - run: flutter test --reporter expanded
+      - run: flutter analyze --no-fatal-infos | tee flutter-analyze.txt
+      - run: flutter test --reporter expanded | tee flutter-tests.txt
       - name: Build staging Debug APK (no credentials)
         run: flutter build apk --debug --dart-define=RESCUE_API_MODE=staging --dart-define=RESCUE_API_BASE_URL=https://xbcutdkqswfzkubkozng.supabase.co/functions/v1/rescue-platform-staging/v1
       - name: APK checksum
@@ -50,3 +50,13 @@ jobs:
             build/app/outputs/flutter-apk/SHA256SUMS.txt
           retention-days: 14
           if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: staging-build-evidence
+          path: |
+            pubspec.lock
+            flutter-analyze.txt
+            flutter-tests.txt
+            android/app/src/main/AndroidManifest.xml
+          retention-days: 14

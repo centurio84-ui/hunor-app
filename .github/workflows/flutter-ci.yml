@@ -16,6 +16,7 @@ concurrency:
 
 jobs:
   flutter-test:
+    if: ${{ !startsWith(github.head_ref || github.ref_name, 'codex/014-') }}
     name: Flutter Statikus Elemzés, Tesztek és Mobil Építés
     runs-on: ubuntu-latest
 

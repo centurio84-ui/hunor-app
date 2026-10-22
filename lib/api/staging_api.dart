@@ -60,13 +60,13 @@ class StagingApi implements RescuePlatformApi {
     final work = _storage.catchError((Object _) {}).then((_) async { if (generation != _generation) return; if(value == null) { await vault.clear(); } else { await vault.write(value); } });
     _storage = work; return work;
   }
-  Future<void> _forget() async { _generation++; _session = null; _org = null; _queue.clear(); _versions.clear(); await _persist(); }
+  Future<void> _forget() async { _generation++; _session = null; _org = null; _refreshing=null; _syncing=null; _queue.clear(); _versions.clear(); await _persist(); }
   Future<void> restore() async {
     final text = await vault.read(); if (text == null) return;
     try {
       final data = jsonDecode(text) as Map<String, dynamic>;
       _session = Map<String, dynamic>.from(data['session'] as Map);
-      _queue.addAll((data['queue'] as List).map((q) => Map<String, dynamic>.from(q as Map)).where((q) => q['user_id'] == userId));
+      _queue.clear(); _queue.addAll((data['queue'] as List).map((q) => Map<String, dynamic>.from(q as Map)).where((q) => q['user_id'] == userId));
       await request('/me');
     } on NetworkUnavailable { rethrow; } on ApiException catch(e) { if(e.statusCode == 401) await _forget(); rethrow; } catch (_) { await _forget(); throw const UnauthorizedException(); }
   }
@@ -129,13 +129,13 @@ class StagingApi implements RescuePlatformApi {
   @override Future<void> switchOrganization(String organizationId) async { _uuid(organizationId); final generation = _generation; _org=null; clearTenantCache(); final membership=await getMyOrganizationMembership(organizationId); _same(generation); if(!membership.isApproved) throw const ForbiddenException(); _org=organizationId; }
   @override void clearTenantCache() { _versions.clear(); }
   @override Future<List<RescueEvent>> getEvents() async { final org=_org,generation=_generation,path=_tenant(); final rows=await _pages('$path/events'); _same(generation,org); return rows.map(RescueEvent.fromJson).toList(); }
-  @override Future<RescueEvent> getEvent(String eventId) async { _uuid(eventId); return RescueEvent.fromJson(await request('${_tenant()}/events/$eventId')); }
+  @override Future<RescueEvent> getEvent(String eventId) async { _uuid(eventId);final org=_org,generation=_generation;final w=await request('${_tenant()}/events/$eventId');_same(generation,org);return RescueEvent.fromJson(w); }
   RescueAlert _alert(Map<String,dynamic> w) => RescueAlert.fromJson({...w,'type':w['kind']=='operational'?'alert':w['kind']});
   @override Future<List<RescueAlert>> getAlerts() async { final org=_org,generation=_generation,path=_tenant(); final rows=await _pages('$path/alerts'); _same(generation,org); return rows.map(_alert).toList(); }
-  @override Future<RescueAlert> getAlert(String alertId) async { _uuid(alertId); return _alert(await request('${_tenant()}/alerts/$alertId')); }
+  @override Future<RescueAlert> getAlert(String alertId) async { _uuid(alertId);final org=_org,generation=_generation;final w=await request('${_tenant()}/alerts/$alertId');_same(generation,org);return _alert(w); }
   Future<AlertResponse> getMyResponse(String alertId) async { _uuid(alertId); final org=_org,generation=_generation; final data=await request('${_tenant()}/alerts/$alertId/response/me'); _same(generation,org); final response=AlertResponse.fromJson(data); _versions[alertId]=response.version; return response; }
-  @override Future<CoinBalance> getCoinBalance() async { final org=_org,generation=_generation,path=_tenant(); final member=await getMyOrganizationMembership(_org!); _same(generation,org); return CoinBalance.fromJson(await request('$path/members/${member.id}/rescue-coins/balance')); }
-  Future<List<Membership>> getMembers() async => (await _pages('${_tenant()}/members')).map(Membership.fromJson).toList();
+  @override Future<CoinBalance> getCoinBalance() async { final org=_org,generation=_generation,path=_tenant(); final member=await getMyOrganizationMembership(_org!); _same(generation,org);final w=await request('$path/members/${member.id}/rescue-coins/balance');_same(generation,org);return CoinBalance.fromJson(w); }
+  Future<List<Membership>> getMembers() async {final org=_org,generation=_generation;final rows=await _pages('${_tenant()}/members');_same(generation,org);return rows.map(Membership.fromJson).toList();}
   @override Future<AlertResponse> setMyAlertResponse({required String alertId,required String response,int? expectedVersion,String? idempotencyKey}) async {
     _uuid(alertId); if(!['going','not_going'].contains(response)) throw ArgumentError('Invalid response');
     final org=_org,generation=_generation; _tenant();

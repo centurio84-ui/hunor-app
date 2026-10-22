@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../api/mock_rescue_platform_api.dart';
 import '../api/staging_api.dart';
+import '../models/api_error.dart';
 import '../api/rescue_platform_api.dart';
 import '../models/coin_balance.dart';
 import '../models/member.dart';
@@ -102,6 +103,7 @@ class AppStore extends ChangeNotifier {
   }
 
   void _clearLocalData() {
+    currentUserRole=MemberRole.member;
     currentUserProfile = null;
     currentUser = null;
     currentOrganization = null;
@@ -136,8 +138,10 @@ class AppStore extends ChangeNotifier {
         if(api is StagingApi){
           final staging=api as StagingApi;
           for(final alert in nextAlerts){
-            final r=await staging.getMyResponse(alert.id);
-            if(r.response=='going'||r.response=='not_going')responses[alert.id]=r.response=='going'?'available':'unavailable';
+            try{
+              final r=await staging.getMyResponse(alert.id);
+              if(r.response=='going'||r.response=='not_going')responses[alert.id]=r.response=='going'?'available':'unavailable';
+            } on ApiException catch(e){if(e.statusCode!=404)rethrow;}
           }
         }
       }
@@ -154,7 +158,7 @@ class AppStore extends ChangeNotifier {
   }
 
   Future<void> syncPendingResponses() async {
-    if(api is! StagingApi||!api.isAuthenticated)return;
+    if(api is! StagingApi||!api.isAuthenticated||!pendingResponses.any((q)=>q['blocked']!=true))return;
     try{await (api as StagingApi).syncResponses();await loadData();}catch(e){if(!api.isAuthenticated){_clearLocalData();isAuthenticated=false;}errorMessage=e.toString();notifyListeners();}
   }
   Future<void> discardPendingResponse(String key) async {if(api is StagingApi){await (api as StagingApi).discardPending(key);notifyListeners();}}

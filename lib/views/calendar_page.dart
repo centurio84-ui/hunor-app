@@ -62,7 +62,8 @@ class CalendarPage extends StatelessWidget {
                           const SizedBox(height: 14),
                           Text(e.details, style: const TextStyle(height: 1.4)),
                         ],
-                        if (!past) ...[
+                        if(s.isStaging) const Padding(padding:EdgeInsets.all(8),child:Text('Eseményjelentkezés ebben a staging verzióban még nem támogatott.')),
+                        if (!past && !s.isStaging) ...[
                           const SizedBox(height: 20),
                           FilledButton.icon(
                             onPressed: () {
