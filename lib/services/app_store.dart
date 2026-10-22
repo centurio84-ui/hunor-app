@@ -77,6 +77,7 @@ class AppStore extends ChangeNotifier {
       isAuthenticated = api.isAuthenticated;
       await loadData();
     } catch (e) {
+      _clearLocalData();
       errorMessage = e.toString();
       isAuthenticated = false;
     } finally {
@@ -86,6 +87,9 @@ class AppStore extends ChangeNotifier {
   }
 
   Future<void> signOut() async {
+    _revision++;
+    _clearLocalData();
+    isAuthenticated=false;
     isLoading = true;
     notifyListeners();
 
@@ -310,6 +314,7 @@ class AppStore extends ChangeNotifier {
     required String position,
     required String phone,
   }) async {
+    if(isStaging) throw unsupportedStaging;
     final idx = members.indexWhere((m) => m.id == member.id);
     if (idx >= 0) {
       members[idx] = Member(

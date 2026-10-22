@@ -55,8 +55,8 @@ class _LoginPageState extends State<LoginPage> {
                       color: HunorColors.surface2,
                       borderRadius: BorderRadius.circular(6),
                     ),
-                    child: const Text(
-                      'Fejlesztői mód: Mock API (Offline)',
+                    child: Text(
+                      store.isStaging ? 'STAGING · kizárólag fiktív tesztfiókok' : 'Fejlesztői mód: Mock API (Offline)',
                       textAlign: TextAlign.center,
                       style: TextStyle(color: HunorColors.warning, fontSize: 12, fontWeight: FontWeight.w700),
                     ),
