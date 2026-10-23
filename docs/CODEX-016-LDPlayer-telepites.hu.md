@@ -3,10 +3,10 @@
 ## Letöltés
 
 1. Lépj be a GitHubra azzal a fiókkal, amely hozzáfér a privát hunor-app repóhoz.
-2. Nyisd meg a [CODEX-016 tesztkiadást](https://github.com/centurio84-ui/hunor-app/releases/tag/codex016-test-20261023).
-3. Az **Assets** résznél töltsd le a **Rescue-Platform-CODEX016-Test.apk** fájlt. Ez már az APK, nem kell kicsomagolni. A Source code ZIP nem telepíthető alkalmazás.
+2. Nyisd meg az [ellenőrzött CODEX-016 APK-artifactot](https://github.com/centurio84-ui/hunor-app/actions/runs/39977738735/artifacts/12512532010).
+3. A letöltött ZIP-et csomagold ki, és a benne lévő **Rescue-Platform-CODEX016-Test.apk** fájlt válaszd. A ZIP önmagában nem telepíthető alkalmazás.
 
-A tesztkiadás a privát repóban marad. Az Actions-artifacttal ellentétben a Release-eszköznek nincs a buildben beállított 14 napos artifact-lejárata; a kiadás visszavonható vagy törölhető.
+Az artifact a privát repóban marad, 30 napos megőrzéssel. Külön GitHub Release nem készült; az tartósabb letöltési lehetőségként később létrehozható a repó hozzáférésének megtartásával.
 
 ## Telepítés – a régi alkalmazás megmarad
 
@@ -23,7 +23,7 @@ Ez külön tesztalkalmazás, nem a régi fölé települő frissítés. Csomagaz
 - Ne kapcsold ki a Chrome Safe Browsingot, a Defendert vagy a SmartScreent. „Veszélyes fájl” esetén ne hagyd figyelmen kívül automatikusan a jelzést.
 - **404 / Not found / nincs jogosultság:** először ellenőrizd a GitHub-belépést és a privát repóhoz való hozzáférést. A privát APK-link önmagában nem ad hozzáférést.
 - **Biztonsági figyelmeztetés:** jegyezd fel a pontos szöveget. A figyelmeztetés típusa nélkül nem állapítható meg az oka. A hash/aláírás nem igazolja önmagában a malware-mentességet.
-- Biztonságos alternatíva a repóhoz már hitelesített GitHub CLI letöltése, változatlan védelem mellett. Technikai segítő használhatja: `gh release download codex016-test-20261023 --repo centurio84-ui/hunor-app --pattern Rescue-Platform-CODEX016-Test.apk`. Ez nem old fel Chrome-figyelmeztetést. A helyben már letöltött és ellenőrzött példányból programozás nélkül telepíthetsz.
+- Biztonságos alternatíva a repóhoz már hitelesített GitHub CLI letöltése, változatlan védelem mellett. Technikai segítő használhatja: `gh run download 39977738735 --repo centurio84-ui/hunor-app --name rescue-platform-codex016-isolated-debug`. Ez nem old fel Chrome-figyelmeztetést. A helyben már letöltött és ellenőrzött példányból programozás nélkül telepíthetsz.
 
 ## Ha az LDPlayer nem válaszol
 
@@ -49,10 +49,13 @@ Más eszközazonosító esetén azt kell megadni. Üres lista, `offline` vagy `u
 
 ## Ellenőrzőösszeg
 
-A kiadás **SHA256SUMS.txt** fájljában szerepel a pontos SHA-256 érték. Windows PowerShellben opcionálisan ellenőrizhető:
+Az artifact **SHA256SUMS.txt** fájljában szerepel a pontos SHA-256 érték. Windows PowerShellben opcionálisan ellenőrizhető:
 
 ```powershell
 Get-FileHash "$env:USERPROFILE\Downloads\Rescue-Platform-CODEX016-Test.apk" -Algorithm SHA256
 ```
 
 Az APK-aláírás és a csomagazonosító ellenőrzésének eredménye az **APK-SIGNATURE.txt** és **APK-PACKAGE.txt** fájlban található. A debug aláírás tesztelésre készült, nem Play Áruház-kiadás.
+
+## Lezárt ellenőrzés
+2026-10-23: ClamAV 1.5.4, adatbázis 28162: eredeti és külön APK OK; 2 vizsgált fájl, 0 fertőzött, 740,19 MiB vizsgált adat. Jelentés: https://github.com/centurio84-ui/hunor-app/actions/runs/39978869310 . Az új APK SHA-256 értéke: de8594240704c7461f49733d2e2f5aa7c845e72a63375d1995d973bcd20baf62. Ez nem teljes malware-mentességi garancia és nem igazolja a Chrome-besorolás téves voltát. Védelmek kikapcsolása vagy veszélyes figyelmeztetés automatikus felülbírálása továbbra sem javasolt. Tényleges LDPlayer-telepítési próba nem történt: a felhasználó az Escape billentyűvel leállította a gépkezelést.

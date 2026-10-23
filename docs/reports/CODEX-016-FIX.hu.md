@@ -48,3 +48,7 @@ A meglévő buildben: Flutter 3.35.7 rögzítve, pubspec.lock verziózott, artif
 - [GitHub artifact letöltés és jogosultság](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/download-workflow-artifacts)
 - [Chrome letöltési figyelmeztetések](https://support.google.com/chrome/answer/6261569?hl=hu)
 - [Android APK-aláírás](https://source.android.com/docs/security/features/apksigning)
+
+## Lezárt vizsgálatok és átadás
+Az elkülönített Android build 39977738735 sikeres, a Flutter analyze/test és az APK aláírás/ZIP ellenőrzése sikeres. Az APK applicationId hu.rescue.staging.hunor_app.codex016, versionCode 16, label Rescue 016 Test; SHA-256 de8594240704c7461f49733d2e2f5aa7c845e72a63375d1995d973bcd20baf62. Artifact: https://github.com/centurio84-ui/hunor-app/actions/runs/39977738735/artifacts/12512532010 . A ClamAV-vizsgálat 39978869310 sikeres: ClamAV 1.5.4, DB 28162, mindkét APK OK, 0 fertőzött, 740,19 MiB vizsgált adat. Nem teljes malware-mentességi garancia; a Chrome konkrét besorolásának indoka ismeretlen. A Windows-gépkezelést a felhasználó Escape billentyűvel megszakította, ezért tényleges telepítés és későbbi gépkezelés nem történt. A régi alkalmazás és adatai megmaradtak. Új Release nem készült; a pontos artifact és a helyi ellenőrzött APK elérhető. Az éles HUNOR-rendszer nem módosult.
+
