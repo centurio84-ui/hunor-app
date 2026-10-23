@@ -1,0 +1,62 @@
+name: CODEX-016 APK integrity and signing verification
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: rescue-platform-staging-android-debug
+          run-id: 39835025351
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: new
+      - uses: actions/download-artifact@v4
+        with:
+          name: rescue-platform-staging-android-debug
+          run-id: 39783723069
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: old
+      - name: Verify original checksums, APK signatures and package identifiers
+        shell: bash
+        run: |
+          set -euo pipefail
+          tools=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)
+          mkdir reports
+          for version in old new; do
+            expected=$(cut -d ' ' -f1 "$version/SHA256SUMS.txt")
+            printf '%s  %s/app-debug.apk\n' "$expected" "$version" | sha256sum --check
+            sha256sum "$version/app-debug.apk" > "reports/$version-sha256.txt"
+            "$tools/apksigner" verify --verbose --print-certs "$version/app-debug.apk" > "reports/$version-signing.txt"
+            "$tools/aapt" dump badging "$version/app-debug.apk" > "reports/$version-package.txt"
+            unzip -t "$version/app-debug.apk" > "reports/$version-zip-integrity.txt"
+          done
+          python3 - <<'PY'
+          from pathlib import Path
+          import re,json
+          def metadata(v):
+              signing=Path(f'reports/{v}-signing.txt').read_text()
+              manifest=Path(f'reports/{v}-package.txt').read_text()
+              return {'certificate_sha256':re.search(r'Signer #1 certificate SHA-256 digest: (\S+)',signing).group(1),
+                      'package_id':re.search(r"package: name='([^']+)'",manifest).group(1),
+                      'version_code':int(re.search(r"versionCode='([^']+)'",manifest).group(1)),
+                      'abis':re.findall(r"'([^']+)'",next((x for x in manifest.splitlines() if x.startswith('native-code:')),'')),
+                      'min_sdk':re.search(r"sdkVersion:'([^']+)'",manifest).group(1)}
+          old,new=metadata('old'),metadata('new')
+          result={'old':old,'new':new,'same_package':old['package_id']==new['package_id'],
+                  'same_signer':old['certificate_sha256']==new['certificate_sha256'],
+                  'upgrade_version_ok':new['version_code']>=old['version_code']}
+          result['in_place_update_possible']=result['same_package'] and result['same_signer'] and result['upgrade_version_ok']
+          Path('reports/compatibility.json').write_text(json.dumps(result,indent=2)+'\n')
+          print(json.dumps(result,indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: codex-016-apk-verification
+          path: reports/
+          retention-days: 30
+          if-no-files-found: error
