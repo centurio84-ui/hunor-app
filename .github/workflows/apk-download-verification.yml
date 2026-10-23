@@ -1,5 +1,8 @@
 name: CODEX-016 APK integrity and signing verification
 on:
+  push:
+    branches: [gemini/codex-016-apk-download-fix]
+    paths: ['.github/workflows/apk-download-verification.yml']
   workflow_dispatch:
 permissions:
   contents: read
