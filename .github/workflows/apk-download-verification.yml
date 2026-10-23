@@ -44,7 +44,7 @@ jobs:
           def metadata(v):
               signing=Path(f'reports/{v}-signing.txt').read_text()
               manifest=Path(f'reports/{v}-package.txt').read_text()
-              return {'certificate_sha256':re.search(r'Signer #1 certificate SHA-256 digest: (\S+)',signing).group(1),
+              return {'certificate_sha256':re.search(r'certificate SHA-256 digest: (\S+)',signing).group(1),
                       'package_id':re.search(r"package: name='([^']+)'",manifest).group(1),
                       'version_code':int(re.search(r"versionCode='([^']+)'",manifest).group(1)),
                       'abis':re.findall(r"'([^']+)'",next((x for x in manifest.splitlines() if x.startswith('native-code:')),'')),
@@ -58,6 +58,7 @@ jobs:
           print(json.dumps(result,indent=2))
           PY
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: codex-016-apk-verification
           path: reports/
