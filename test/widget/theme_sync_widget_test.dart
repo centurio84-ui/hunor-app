@@ -53,9 +53,9 @@ void main() {
     expect(find.text('Medic'), findsOneWidget);
     expect(find.text('Theme ID: weekday-04-medic'), findsOneWidget);
 
-    // Szín ellenőrzése (Medic menta/cián: 0xFF00BFA5)
+    // Szín ellenőrzése (Medic smaragdzöld: 0xFF10B981)
     final boxWidget = tester.widget<Container>(find.byKey(const ValueKey('color-box')));
-    expect(boxWidget.color, const Color(0xFF00BFA5));
+    expect(boxWidget.color, const Color(0xFF10B981));
 
     controller.dispose();
     service.dispose();

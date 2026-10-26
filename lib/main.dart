@@ -60,12 +60,13 @@ class HunorApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final themeController = context.watch<ThemeController>();
+    final themeController = Provider.of<ThemeController?>(context);
+    final theme = themeController?.currentTheme ?? HunorTheme.dark;
 
     return MaterialApp(
       title: 'Rescue Platform',
       debugShowCheckedModeBanner: false,
-      theme: themeController.currentTheme,
+      theme: theme,
       home: Consumer<AppStore>(
         builder: (context, store, _) {
           if (!store.initialized) {
