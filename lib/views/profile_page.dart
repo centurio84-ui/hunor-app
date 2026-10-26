@@ -187,9 +187,9 @@ class ProfilePage extends StatelessWidget {
   }
 
   Widget _buildThemeCard(BuildContext context, ThemeController themeCtrl, AppStore store) {
-    final def = themeCtrl.currentThemeDefinition;
-    final source = themeCtrl.contextData?.themeSource ?? 'helyi';
-    final isSyncing = themeCtrl.isSyncing;
+    final def = themeCtrl.currentDefinition;
+    final source = themeCtrl.themeContext?.source ?? 'helyi';
+    final isSyncing = themeCtrl.isLoading;
 
     return Card(
       child: ListTile(
@@ -216,7 +216,7 @@ class ProfilePage extends StatelessWidget {
         ),
         subtitle: Text('Forrás: $source • ID: ${def.id}', style: const TextStyle(color: HunorColors.muted)),
         trailing: const Icon(Icons.palette_outlined),
-        onTap: () => _showThemeSelector(context, themeCtrl, store.currentOrganization?.id),
+        onTap: () => _showThemeSelector(context, themeCtrl),
       ),
     );
   }
@@ -224,7 +224,6 @@ class ProfilePage extends StatelessWidget {
   static Future<void> _showThemeSelector(
     BuildContext context,
     ThemeController themeCtrl,
-    String? orgId,
   ) async {
     await showModalBottomSheet(
       context: context,
@@ -234,7 +233,7 @@ class ProfilePage extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) {
-        final currentId = themeCtrl.activeThemeId;
+        final currentId = themeCtrl.currentThemeId;
         final catalog = RescueThemeRegistry.allThemes;
 
         return DraggableScrollableSheet(
@@ -293,7 +292,7 @@ class ProfilePage extends StatelessWidget {
                         ),
                       ),
                       subtitle: Text(
-                        '${theme.group == "weekday" ? "Hétköznapi" : "Szezonális"} • ${theme.id}',
+                        '${!theme.isSeasonal ? "Hétköznapi" : "Szezonális"} • ${theme.id}',
                         style: const TextStyle(color: Colors.white54, fontSize: 12),
                       ),
                       trailing: isSelected
@@ -301,7 +300,7 @@ class ProfilePage extends StatelessWidget {
                           : null,
                       onTap: () async {
                         Navigator.pop(ctx);
-                        await themeCtrl.setTheme(theme.id, orgId);
+                        await themeCtrl.setTheme(theme.id);
                       },
                     );
                   },

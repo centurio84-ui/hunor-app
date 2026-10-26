@@ -1,112 +1,112 @@
 import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hunor_app/models/api_error.dart';
 import 'package:hunor_app/models/theme_config.dart';
 import 'package:hunor_app/services/theme_controller.dart';
 import 'package:hunor_app/services/theme_service.dart';
 import 'package:hunor_app/services/theme_vault.dart';
 
-class FakeThemeService implements ThemeService {
-  ThemeContext? currentContext;
-  final StreamController<void> _invalidationController = StreamController<void>.broadcast();
-  int setThemeCalls = 0;
+class TestThemeService implements ThemeService {
+  ThemeContext _context;
+  final StreamController<void> _signalsController = StreamController<void>.broadcast();
+  int setMyThemeCalls = 0;
   String? lastSetThemeId;
-  int? lastExpectedVersion;
-  bool shouldThrowConflictOnce = false;
+  bool throwConflictOnce = false;
 
-  FakeThemeService({this.currentContext});
+  TestThemeService({ThemeContext? initialContext})
+      : _context = initialContext ??
+            const ThemeContext(
+              contractVersion: 'rp-theme-1',
+              organizationId: 'org-test-1',
+              effectiveThemeId: RescueThemeRegistry.defaultThemeId,
+              source: 'global',
+              organizationVersion: 1,
+              allowPersonal: true,
+              globalThemeId: RescueThemeRegistry.defaultThemeId,
+              globalVersion: 1,
+              userVersion: 0,
+            );
 
-  @override
-  Future<ThemeContext> getThemeContext(String organizationId) async {
-    if (currentContext != null) {
-      return currentContext!;
-    }
-    return ThemeContext(
-      contractVersion: 'rp-theme-1',
-      organizationId: organizationId,
-      activeThemeId: 'weekday-01-alpin',
-      themeSource: 'system',
-    );
+  void setServerContext(ThemeContext context) {
+    _context = context;
+  }
+
+  void triggerSignal() {
+    _signalsController.add(null);
   }
 
   @override
-  Future<List<ThemeCatalogItem>> getThemeCatalog() async {
+  Future<ThemeContext> getThemeContext(String organizationId) async {
+    return _context;
+  }
+
+  @override
+  Future<List<ThemeCatalogItem>> getCatalog() async {
     return RescueThemeRegistry.allThemes
-        .map((t) => ThemeCatalogItem(id: t.id, name: t.name, group: t.group, primaryHex: '#000000'))
+        .map(
+          (d) => ThemeCatalogItem(
+            id: d.id,
+            name: d.name,
+            category: d.isSeasonal ? 'seasonal' : 'weekday',
+            description: d.description,
+            primaryColor: d.primaryColor,
+          ),
+        )
         .toList();
   }
 
   @override
-  Future<ThemeMutationResult> setMyTheme({
+  Future<ThemeContext> setMyTheme({
     required String organizationId,
-    required String themeId,
-    required int? expectedVersion,
+    required String? themeId,
+    required int expectedVersion,
   }) async {
-    setThemeCalls++;
+    setMyThemeCalls++;
     lastSetThemeId = themeId;
-    lastExpectedVersion = expectedVersion;
 
-    if (shouldThrowConflictOnce) {
-      shouldThrowConflictOnce = false;
-      return ThemeMutationResult.conflict(
-        message: 'Version conflict',
-        latestContext: ThemeContext(
-          contractVersion: 'rp-theme-1',
-          organizationId: organizationId,
-          activeThemeId: 'weekday-05-torzs',
-          themeSource: 'user',
-          userPreference: UserThemePreference(
-            themeId: 'weekday-05-torzs',
-            version: 10,
-            updatedAt: DateTime.now().toIso8601String(),
-          ),
-        ),
+    if (throwConflictOnce) {
+      throwConflictOnce = false;
+      throw const PreconditionFailedException(
+        code: 'PT412',
+        message: 'A téma verziója időközben megváltozott a szerveren (PT412).',
       );
     }
 
-    final newVersion = (expectedVersion ?? 0) + 1;
-    currentContext = ThemeContext(
-      contractVersion: 'rp-theme-1',
-      organizationId: organizationId,
-      activeThemeId: themeId,
-      themeSource: 'user',
-      userPreference: UserThemePreference(
-        themeId: themeId,
-        version: newVersion,
-        updatedAt: DateTime.now().toIso8601String(),
-      ),
+    _context = _context.copyWith(
+      effectiveThemeId: themeId ?? _context.globalThemeId,
+      source: 'user',
+      userThemeId: themeId,
+      userVersion: expectedVersion + 1,
     );
-
-    return ThemeMutationResult.success(newVersion);
+    return _context;
   }
 
   @override
-  Stream<void> subscribeToThemeChanges({
+  Stream<void> subscribeToThemeSignals({
     required String organizationId,
     required String userId,
   }) {
-    return _invalidationController.stream;
-  }
-
-  void emitRealtimeInvalidation() {
-    _invalidationController.add(null);
+    return _signalsController.stream;
   }
 
   @override
+  Future<void> unsubscribe() async {}
+
   void dispose() {
-    _invalidationController.close();
+    _signalsController.close();
   }
 }
 
 void main() {
   group('ThemeController', () {
     late InMemoryThemeVault vault;
-    late FakeThemeService service;
+    late TestThemeService service;
     late ThemeController controller;
 
     setUp(() {
       vault = InMemoryThemeVault();
-      service = FakeThemeService();
-      controller = ThemeController(themeService: service, vault: vault);
+      service = TestThemeService();
+      controller = ThemeController(themeService: service, themeVault: vault);
     });
 
     tearDown(() {
@@ -115,105 +115,130 @@ void main() {
     });
 
     test('initializes immediately from local cache (flash-free)', () async {
-      await vault.writeLastThemeId('weekday-04-medic');
+      await vault.writeTheme('weekday-04-medic');
       await controller.initialize();
 
-      expect(controller.activeThemeId, 'weekday-04-medic');
-      expect(controller.currentThemeDefinition.name, 'Medic');
-      expect(controller.initialized, isTrue);
+      expect(controller.currentThemeId, 'weekday-04-medic');
+      expect(controller.currentDefinition.name, 'Medic');
+      expect(controller.isLoading, isFalse);
     });
 
     test('onUserSignedIn loads server context and updates local cache', () async {
       await controller.initialize();
-      service.currentContext = ThemeContext(
+      service.setServerContext(const ThemeContext(
         contractVersion: 'rp-theme-1',
         organizationId: 'org-test-1',
-        activeThemeId: 'weekday-03-k9',
-        themeSource: 'organization',
-      );
+        effectiveThemeId: 'weekday-03-k9',
+        source: 'organization',
+        organizationVersion: 2,
+        allowPersonal: true,
+        globalThemeId: 'weekday-01-alpin',
+        globalVersion: 1,
+        userVersion: 0,
+      ));
 
       await controller.onUserSignedIn(userId: 'user-1', organizationId: 'org-test-1');
 
-      expect(controller.activeThemeId, 'weekday-03-k9');
-      expect(controller.contextData?.themeSource, 'organization');
-      expect(await vault.readLastThemeId(), 'weekday-03-k9');
-      expect(await vault.readUserThemeId('user-1'), 'weekday-03-k9');
+      expect(controller.currentThemeId, 'weekday-03-k9');
+      expect(controller.themeContext?.source, 'organization');
+      expect(await vault.readTheme(), 'weekday-03-k9');
+      expect(await vault.readTheme(userId: 'user-1', organizationId: 'org-test-1'), 'weekday-03-k9');
+      expect(controller.isSubscribed, isTrue);
     });
 
     test('setTheme triggers two-way sync and persists to service and vault', () async {
       await controller.initialize();
       await controller.onUserSignedIn(userId: 'user-1', organizationId: 'org-test-1');
 
-      await controller.setTheme('weekday-07-it', 'org-test-1');
+      await controller.setTheme('weekday-07-it');
 
-      expect(controller.activeThemeId, 'weekday-07-it');
-      expect(service.setThemeCalls, 1);
+      expect(controller.currentThemeId, 'weekday-07-it');
+      expect(service.setMyThemeCalls, 1);
       expect(service.lastSetThemeId, 'weekday-07-it');
-      expect(await vault.readUserThemeId('user-1'), 'weekday-07-it');
+      expect(await vault.readTheme(userId: 'user-1', organizationId: 'org-test-1'), 'weekday-07-it');
     });
 
-    test('setTheme handles PT412 version conflict by adopting latest context', () async {
+    test('setTheme handles PT412 version conflict by resyncing from server', () async {
       await controller.initialize();
       await controller.onUserSignedIn(userId: 'user-1', organizationId: 'org-test-1');
 
-      service.shouldThrowConflictOnce = true;
-      await controller.setTheme('weekday-02-alatamasztas', 'org-test-1');
-
-      // Megoldja az ütközést és átveszi a legfrissebb szerverállapotot
-      expect(controller.activeThemeId, 'weekday-05-torzs');
-      expect(controller.currentVersion, 10);
-    });
-
-    test('realtime invalidation trigger re-fetches latest theme from server', () async {
-      await controller.initialize();
-      await controller.onUserSignedIn(userId: 'user-1', organizationId: 'org-test-1');
-      expect(controller.activeThemeId, 'weekday-01-alpin');
-
-      // A szerveren megváltozik a téma (pl. webről módosítva)
-      service.currentContext = ThemeContext(
+      service.throwConflictOnce = true;
+      // Közben a szerver más témára váltott
+      service.setServerContext(const ThemeContext(
         contractVersion: 'rp-theme-1',
         organizationId: 'org-test-1',
-        activeThemeId: 'seasonal-01-karacsony',
-        themeSource: 'user',
-        userPreference: UserThemePreference(
-          themeId: 'seasonal-01-karacsony',
-          version: 5,
-          updatedAt: DateTime.now().toIso8601String(),
-        ),
-      );
+        effectiveThemeId: 'weekday-05-torzs',
+        source: 'user',
+        organizationVersion: 2,
+        allowPersonal: true,
+        globalThemeId: 'weekday-01-alpin',
+        globalVersion: 1,
+        userVersion: 5,
+      ));
 
-      // Invalidation jel érkezik a Realtime csatornán
-      service.emitRealtimeInvalidation();
+      await controller.setTheme('weekday-02-alatamasztas');
+
+      // Ütközés után átvette a legfrissebb szerverállapotot
+      expect(controller.currentThemeId, 'weekday-05-torzs');
+      expect(controller.themeContext?.userVersion, 5);
+    });
+
+    test('realtime invalidation signal re-fetches latest theme from server', () async {
+      await controller.initialize();
+      await controller.onUserSignedIn(userId: 'user-1', organizationId: 'org-test-1');
+      expect(controller.currentThemeId, 'weekday-01-alpin');
+
+      // A weben a felhasználó átváltja karácsonyi témára
+      service.setServerContext(const ThemeContext(
+        contractVersion: 'rp-theme-1',
+        organizationId: 'org-test-1',
+        effectiveThemeId: 'seasonal-01-karacsony',
+        source: 'user',
+        organizationVersion: 2,
+        allowPersonal: true,
+        globalThemeId: 'weekday-01-alpin',
+        globalVersion: 1,
+        userVersion: 2,
+      ));
+
+      // Realtime signal invalidáció érkezik
+      service.triggerSignal();
       await Future<void>.delayed(const Duration(milliseconds: 50));
 
-      expect(controller.activeThemeId, 'seasonal-01-karacsony');
-      expect(controller.currentThemeDefinition.group, 'seasonal');
+      expect(controller.currentThemeId, 'seasonal-01-karacsony');
+      expect(controller.currentDefinition.isSeasonal, isTrue);
     });
 
     test('onOrganizationChanged re-subscribes and updates org-specific theme', () async {
       await controller.initialize();
       await controller.onUserSignedIn(userId: 'user-1', organizationId: 'org-1');
 
-      service.currentContext = ThemeContext(
+      service.setServerContext(const ThemeContext(
         contractVersion: 'rp-theme-1',
         organizationId: 'org-2',
-        activeThemeId: 'weekday-08-liaison',
-        themeSource: 'organization',
-      );
+        effectiveThemeId: 'weekday-08-liaison',
+        source: 'organization',
+        organizationVersion: 3,
+        allowPersonal: true,
+        globalThemeId: 'weekday-01-alpin',
+        globalVersion: 1,
+        userVersion: 0,
+      ));
 
       await controller.onOrganizationChanged('org-2');
-      expect(controller.activeThemeId, 'weekday-08-liaison');
+      expect(controller.currentThemeId, 'weekday-08-liaison');
     });
 
     test('onUserSignedOut cleans up subscription and resets active theme', () async {
       await controller.initialize();
       await controller.onUserSignedIn(userId: 'user-1', organizationId: 'org-1');
-      await controller.setTheme('weekday-09-muszaki-mentes', 'org-1');
+      await controller.setTheme('weekday-09-muszaki-mentes');
 
       await controller.onUserSignedOut();
 
-      expect(controller.activeThemeId, 'weekday-01-alpin');
-      expect(controller.contextData, isNull);
+      expect(controller.currentThemeId, 'weekday-01-alpin');
+      expect(controller.themeContext, isNull);
+      expect(controller.isSubscribed, isFalse);
     });
   });
 }

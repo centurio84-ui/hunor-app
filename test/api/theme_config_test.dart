@@ -21,9 +21,9 @@ void main() {
         'weekday-09-muszaki-mentes',
       ];
       for (final id in weekdayExpected) {
-        expect(RescueThemeRegistry.hasTheme(id), isTrue, reason: 'Missing theme $id');
+        expect(RescueThemeRegistry.isValidThemeId(id), isTrue, reason: 'Missing theme $id');
         final def = RescueThemeRegistry.findById(id);
-        expect(def.group, 'weekday');
+        expect(def.isSeasonal, isFalse);
         expect(def.name.isNotEmpty, isTrue);
       }
     });
@@ -37,55 +37,46 @@ void main() {
         'seasonal-05-halloween',
       ];
       for (final id in seasonalExpected) {
-        expect(RescueThemeRegistry.hasTheme(id), isTrue, reason: 'Missing theme $id');
+        expect(RescueThemeRegistry.isValidThemeId(id), isTrue, reason: 'Missing theme $id');
         final def = RescueThemeRegistry.findById(id);
-        expect(def.group, 'seasonal');
+        expect(def.isSeasonal, isTrue);
         expect(def.name.isNotEmpty, isTrue);
       }
     });
 
-    test('safely falls back to default dark theme for unknown or null themeId', () {
-      final fallbackUnknown = RescueThemeRegistry.resolveTheme('unknown-nonexistent-id');
-      expect(fallbackUnknown.id, 'weekday-01-alpin');
-
-      final fallbackNull = RescueThemeRegistry.resolveTheme(null);
-      expect(fallbackNull.id, 'weekday-01-alpin');
+    test('safely falls back to default Alpin dark theme for unknown themeId', () {
+      final fallbackUnknown = RescueThemeRegistry.findById('unknown-nonexistent-id');
+      expect(fallbackUnknown.id, RescueThemeRegistry.defaultThemeId);
     });
 
     test('deserializes ThemeContext from JSON', () {
       final json = {
         'contract_version': 'rp-theme-1',
         'organization_id': 'org-123',
-        'active_theme_id': 'weekday-04-medic',
-        'theme_source': 'user',
-        'user_preference': {
-          'theme_id': 'weekday-04-medic',
-          'version': 2,
-          'updated_at': '2026-10-26T12:00:00Z',
-        },
-        'organization_preference': {
-          'theme_id': 'weekday-01-alpin',
-          'version': 1,
-          'updated_at': '2026-10-25T12:00:00Z',
-        },
-        'system_default': {
-          'theme_id': 'weekday-01-alpin',
-          'source': 'weekday',
-          'computed_at': '2026-10-26T00:00:00Z',
-        },
+        'effective_theme_id': 'weekday-04-medic',
+        'source': 'user',
+        'organization_theme_id': 'weekday-01-alpin',
+        'organization_version': 1,
+        'allow_personal': true,
+        'global_theme_id': 'weekday-01-alpin',
+        'global_version': 1,
+        'user_theme_id': 'weekday-04-medic',
+        'user_version': 2,
+        'can_manage_organization': false,
+        'can_manage_global': false,
       };
 
       final ctx = ThemeContext.fromJson(json);
       expect(ctx.contractVersion, 'rp-theme-1');
       expect(ctx.organizationId, 'org-123');
-      expect(ctx.activeThemeId, 'weekday-04-medic');
-      expect(ctx.themeSource, 'user');
-      expect(ctx.userPreference?.themeId, 'weekday-04-medic');
-      expect(ctx.userPreference?.version, 2);
-      expect(ctx.organizationPreference?.themeId, 'weekday-01-alpin');
-      expect(ctx.organizationPreference?.version, 1);
-      expect(ctx.systemDefault?.themeId, 'weekday-01-alpin');
-      expect(ctx.systemDefault?.source, 'weekday');
+      expect(ctx.effectiveThemeId, 'weekday-04-medic');
+      expect(ctx.source, 'user');
+      expect(ctx.userThemeId, 'weekday-04-medic');
+      expect(ctx.userVersion, 2);
+      expect(ctx.organizationThemeId, 'weekday-01-alpin');
+      expect(ctx.organizationVersion, 1);
+      expect(ctx.globalThemeId, 'weekday-01-alpin');
+      expect(ctx.globalVersion, 1);
     });
   });
 }

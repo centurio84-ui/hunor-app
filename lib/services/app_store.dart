@@ -170,7 +170,7 @@ class AppStore extends ChangeNotifier {
       if(api is MockRescuePlatformApi){_loadMembersForCurrentOrganization(orgId??'');}else{members=[];memberRoles.clear();alertResponseByMember.clear();}
       currentUser=Member(id:profile.user.id,name:profile.user.displayName,rank:membership?.positions.firstOrNull??'Tag',workplace:currentOrganization?.name??'',position:membership?.positions.join(', ')??'',phone:profile.contactPhone??'',skills:membership?.skills??const [],status:(membership?.alertable??false)?AvailabilityStatus.available:AvailabilityStatus.unavailable);
       isAuthenticated=true;
-      if (themeController != null) {
+      if (themeController != null && orgId != null) {
         await themeController!.onUserSignedIn(
           userId: profile.user.id,
           organizationId: orgId,

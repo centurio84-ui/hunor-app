@@ -27,13 +27,13 @@ Future<void> main() async {
 
   final ThemeService themeService = apiMode == 'staging' && selectedApi is StagingApi
       ? SupabaseThemeService(
-          tokenProvider: () => selectedApi.accessToken,
+          getAccessToken: () async => selectedApi.accessToken,
         )
       : MockThemeService();
 
   final themeController = ThemeController(
     themeService: themeService,
-    vault: DeviceThemeVault(),
+    themeVault: DeviceThemeVault(),
   );
 
   // Azonnali, flash-mentes helyi témainicializálás

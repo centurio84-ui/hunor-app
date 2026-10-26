@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
-import 'package:hunor_app/models/theme_config.dart';
 import 'package:hunor_app/services/theme_controller.dart';
 import 'package:hunor_app/services/theme_vault.dart';
-import 'theme_controller_test.dart' show FakeThemeService;
+import '../api/theme_controller_test.dart' show TestThemeService;
 
 void main() {
   testWidgets('ThemeController dynamically updates MaterialApp theme and widgets react', (tester) async {
     final vault = InMemoryThemeVault();
-    final service = FakeThemeService();
-    final controller = ThemeController(themeService: service, vault: vault);
+    final service = TestThemeService();
+    final controller = ThemeController(themeService: service, themeVault: vault);
     await controller.initialize();
 
     await tester.pumpWidget(
@@ -22,7 +21,7 @@ void main() {
               theme: themeCtrl.currentTheme,
               home: Scaffold(
                 appBar: AppBar(
-                  title: Text(themeCtrl.currentThemeDefinition.name),
+                  title: Text(themeCtrl.currentDefinition.name),
                 ),
                 body: Builder(
                   builder: (ctx) {
@@ -31,7 +30,7 @@ void main() {
                       child: Container(
                         key: const ValueKey('color-box'),
                         color: primary,
-                        child: Text('Theme ID: ${themeCtrl.activeThemeId}'),
+                        child: Text('Theme ID: ${themeCtrl.currentThemeId}'),
                       ),
                     );
                   },
@@ -48,13 +47,13 @@ void main() {
     expect(find.text('Theme ID: weekday-01-alpin'), findsOneWidget);
 
     // Téma váltás Medic-re
-    await controller.setTheme('weekday-04-medic', 'org-1');
+    await controller.setTheme('weekday-04-medic');
     await tester.pumpAndSettle();
 
     expect(find.text('Medic'), findsOneWidget);
     expect(find.text('Theme ID: weekday-04-medic'), findsOneWidget);
 
-    // Szín ellenőrzése
+    // Szín ellenőrzése (Medic menta/cián: 0xFF00BFA5)
     final boxWidget = tester.widget<Container>(find.byKey(const ValueKey('color-box')));
     expect(boxWidget.color, const Color(0xFF00BFA5));
 
