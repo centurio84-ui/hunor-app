@@ -12,7 +12,7 @@ class ProfilePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = context.watch<AppStore>();
-    final themeCtrl = context.watch<ThemeController>();
+    final themeCtrl = Provider.of<ThemeController?>(context);
     final u = s.currentUser;
     final org = s.currentOrganization;
     final membership = s.currentMembership;
@@ -44,8 +44,10 @@ class ProfilePage extends StatelessWidget {
           Text(org?.name ?? 'Nincs jóváhagyott szervezet'),
           Text('Tagság: ${membership?.membershipStatus.label ?? "Nincs"}'),
           const SizedBox(height: 16),
-          _buildThemeCard(context, themeCtrl, s),
-          const SizedBox(height: 16),
+          if (themeCtrl != null) ...[
+            _buildThemeCard(context, themeCtrl, s),
+            const SizedBox(height: 16),
+          ],
           const Text('Staging tesztprofil. A profil, készségek és riaszthatóság szerkesztése még nem támogatott. Push és valódi riasztásküldés nincs bekötve.'),
           const SizedBox(height: 16),
           FilledButton(onPressed: s.signOut, child: const Text('Kijelentkezés')),
@@ -120,8 +122,10 @@ class ProfilePage extends StatelessWidget {
         if (s.showRescueCoins && coin != null) const SizedBox(height: 10),
 
         // Témaszinkronizáció kártya (RP-THEME-002)
-        _buildThemeCard(context, themeCtrl, s),
-        const SizedBox(height: 10),
+        if (themeCtrl != null) ...[
+          _buildThemeCard(context, themeCtrl, s),
+          const SizedBox(height: 10),
+        ],
 
         // Elérhetőség kártya
         Card(
