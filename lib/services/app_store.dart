@@ -10,6 +10,7 @@ import '../models/organization_capabilities.dart';
 import '../models/rescue_alert.dart';
 import '../models/rescue_event.dart';
 import '../models/user_profile.dart';
+import 'theme_controller.dart';
 
 enum MemberRole { member, admin }
 
@@ -18,8 +19,9 @@ enum MemberRole { member, admin }
 /// megvalósítja a többszervezetes adatizolációt, a taglisták kezelését és a szervezetváltási cache-ürítést.
 class AppStore extends ChangeNotifier {
   final RescuePlatformApi api;
+  final ThemeController? themeController;
 
-  AppStore({RescuePlatformApi? api}) : api = api ?? MockRescuePlatformApi();
+  AppStore({RescuePlatformApi? api, this.themeController}) : api = api ?? MockRescuePlatformApi();
 
   int _revision = 0;
   bool get isStaging => api is StagingApi;
@@ -102,6 +104,7 @@ class AppStore extends ChangeNotifier {
       // Kijelentkezéskor kötelező az összes szervezeti adat ürítése
       _clearLocalData();
       isAuthenticated = false;
+      await themeController?.onUserSignedOut();
     } catch (e) {
       errorMessage = e.toString();
     } finally {
@@ -167,6 +170,12 @@ class AppStore extends ChangeNotifier {
       if(api is MockRescuePlatformApi){_loadMembersForCurrentOrganization(orgId??'');}else{members=[];memberRoles.clear();alertResponseByMember.clear();}
       currentUser=Member(id:profile.user.id,name:profile.user.displayName,rank:membership?.positions.firstOrNull??'Tag',workplace:currentOrganization?.name??'',position:membership?.positions.join(', ')??'',phone:profile.contactPhone??'',skills:membership?.skills??const [],status:(membership?.alertable??false)?AvailabilityStatus.available:AvailabilityStatus.unavailable);
       isAuthenticated=true;
+      if (themeController != null) {
+        await themeController!.onUserSignedIn(
+          userId: profile.user.id,
+          organizationId: orgId,
+        );
+      }
     } catch(e){if(revision!=_revision)return;_clearLocalData();isAuthenticated=api.isAuthenticated;errorMessage=e.toString();}
     finally{if(revision==_revision){isLoading=false;notifyListeners();}}
   }
@@ -275,6 +284,7 @@ class AppStore extends ChangeNotifier {
 
       // 2. Szervezetváltás az API rétegben
       await api.switchOrganization(organizationId);
+      await themeController?.onOrganizationChanged(organizationId);
 
       // 3. Új szervezet adatainak betöltése
       await loadData();

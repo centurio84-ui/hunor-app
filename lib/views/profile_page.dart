@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/member.dart';
+import '../models/theme_config.dart';
 import '../services/app_store.dart';
+import '../services/theme_controller.dart';
 import '../theme/hunor_theme.dart';
 
 class ProfilePage extends StatelessWidget {
@@ -10,13 +12,21 @@ class ProfilePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = context.watch<AppStore>();
+    final themeCtrl = context.watch<ThemeController>();
     final u = s.currentUser;
     final org = s.currentOrganization;
     final membership = s.currentMembership;
     final coin = s.coinBalance;
 
     if (u == null) {
-      if(s.isStaging) return Center(child:FilledButton(onPressed:s.signOut,child:const Text('Kijelentkezés')));
+      if (s.isStaging) {
+        return Center(
+          child: FilledButton(
+            onPressed: s.signOut,
+            child: const Text('Kijelentkezés'),
+          ),
+        );
+      }
       if (s.isLoading) {
         return const Center(child: CircularProgressIndicator(color: HunorColors.red));
       }
@@ -25,16 +35,23 @@ class ProfilePage extends StatelessWidget {
       );
     }
 
-    if(s.isStaging) return ListView(padding:const EdgeInsets.all(20),children:[
-      Text(u.name,style:Theme.of(context).textTheme.headlineSmall),
-      Text(s.currentUserProfile?.user.email??''),
-      Text(org?.name??'Nincs jóváhagyott szervezet'),
-      Text('Tagság: ${membership?.membershipStatus.label??"Nincs"}'),
-      const SizedBox(height:16),
-      const Text('Staging tesztprofil. A profil, készségek és riaszthatóság szerkesztése még nem támogatott. Push és valódi riasztásküldés nincs bekötve.'),
-      const SizedBox(height:16),
-      FilledButton(onPressed:s.signOut,child:const Text('Kijelentkezés')),
-    ]);
+    if (s.isStaging) {
+      return ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          Text(u.name, style: Theme.of(context).textTheme.headlineSmall),
+          Text(s.currentUserProfile?.user.email ?? ''),
+          Text(org?.name ?? 'Nincs jóváhagyott szervezet'),
+          Text('Tagság: ${membership?.membershipStatus.label ?? "Nincs"}'),
+          const SizedBox(height: 16),
+          _buildThemeCard(context, themeCtrl, s),
+          const SizedBox(height: 16),
+          const Text('Staging tesztprofil. A profil, készségek és riaszthatóság szerkesztése még nem támogatott. Push és valódi riasztásküldés nincs bekötve.'),
+          const SizedBox(height: 16),
+          FilledButton(onPressed: s.signOut, child: const Text('Kijelentkezés')),
+        ],
+      );
+    }
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
@@ -100,6 +117,10 @@ class ProfilePage extends StatelessWidget {
               ),
             ),
           ),
+        if (s.showRescueCoins && coin != null) const SizedBox(height: 10),
+
+        // Témaszinkronizáció kártya (RP-THEME-002)
+        _buildThemeCard(context, themeCtrl, s),
         const SizedBox(height: 10),
 
         // Elérhetőség kártya
@@ -162,6 +183,134 @@ class ProfilePage extends StatelessWidget {
           label: const Text('Kijelentkezés és gyorsítótár ürítése'),
         ),
       ],
+    );
+  }
+
+  Widget _buildThemeCard(BuildContext context, ThemeController themeCtrl, AppStore store) {
+    final def = themeCtrl.currentThemeDefinition;
+    final source = themeCtrl.contextData?.themeSource ?? 'helyi';
+    final isSyncing = themeCtrl.isSyncing;
+
+    return Card(
+      child: ListTile(
+        leading: Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: def.primaryColor,
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white24, width: 2),
+          ),
+        ),
+        title: Row(
+          children: [
+            Text(def.name, style: const TextStyle(fontWeight: FontWeight.w800)),
+            const SizedBox(width: 8),
+            if (isSyncing)
+              const SizedBox(
+                width: 14,
+                height: 14,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+          ],
+        ),
+        subtitle: Text('Forrás: $source • ID: ${def.id}', style: const TextStyle(color: HunorColors.muted)),
+        trailing: const Icon(Icons.palette_outlined),
+        onTap: () => _showThemeSelector(context, themeCtrl, store.currentOrganization?.id),
+      ),
+    );
+  }
+
+  static Future<void> _showThemeSelector(
+    BuildContext context,
+    ThemeController themeCtrl,
+    String? orgId,
+  ) async {
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF1E222B),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        final currentId = themeCtrl.activeThemeId;
+        final catalog = RescueThemeRegistry.allThemes;
+
+        return DraggableScrollableSheet(
+          initialChildSize: 0.7,
+          minChildSize: 0.4,
+          maxChildSize: 0.9,
+          expand: false,
+          builder: (_, scrollCtrl) => Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  children: [
+                    const Icon(Icons.palette_outlined, color: HunorColors.accent),
+                    const SizedBox(width: 10),
+                    const Text(
+                      'Téma kiválasztása',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: Colors.white70),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(color: Colors.white12, height: 1),
+              Expanded(
+                child: ListView.separated(
+                  controller: scrollCtrl,
+                  itemCount: catalog.length,
+                  separatorBuilder: (_, __) => const Divider(color: Colors.white10, height: 1),
+                  itemBuilder: (c, index) {
+                    final theme = catalog[index];
+                    final isSelected = theme.id == currentId;
+
+                    return ListTile(
+                      leading: Container(
+                        width: 28,
+                        height: 28,
+                        decoration: BoxDecoration(
+                          color: theme.primaryColor,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isSelected ? Colors.white : Colors.transparent,
+                            width: 2,
+                          ),
+                        ),
+                      ),
+                      title: Text(
+                        theme.name,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        ),
+                      ),
+                      subtitle: Text(
+                        '${theme.group == "weekday" ? "Hétköznapi" : "Szezonális"} • ${theme.id}',
+                        style: const TextStyle(color: Colors.white54, fontSize: 12),
+                      ),
+                      trailing: isSelected
+                          ? const Icon(Icons.check_circle, color: HunorColors.success)
+                          : null,
+                      onTap: () async {
+                        Navigator.pop(ctx);
+                        await themeCtrl.setTheme(theme.id, orgId);
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 

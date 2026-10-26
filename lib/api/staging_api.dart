@@ -53,6 +53,7 @@ class StagingApi implements RescuePlatformApi {
   @override bool get isAuthenticated => _session != null;
   @override String? get currentOrganizationId => _org;
   String? get userId => (_session?['user'] as Map?)?['id'] as String?;
+  String? get accessToken => _session?['access_token'] as String?;
   List<Map<String, dynamic>> get pendingResponses => _queue.where((q) => q['user_id'] == userId && q['organization_id'] == _org).map((q) => Map<String, dynamic>.unmodifiable(q)).toList();
   void _same(int generation, [String? org]) { if (generation != _generation || (org != null && org != _org)) throw const UnauthorizedException(); }
   Future<void> _persist() {

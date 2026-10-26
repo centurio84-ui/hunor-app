@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../models/theme_config.dart';
 
 class HunorColors {
   static const red = Color(0xFFD71920);
@@ -14,14 +15,24 @@ class HunorColors {
 }
 
 class HunorTheme {
-  static ThemeData get dark {
+  /// Alapértelmezett Alpin (HUNOR vörös / grafit sötét) téma.
+  static ThemeData get dark => themeForId(RescueThemeRegistry.defaultThemeId);
+
+  /// Téma előállítása azonosító alapján (ha ismeretlen, Alpin sötét a biztonságos fallback).
+  static ThemeData themeForId(String themeId) {
+    final def = RescueThemeRegistry.findById(themeId);
+    return themeForDefinition(def);
+  }
+
+  /// Téma előállítása témadefiníció alapján.
+  static ThemeData themeForDefinition(RescueThemeDefinition def) {
     final scheme = ColorScheme.fromSeed(
-      seedColor: HunorColors.red,
+      seedColor: def.primaryColor,
       brightness: Brightness.dark,
     ).copyWith(
-      primary: HunorColors.red,
+      primary: def.primaryColor,
       onPrimary: Colors.white,
-      secondary: HunorColors.red,
+      secondary: def.accentColor,
       surface: HunorColors.surface,
       onSurface: HunorColors.text,
     );
@@ -59,19 +70,19 @@ class HunorTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: HunorColors.red, width: 2),
+          borderSide: BorderSide(color: def.primaryColor, width: 2),
         ),
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: HunorColors.surface,
-        indicatorColor: HunorColors.redDark,
-        labelTextStyle: WidgetStatePropertyAll(
-          const TextStyle(fontWeight: FontWeight.w600),
+        indicatorColor: def.accentColor,
+        labelTextStyle: const WidgetStatePropertyAll(
+          TextStyle(fontWeight: FontWeight.w600),
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: HunorColors.red,
+          backgroundColor: def.primaryColor,
           foregroundColor: Colors.white,
           minimumSize: const Size.fromHeight(50),
           shape: RoundedRectangleBorder(

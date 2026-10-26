@@ -5,6 +5,9 @@ import 'api/mock_rescue_platform_api.dart';
 import 'api/staging_api.dart';
 import 'api/rescue_platform_api.dart';
 import 'services/app_store.dart';
+import 'services/theme_controller.dart';
+import 'services/theme_service.dart';
+import 'services/theme_vault.dart';
 import 'theme/hunor_theme.dart';
 import 'views/app_shell.dart';
 import 'views/login_page.dart';
@@ -14,12 +17,39 @@ const String apiMode = String.fromEnvironment('RESCUE_API_MODE', defaultValue: '
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  if(!['mock','staging'].contains(apiMode)) throw StateError('Invalid API mode');
-  final RescuePlatformApi selectedApi = apiMode == 'staging' ? StagingApi(baseUrl: const String.fromEnvironment('RESCUE_API_BASE_URL',defaultValue:stagingBase)) : MockRescuePlatformApi();
+  if (!['mock', 'staging'].contains(apiMode)) {
+    throw StateError('Invalid API mode');
+  }
+
+  final RescuePlatformApi selectedApi = apiMode == 'staging'
+      ? StagingApi(baseUrl: const String.fromEnvironment('RESCUE_API_BASE_URL', defaultValue: stagingBase))
+      : MockRescuePlatformApi();
+
+  final ThemeService themeService = apiMode == 'staging' && selectedApi is StagingApi
+      ? SupabaseThemeService(
+          tokenProvider: () => selectedApi.accessToken,
+        )
+      : MockThemeService();
+
+  final themeController = ThemeController(
+    themeService: themeService,
+    vault: DeviceThemeVault(),
+  );
+
+  // Azonnali, flash-mentes helyi témainicializálás
+  await themeController.initialize();
+
+  final appStore = AppStore(
+    api: selectedApi,
+    themeController: themeController,
+  )..initialize();
 
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => AppStore(api: selectedApi)..initialize(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider<ThemeController>.value(value: themeController),
+        ChangeNotifierProvider<AppStore>.value(value: appStore),
+      ],
       child: const HunorApp(),
     ),
   );
@@ -30,10 +60,12 @@ class HunorApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeController = context.watch<ThemeController>();
+
     return MaterialApp(
       title: 'Rescue Platform',
       debugShowCheckedModeBanner: false,
-      theme: HunorTheme.dark,
+      theme: themeController.currentTheme,
       home: Consumer<AppStore>(
         builder: (context, store, _) {
           if (!store.initialized) {
