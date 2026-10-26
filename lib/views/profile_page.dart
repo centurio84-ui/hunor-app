@@ -247,7 +247,7 @@ class ProfilePage extends StatelessWidget {
                 padding: const EdgeInsets.all(16.0),
                 child: Row(
                   children: [
-                    const Icon(Icons.palette_outlined, color: HunorColors.accent),
+                    const Icon(Icons.palette_outlined, color: HunorColors.red),
                     const SizedBox(width: 10),
                     const Text(
                       'Téma kiválasztása',

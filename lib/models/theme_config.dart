@@ -255,6 +255,8 @@ class RescueThemeRegistry {
     ),
   ];
 
+  static List<String> get catalogIds => allThemes.map((t) => t.id).toList();
+
   static RescueThemeDefinition findById(String id) {
     return allThemes.firstWhere(
       (t) => t.id == id,
