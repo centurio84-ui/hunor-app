@@ -1,8 +1,10 @@
 import '../models/coin_balance.dart';
+import '../models/event_participation.dart';
 import '../models/installation.dart';
 import '../models/organization.dart';
 import '../models/rescue_alert.dart';
 import '../models/rescue_event.dart';
+import '../models/rescue_news.dart';
 import '../models/user_profile.dart';
 
 /// Típusos API interfész a Rescue Platform OpenAPI v0.2 specifikációja alapján.
@@ -26,6 +28,20 @@ abstract class RescuePlatformApi {
   // --- Események (Events) ---
   Future<List<RescueEvent>> getEvents();
   Future<RescueEvent> getEvent(String eventId);
+
+  // --- Eseményjelentkezés (CODEX-017) ---
+  Future<EventRegistrationInfo> getEventRegistrationInfo(String eventId);
+  Future<EventParticipation> getMyEventParticipation(String eventId);
+  Future<EventParticipation> setMyEventParticipation({
+    required String eventId,
+    required EventParticipationStatus response,
+    required int expectedVersion,
+    String? idempotencyKey,
+  });
+
+  // --- Hírek és közlemények (CODEX-018) ---
+  Future<List<RescueNewsItem>> getNews({int limit = 20, String? cursor});
+  Future<RescueNewsItem> getNewsItem(String newsId);
 
   // --- Riasztások (Alerts) ---
   Future<List<RescueAlert>> getAlerts();

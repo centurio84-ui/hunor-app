@@ -1,9 +1,11 @@
 import '../models/api_error.dart';
 import '../models/coin_balance.dart';
+import '../models/event_participation.dart';
 import '../models/installation.dart';
 import '../models/organization.dart';
 import '../models/rescue_alert.dart';
 import '../models/rescue_event.dart';
+import '../models/rescue_news.dart';
 import '../models/user_profile.dart';
 import 'rescue_platform_api.dart';
 
@@ -481,10 +483,138 @@ class MockRescuePlatformApi implements RescuePlatformApi {
     );
   }
 
+  // CODEX-017 / CODEX-018 Mock Adattárak
+  final Map<String, EventParticipation> _participations = {};
+  final Map<String, EventRegistrationInfo> _registrationInfos = {};
+  final List<RescueNewsItem> _mockNews = [
+    RescueNewsItem(
+      id: 'news-001',
+      organizationId: orgAId,
+      title: 'Téli felkészülési gyakorlat a Mátrában',
+      summary: 'A HUNOR nehézkutató egység 3 napos téli bevetési szimulációt tart.',
+      content: 'A gyakorlat célja a lavina- és hegyimentési eljárások összehangolása extrém időjárási körülmények között. Minden résztvevőtől elvárt a teljes téli védőfelszerelés megléte.',
+      authorName: 'Műveleti Parancsnokság',
+      publishedAt: DateTime.now().subtract(const Duration(days: 1)),
+      audience: NewsAudience.members,
+      isPinned: true,
+      tags: const ['Gyakorlat', 'HUNOR', 'Tél'],
+    ),
+    RescueNewsItem(
+      id: 'news-002',
+      organizationId: orgAId,
+      title: 'Új akkumulátoros feszítő-vágó készletek érkeztek',
+      summary: 'Átvehetők az új generációs műszaki mentőeszközök a logisztikai raktárban.',
+      content: 'A legmodernebb hidraulikus feszítő-vágó szerszámok megérkeztek a bázisra. Kérjük a szerparancsnokokat, hogy egyeztessenek az eszközök beosztásáról és átvételéről.',
+      authorName: 'Logisztikai Csoport',
+      publishedAt: DateTime.now().subtract(const Duration(days: 3)),
+      audience: NewsAudience.all,
+      tags: const ['Eszközök', 'Logisztika'],
+    ),
+    RescueNewsItem(
+      id: 'news-003',
+      organizationId: orgBId,
+      title: 'Barlangi mentőorvosi továbbképzés',
+      summary: 'Speciális hipotermiás ellátás barlangi környezetben.',
+      content: 'A BMSZ orvoscsoportja belső továbbképzést szervez az aggregátorról működtetett melegítőrendszerek használatáról mélységi mentések során.',
+      authorName: 'BMSZ Egészségügy',
+      publishedAt: DateTime.now().subtract(const Duration(days: 2)),
+      audience: NewsAudience.members,
+      tags: const ['Orvosi', 'BMSZ'],
+    ),
+  ];
+
+  @override
+  Future<EventRegistrationInfo> getEventRegistrationInfo(String eventId) async {
+    _checkActiveTenant();
+    return _registrationInfos[eventId] ??
+        EventRegistrationInfo(
+          eventId: eventId,
+          organizationId: _currentOrganizationId!,
+          maxCapacity: 20,
+          currentGoingCount: 8,
+          registrationDeadline: DateTime.now().add(const Duration(days: 7)),
+          cancellationDeadline: DateTime.now().add(const Duration(days: 6)),
+          rulesVersion: 1,
+          isEligible: true,
+        );
+  }
+
+  @override
+  Future<EventParticipation> getMyEventParticipation(String eventId) async {
+    _checkActiveTenant();
+    final membership = _memberships[_currentOrganizationId]!;
+    return _participations['${_currentOrganizationId}_$eventId'] ??
+        EventParticipation(
+          organizationId: _currentOrganizationId!,
+          eventId: eventId,
+          membershipId: membership.id,
+          response: null,
+          version: 0,
+        );
+  }
+
+  @override
+  Future<EventParticipation> setMyEventParticipation({
+    required String eventId,
+    required EventParticipationStatus response,
+    required int expectedVersion,
+    String? idempotencyKey,
+  }) async {
+    _checkActiveTenant();
+    final membership = _memberships[_currentOrganizationId]!;
+    final key = '${_currentOrganizationId}_$eventId';
+    final current = _participations[key] ??
+        EventParticipation(
+          organizationId: _currentOrganizationId!,
+          eventId: eventId,
+          membershipId: membership.id,
+          response: null,
+          version: 0,
+        );
+
+    if (expectedVersion != current.version) {
+      throw const PreconditionFailedException(
+        code: 'VERSION_CONFLICT',
+        message: 'A részvételi állapot időközben megváltozott a szerveren (412).',
+      );
+    }
+
+    final updated = EventParticipation(
+      organizationId: _currentOrganizationId!,
+      eventId: eventId,
+      membershipId: membership.id,
+      response: response,
+      respondedAt: DateTime.now(),
+      version: current.version + 1,
+    );
+    _participations[key] = updated;
+    return updated;
+  }
+
+  @override
+  Future<List<RescueNewsItem>> getNews({int limit = 20, String? cursor}) async {
+    _checkActiveTenant();
+    return _mockNews
+        .where((n) => n.organizationId == _currentOrganizationId)
+        .take(limit)
+        .toList();
+  }
+
+  @override
+  Future<RescueNewsItem> getNewsItem(String newsId) async {
+    _checkActiveTenant();
+    final item = _mockNews.where((n) => n.organizationId == _currentOrganizationId && n.id == newsId).firstOrNull;
+    if (item == null) {
+      throw const NotFoundException(message: 'A kért hír nem található ebben a szervezetben.');
+    }
+    return item;
+  }
+
   @override
   void clearTenantCache() {
     _tenantCache.clear();
     _alertResponses.clear();
+    _participations.clear();
     _idempotentKeys.clear();
     _cacheCleared = true;
   }

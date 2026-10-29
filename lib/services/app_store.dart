@@ -4,11 +4,13 @@ import '../api/staging_api.dart';
 import '../models/api_error.dart';
 import '../api/rescue_platform_api.dart';
 import '../models/coin_balance.dart';
+import '../models/event_participation.dart';
 import '../models/member.dart';
 import '../models/organization.dart';
 import '../models/organization_capabilities.dart';
 import '../models/rescue_alert.dart';
 import '../models/rescue_event.dart';
+import '../models/rescue_news.dart';
 import '../models/user_profile.dart';
 import 'theme_controller.dart';
 
@@ -34,6 +36,9 @@ class AppStore extends ChangeNotifier {
   List<Organization> availableOrganizations = [];
   List<RescueEvent> events = [];
   List<RescueAlert> alerts = [];
+  List<RescueNewsItem> news = [];
+  Map<String, EventParticipation> eventParticipations = {};
+  Map<String, EventRegistrationInfo> eventRegistrations = {};
   List<Member> members = [];
   CoinBalance? coinBalance;
   OrganizationCapabilities? capabilities;
@@ -122,6 +127,9 @@ class AppStore extends ChangeNotifier {
     availableOrganizations = [];
     events = [];
     alerts = [];
+    news = [];
+    eventParticipations.clear();
+    eventRegistrations.clear();
     members = [];
     coinBalance = null;
     capabilities = null;
@@ -142,12 +150,29 @@ class AppStore extends ChangeNotifier {
       final orgId=api.currentOrganizationId??organizations.firstOrNull?.id;
       Membership? membership;
       List<RescueEvent> nextEvents=[];List<RescueAlert> nextAlerts=[];
+      List<RescueNewsItem> nextNews=[];
+      final nextParticipations=<String, EventParticipation>{};
+      final nextRegistrations=<String, EventRegistrationInfo>{};
       OrganizationCapabilities? nextCapabilities;
       final responses=<String,String>{};
       if(orgId!=null){
         if(api.currentOrganizationId!=orgId)await api.switchOrganization(orgId);
         membership=await api.getMyOrganizationMembership(orgId);
         nextEvents=await api.getEvents();nextAlerts=await api.getAlerts();
+        try { nextNews=await api.getNews(); } catch (_) { nextNews=[]; }
+
+        // Betöltjük az eseményekhez a regisztrációt és saját részvételt
+        for(final ev in nextEvents) {
+          try {
+            final reg = await api.getEventRegistrationInfo(ev.id);
+            nextRegistrations[ev.id] = reg;
+            final part = await api.getMyEventParticipation(ev.id);
+            nextParticipations[ev.id] = part;
+            if(part.response != null) {
+              eventResponses[ev.id] = part.response!.value;
+            }
+          } catch (_) {}
+        }
         if(api is StagingApi){
           final staging=api as StagingApi;
           nextCapabilities=await staging.getMyCapabilities(membership);
@@ -166,7 +191,7 @@ class AppStore extends ChangeNotifier {
       currentUserRole=isStaging
           ? ((capabilities?.allows('members.manage_permissions')??false)?MemberRole.admin:MemberRole.member)
           : ((membership?.hasPermission('members.manage_permissions')??false)?MemberRole.admin:MemberRole.member);
-      events=nextEvents;alerts=nextAlerts;coinBalance=null;alertResponses=responses;
+      events=nextEvents;alerts=nextAlerts;news=nextNews;eventParticipations=nextParticipations;eventRegistrations=nextRegistrations;coinBalance=null;alertResponses=responses;
       if(api is MockRescuePlatformApi){_loadMembersForCurrentOrganization(orgId??'');}else{members=[];memberRoles.clear();alertResponseByMember.clear();}
       currentUser=Member(id:profile.user.id,name:profile.user.displayName,rank:membership?.positions.firstOrNull??'Tag',workplace:currentOrganization?.name??'',position:membership?.positions.join(', ')??'',phone:profile.contactPhone??'',skills:membership?.skills??const [],status:(membership?.alertable??false)?AvailabilityStatus.available:AvailabilityStatus.unavailable);
       isAuthenticated=true;
@@ -276,6 +301,9 @@ class AppStore extends ChangeNotifier {
       // 1. Korábbi adatok ürítése a szivárgás megakadályozására
       events = [];
       alerts = [];
+      news = [];
+      eventParticipations.clear();
+      eventRegistrations.clear();
       members = [];
       coinBalance = null;
       eventResponses.clear();
@@ -320,9 +348,35 @@ class AppStore extends ChangeNotifier {
   }
 
   Future<void> respondToEvent(String eventId, bool going) async {
-    if(isStaging) throw unsupportedStaging;
-    eventResponses[eventId] = going ? 'going' : 'not_going';
-    notifyListeners();
+    try {
+      final currentPart = eventParticipations[eventId];
+      final currentVersion = currentPart?.version ?? 0;
+      final targetStatus = going ? EventParticipationStatus.going : EventParticipationStatus.notGoing;
+
+      final updated = await api.setMyEventParticipation(
+        eventId: eventId,
+        response: targetStatus,
+        expectedVersion: currentVersion,
+      );
+
+      eventParticipations[eventId] = updated;
+      eventResponses[eventId] = updated.response?.value ?? (going ? 'going' : 'not_going');
+      lastResponseMessage = 'Részvételi szándék (${going ? "Részt veszek" : "Nem veszek részt"}) rögzítve.';
+      notifyListeners();
+    } on PreconditionFailedException catch (_) {
+      // 412 VERSION_CONFLICT: frissítjük az állapotot
+      errorMessage = 'A részvételi állapot időközben módosult a szerveren. Kérjük próbáld újra!';
+      try {
+        final freshPart = await api.getMyEventParticipation(eventId);
+        eventParticipations[eventId] = freshPart;
+        if (freshPart.response != null) eventResponses[eventId] = freshPart.response!.value;
+      } catch (_) {}
+      notifyListeners();
+    } catch (e) {
+      errorMessage = e.toString();
+      notifyListeners();
+      rethrow;
+    }
   }
 
   MemberRole roleForMember(String memberId) => memberRoles[memberId] ?? MemberRole.member;

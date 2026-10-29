@@ -1,80 +1,95 @@
-import 'dart:io' show Platform;
+import 'dart:async';
+import 'package:flutter/foundation.dart';
 
-import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-
-class PushNotificationService {
-  static final FirebaseMessaging _messaging = FirebaseMessaging.instance;
-
-  static Future<void> initialize() async {
-    if (!Platform.isIOS && !Platform.isAndroid) return;
-
-    if (Platform.isIOS) {
-      await _messaging.requestPermission(
-        alert: true,
-        badge: true,
-        sound: true,
-        provisional: false,
-      );
-      await _messaging.setForegroundNotificationPresentationOptions(
-        alert: true,
-        badge: true,
-        sound: true,
-      );
-    }
-
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      // iOS displays notification payloads in the foreground because of
-      // setForegroundNotificationPresentationOptions above. Android foreground
-      // presentation can be added later with a local-notifications plugin.
-    });
-
-    FirebaseMessaging.instance.onTokenRefresh.listen((token) async {
-      await _saveToken(token);
-    });
-
-    final session = Supabase.instance.client.auth.currentSession;
-    if (session != null) {
-      await registerCurrentDevice();
-    }
-  }
-
-  static Future<void> registerCurrentDevice() async {
-    if (!Platform.isIOS && !Platform.isAndroid) return;
-
-    if (Platform.isIOS) {
-      // Firebase recommends waiting until the APNs token is available before
-      // making FCM token calls on Apple platforms.
-      for (var i = 0; i < 10; i++) {
-        final apnsToken = await _messaging.getAPNSToken();
-        if (apnsToken != null) break;
-        await Future<void>.delayed(const Duration(milliseconds: 500));
-      }
-    }
-
-    final token = await _messaging.getToken();
-    if (token != null) {
-      await _saveToken(token);
-    }
-  }
-
-  static Future<void> _saveToken(String token) async {
-    final user = Supabase.instance.client.auth.currentUser;
-    if (user == null) return;
-
-    await Supabase.instance.client.from('device_tokens').upsert(
-      {
-        'member_id': user.id,
-        'token': token,
-        'platform': Platform.isIOS ? 'ios' : 'android',
-        'updated_at': DateTime.now().toIso8601String(),
-      },
-      onConflict: 'member_id,token',
-    );
-  }
+enum NotificationType {
+  alert,
+  event,
+  news,
+  system,
 }
 
-@pragma('vm:entry-point')
-Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // Background notification messages are displayed by the operating system.
+class AppPushNotification {
+  final String id;
+  final String title;
+  final String body;
+  final NotificationType type;
+  final String? targetId; // alertId, eventId, vagy newsId
+  final DateTime receivedAt;
+  final Map<String, dynamic> data;
+
+  const AppPushNotification({
+    required this.id,
+    required this.title,
+    required this.body,
+    required this.type,
+    this.targetId,
+    required this.receivedAt,
+    this.data = const {},
+  });
+}
+
+abstract class PushNotificationService {
+  Future<void> initialize();
+  Future<String?> getDeviceToken();
+  Stream<AppPushNotification> get onNotificationReceived;
+  Stream<AppPushNotification> get onNotificationOpened;
+  Future<void> setEnabled(bool enabled);
+}
+
+class MockPushNotificationService implements PushNotificationService {
+  final StreamController<AppPushNotification> _receivedCtrl = StreamController<AppPushNotification>.broadcast();
+  final StreamController<AppPushNotification> _openedCtrl = StreamController<AppPushNotification>.broadcast();
+  bool _enabled = true;
+  String _mockToken = 'mock-fcm-token-123456789';
+
+  @override
+  Future<void> initialize() async {
+    debugPrint('[PushService] Mock push notification service initialized.');
+  }
+
+  @override
+  Future<String?> getDeviceToken() async {
+    return _enabled ? _mockToken : null;
+  }
+
+  @override
+  Stream<AppPushNotification> get onNotificationReceived => _receivedCtrl.stream;
+
+  @override
+  Stream<AppPushNotification> get onNotificationOpened => _openedCtrl.stream;
+
+  @override
+  Future<void> setEnabled(bool enabled) async {
+    _enabled = enabled;
+  }
+
+  /// Teszt célra: push értesítés szimulációja
+  void simulateIncomingNotification({
+    required String title,
+    required String body,
+    required NotificationType type,
+    String? targetId,
+    Map<String, dynamic>? data,
+  }) {
+    if (!_enabled) return;
+    final notif = AppPushNotification(
+      id: 'mock-notif-${DateTime.now().millisecondsSinceEpoch}',
+      title: title,
+      body: body,
+      type: type,
+      targetId: targetId,
+      receivedAt: DateTime.now(),
+      data: data ?? {},
+    );
+    _receivedCtrl.add(notif);
+  }
+
+  void simulateNotificationTap(AppPushNotification notif) {
+    _openedCtrl.add(notif);
+  }
+
+  void dispose() {
+    _receivedCtrl.close();
+    _openedCtrl.close();
+  }
 }

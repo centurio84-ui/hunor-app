@@ -5,11 +5,13 @@ import 'package:http/http.dart' as http;
 import 'package:uuid/uuid.dart';
 import '../models/api_error.dart';
 import '../models/coin_balance.dart';
+import '../models/event_participation.dart';
 import '../models/installation.dart';
 import '../models/organization.dart';
 import '../models/organization_capabilities.dart';
 import '../models/rescue_alert.dart';
 import '../models/rescue_event.dart';
+import '../models/rescue_news.dart';
 import '../models/user_profile.dart';
 import 'rescue_platform_api.dart';
 
@@ -150,6 +152,47 @@ class StagingApi implements RescuePlatformApi {
   @override void clearTenantCache() { _versions.clear(); }
   @override Future<List<RescueEvent>> getEvents() async { final org=_org,generation=_generation,path=_tenant(); final rows=await _pages('$path/events'); _same(generation,org); return rows.map(RescueEvent.fromJson).toList(); }
   @override Future<RescueEvent> getEvent(String eventId) async { _uuid(eventId);final org=_org,generation=_generation;final w=await request('${_tenant()}/events/$eventId');_same(generation,org);return RescueEvent.fromJson(w); }
+  @override Future<EventRegistrationInfo> getEventRegistrationInfo(String eventId) async {
+    _uuid(eventId); final org=_org,generation=_generation;
+    final w=await request('${_tenant()}/events/$eventId/registration');
+    _same(generation,org); return EventRegistrationInfo.fromJson(w);
+  }
+  @override Future<EventParticipation> getMyEventParticipation(String eventId) async {
+    _uuid(eventId); final org=_org,generation=_generation;
+    final w=await request('${_tenant()}/events/$eventId/participation/me');
+    _same(generation,org); return EventParticipation.fromJson(w);
+  }
+  @override Future<EventParticipation> setMyEventParticipation({
+    required String eventId,
+    required EventParticipationStatus response,
+    required int expectedVersion,
+    String? idempotencyKey,
+  }) async {
+    _uuid(eventId); final org=_org,generation=_generation;
+    final key = idempotencyKey ?? const Uuid().v4();
+    final w=await request(
+      '${_tenant()}/events/$eventId/participation/me',
+      method: 'PUT',
+      body: {'response': response.value},
+      headers: {
+        'if-match': '"v$expectedVersion"',
+        'idempotency-key': key,
+      },
+    );
+    _same(generation,org); return EventParticipation.fromJson(w);
+  }
+  @override Future<List<RescueNewsItem>> getNews({int limit = 20, String? cursor}) async {
+    final org=_org,generation=_generation;
+    final path = cursor != null ? '${_tenant()}/news?cursor=$cursor&limit=$limit' : '${_tenant()}/news?limit=$limit';
+    final rows=await _pages(path);
+    _same(generation,org); return rows.map(RescueNewsItem.fromJson).toList();
+  }
+  @override Future<RescueNewsItem> getNewsItem(String newsId) async {
+    _uuid(newsId); final org=_org,generation=_generation;
+    final w=await request('${_tenant()}/news/$newsId');
+    _same(generation,org); return RescueNewsItem.fromJson(w);
+  }
+
   RescueAlert _alert(Map<String,dynamic> w) => RescueAlert.fromJson({...w,'type':w['kind']=='operational'?'alert':w['kind']});
   @override Future<List<RescueAlert>> getAlerts() async { final org=_org,generation=_generation,path=_tenant(); final rows=await _pages('$path/alerts'); _same(generation,org); return rows.map(_alert).toList(); }
   @override Future<RescueAlert> getAlert(String alertId) async { _uuid(alertId);final org=_org,generation=_generation;final w=await request('${_tenant()}/alerts/$alertId');_same(generation,org);return _alert(w); }
