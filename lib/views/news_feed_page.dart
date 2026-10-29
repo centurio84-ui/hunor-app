@@ -52,7 +52,7 @@ class NewsFeedPage extends StatelessWidget {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(14),
               side: item.isPinned
-                  ? const BorderSide(color: HunorColors.accent, width: 1.5)
+                  ? const BorderSide(color: HunorColors.red, width: 1.5)
                   : BorderSide.none,
             ),
             child: InkWell(
@@ -66,11 +66,11 @@ class NewsFeedPage extends StatelessWidget {
                     Row(
                       children: [
                         if (item.isPinned) ...[
-                          const Icon(Icons.push_pin, size: 16, color: HunorColors.accent),
+                          const Icon(Icons.push_pin, size: 16, color: HunorColors.red),
                           const SizedBox(width: 6),
                           const Text(
                             'Kiemelt',
-                            style: TextStyle(fontSize: 12, color: HunorColors.accent, fontWeight: FontWeight.bold),
+                            style: TextStyle(fontSize: 12, color: HunorColors.red, fontWeight: FontWeight.bold),
                           ),
                           const Spacer(),
                         ] else

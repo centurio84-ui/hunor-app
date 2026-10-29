@@ -1,7 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hunor_app/api/mock_rescue_platform_api.dart';
-import 'package:hunor_app/models/event_participation.dart';
-import 'package:hunor_app/models/rescue_news.dart';
 import 'package:hunor_app/services/app_store.dart';
 
 void main() {

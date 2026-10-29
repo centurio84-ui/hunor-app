@@ -167,7 +167,7 @@ class CalendarPage extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.people_outline, size: 18, color: HunorColors.accent),
+                          const Icon(Icons.people_outline, size: 18, color: HunorColors.exercise),
                           const SizedBox(width: 8),
                           Text(
                             reg.hasCapacityLimit
