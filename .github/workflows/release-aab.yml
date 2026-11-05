@@ -59,17 +59,19 @@ jobs:
                   text = text.replace('<application', '<uses-permission android:name="android.permission.INTERNET" />\n    <application android:allowBackup="false" android:usesCleartextTraffic="false"', 1)
                   manifest.write_text(text)
 
-          # Target SDK és Min SDK frissítés (Google Play 2026 követelmények: minSdk 23, targetSdk 35)
+          # Target SDK és Min SDK frissítés (Google Play 2026. augusztus követelmény: targetSdk 36, minSdk 23)
           gradle_kts = Path('android/app/build.gradle.kts')
           if gradle_kts.exists():
               gt = gradle_kts.read_text()
               gt = gt.replace('minSdk = flutter.minSdkVersion', 'minSdk = 23')
+              gt = gt.replace('targetSdk = flutter.targetSdkVersion', 'targetSdk = 36')
               gradle_kts.write_text(gt)
           
           gradle_groovy = Path('android/app/build.gradle')
           if gradle_groovy.exists():
               gt = gradle_groovy.read_text()
               gt = gt.replace('minSdkVersion flutter.minSdkVersion', 'minSdkVersion 23')
+              gt = gt.replace('targetSdkVersion flutter.targetSdkVersion', 'targetSdkVersion 36')
               gradle_groovy.write_text(gt)
           PY
 
@@ -86,26 +88,89 @@ jobs:
         id: signing
         shell: bash
         run: |
-          if [ -n "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ]; then
-            echo "Kiadási aláírókulcs elérhető (GitHub Secret). Aláírt kiadási AAB készül."
-            echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/app/release.keystore
-            cat <<EOF > android/key.properties
-            storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-            keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
-            keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
-            storeFile=release.keystore
-          EOF
-            echo "has_signing=true" >> $GITHUB_OUTPUT
-          else
-            echo "Nem található ANDROID_KEYSTORE_BASE64 secret. Kiadásra kész Release AAB készül alapértelmezett/unaligned módban."
-            echo "has_signing=false" >> $GITHUB_OUTPUT
+          if [ -z "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ] || [ -z "${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" ] || [ -z "${{ secrets.ANDROID_KEY_ALIAS }}" ] || [ -z "${{ secrets.ANDROID_KEY_PASSWORD }}" ]; then
+            echo "::error::HIÁNYZÓ KIADÁSI TITKOK: Az ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS vagy ANDROID_KEY_PASSWORD secret nincs beállítva!"
+            echo "A Google Play Production AAB fordítás nem folytatható hiteles aláírás nélkül."
+            exit 1
           fi
+
+          echo "Kiadási aláírókulcs elérhető (GitHub Secret). Aláírt kiadási AAB készül."
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/app/release.keystore
+          cat <<EOF > android/key.properties
+          storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
+          keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
+          storeFile=release.keystore
+          EOF
+
+          # Gradle signingConfigs tényleges bekötése a build.gradle / build.gradle.kts fájlban
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p_kts = Path('android/app/build.gradle.kts')
+          if p_kts.exists():
+              s = p_kts.read_text()
+              if 'signingConfigs' not in s:
+                  # signingConfigs beszúrása a buildTypes elé
+                  marker = 'buildTypes {'
+                  signing_code = '''
+    signingConfigs {
+        create("release") {
+            val keyProps = java.util.Properties()
+            val keyPropsFile = rootProject.file("key.properties")
+            if (keyPropsFile.exists()) {
+                keyProps.load(java.io.FileInputStream(keyPropsFile))
+                storeFile = file(keyProps.getProperty("storeFile"))
+                storePassword = keyProps.getProperty("storePassword")
+                keyAlias = keyProps.getProperty("keyAlias")
+                keyPassword = keyProps.getProperty("keyPassword")
+            }
+        }
+    }
+'''
+                  if marker in s:
+                      s = s.replace(marker, signing_code + '\n    ' + marker)
+                      s = s.replace('getByName("release") {', 'getByName("release") {\n            signingConfig = signingConfigs.getByName("release")')
+                      p_kts.write_text(s)
+
+          p_groovy = Path('android/app/build.gradle')
+          if p_groovy.exists():
+              s = p_groovy.read_text()
+              if 'signingConfigs {' not in s:
+                  marker = 'buildTypes {'
+                  signing_code = '''
+    signingConfigs {
+        release {
+            def keyProps = new Properties()
+            def keyPropsFile = rootProject.file("key.properties")
+            if (keyPropsFile.exists()) {
+                keyProps.load(new FileInputStream(keyPropsFile))
+                storeFile file(keyProps['storeFile'])
+                storePassword keyProps['storePassword']
+                keyAlias keyProps['keyAlias']
+                keyPassword keyProps['keyPassword']
+            }
+        }
+    }
+'''
+                  if marker in s:
+                      s = s.replace(marker, signing_code + '\n    ' + marker)
+                      s = s.replace('release {', 'release {\n            signingConfig signingConfigs.release')
+                      p_groovy.write_text(s)
+          PY
 
       - name: Build Android App Bundle (Release AAB)
         run: |
           BUILD_NUM="${{ github.event.inputs.build_number || '10001' }}"
           VERSION_NAME="${{ github.event.inputs.version_name || '1.0.0' }}"
-          flutter build appbundle --release --build-number=$BUILD_NUM --build-name=$VERSION_NAME
+          API_URL="${{ secrets.RESCUE_PROD_API_BASE_URL || secrets.RESCUE_API_BASE_URL }}"
+          if [ -z "$API_URL" ]; then
+            echo "::error::HIÁNYZÓ PRODUCTION API CÍM: Nincs megadva RESCUE_PROD_API_BASE_URL környezeti változó!"
+            exit 1
+          fi
+          flutter build appbundle --release --build-number=$BUILD_NUM --build-name=$VERSION_NAME \
+            --dart-define=RESCUE_API_MODE=staging \
+            --dart-define=RESCUE_API_BASE_URL=$API_URL
           ls -la build/app/outputs/bundle/release/
 
       - name: Generate AAB Checksum

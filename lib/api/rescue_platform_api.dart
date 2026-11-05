@@ -19,6 +19,7 @@ abstract class RescuePlatformApi {
   // --- Felhasználói profil és munkamenet ---
   Future<UserProfile> getMyProfile();
   Future<void> revokeCurrentSession();
+  Future<void> requestAccountDeletion({required String reason});
 
   // --- Többszervezetes kezelés (Multi-tenancy) ---
   Future<List<Organization>> getMyOrganizations();

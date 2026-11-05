@@ -475,7 +475,7 @@ class ProfilePage extends StatelessWidget {
             ),
             SizedBox(height: 12),
             Text(
-              'A törlési kérelem indításával a munkameneted megszakad, és az adminisztrátorok 30 napon belül végrehajtják a törlést.',
+              'A megerősítést követően a kérelem azonnal továbbításra kerül a hitelesített szerverhez, és a fiókodból automatikusan kijelentkezel. A kérelem nem vonható vissza.',
               style: TextStyle(height: 1.4, color: HunorColors.muted),
             ),
           ],
@@ -489,14 +489,25 @@ class ProfilePage extends StatelessWidget {
             style: FilledButton.styleFrom(backgroundColor: HunorColors.red),
             onPressed: () async {
               Navigator.pop(c);
-              await s.signOut();
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Fióktörlési kérelem rögzítve. Kijelentkeztetve.'),
-                    backgroundColor: HunorColors.redDark,
-                  ),
-                );
+              try {
+                await s.requestAccountDeletion(reason: 'Felhasználói in-app törlési kérelem');
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('A törlési kérelem sikeresen rögzítve a szerveren. Kijelentkeztetve.'),
+                      backgroundColor: HunorColors.success,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Hiba a törlési kérelem küldésekor: $e'),
+                      backgroundColor: HunorColors.red,
+                    ),
+                  );
+                }
               }
             },
             child: const Text('Törlési kérelem elküldése'),

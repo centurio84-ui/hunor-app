@@ -89,5 +89,18 @@ void main() {
       expect(store.eventRegistrations.isEmpty, isTrue);
       expect(store.isAuthenticated, isFalse);
     });
+
+    test('Fióktörlési kérelem indítása sikeresen üríti a helyi adatokat és a munkamenetet', () async {
+      await store.initialize();
+      expect(store.isAuthenticated, isTrue);
+
+      await store.requestAccountDeletion(reason: 'Teszt fióktörlés');
+
+      expect(store.isAuthenticated, isFalse);
+      expect(store.currentUser, isNull);
+      expect(store.currentOrganization, isNull);
+      expect(store.news.isEmpty, isTrue);
+      expect(store.eventParticipations.isEmpty, isTrue);
+    });
   });
 }

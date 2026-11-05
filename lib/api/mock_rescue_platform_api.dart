@@ -204,6 +204,15 @@ class MockRescuePlatformApi implements RescuePlatformApi {
   }
 
   @override
+  Future<void> requestAccountDeletion({required String reason}) async {
+    _checkAuth();
+    // Szimulált szerveroldali fióktörlési kérelem rögzítés és session azonnali visszavonás
+    _authenticated = false;
+    clearTenantCache();
+    _currentOrganizationId = null;
+  }
+
+  @override
   Future<List<Organization>> getMyOrganizations() async {
     _checkAuth();
     return List.unmodifiable(_organizations);

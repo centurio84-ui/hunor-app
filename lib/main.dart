@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -17,8 +18,16 @@ const String apiMode = String.fromEnvironment('RESCUE_API_MODE', defaultValue: '
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  if (!['mock', 'staging'].contains(apiMode)) {
-    throw StateError('Invalid API mode');
+  // Kiadási (Release) védelmi kapu: production kiadásban tilos a mock vagy az engedélyezetlen API mód
+  if (kReleaseMode && apiMode == 'mock') {
+    throw StateError(
+      'BIZTONSÁGI HIBA: Production Release build nem futtatható Mock API módban! '
+      'Állítsd be a jóváhagyott éles RESCUE_API_MODE és RESCUE_API_BASE_URL környezeti változókat.',
+    );
+  }
+
+  if (!['mock', 'staging', 'production'].contains(apiMode)) {
+    throw StateError('Invalid API mode: $apiMode');
   }
 
   final RescuePlatformApi selectedApi = apiMode == 'staging'

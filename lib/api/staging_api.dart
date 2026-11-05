@@ -229,6 +229,13 @@ class StagingApi implements RescuePlatformApi {
   }
   Future<void> discardPending(String key) async { _queue.removeWhere((q)=>q['key']==key&&q['user_id']==userId&&q['organization_id']==_org); await _persist(); }
   @override Future<void> revokeCurrentSession() async { final token=_session?['access_token'] as String?; await _forget(); if(token!=null) { try { await _raw('DELETE','/auth/sessions/current',token:token); } on Exception { /* Local logout is final even offline; remote revocation may be unavailable. */ } } }
+  @override Future<void> requestAccountDeletion({required String reason}) async {
+    final token = _session?['access_token'] as String?;
+    if (token == null) throw const UnauthorizedException();
+    // Hitelesített backend fióktörlési végpont hívása
+    await request('/users/me/deletion-request', method: 'POST', body: {'reason': reason});
+    await revokeCurrentSession();
+  }
   @override Future<RescueAlert> dispatchAlert({required String title,required String message,required String type,DateTime? expiresAt}) async => throw unsupportedStaging;
   @override Future<void> acknowledgeAlert(String alertId,{String? idempotencyKey}) async { _uuid(alertId); await request('${_tenant()}/alerts/$alertId/acknowledgement/me',method:'PUT',headers:{'idempotency-key':idempotencyKey??const Uuid().v4()}); }
   @override Future<Installation> registerMyInstallation({required String installationId,required String platform,required String provider,required String token,String? label,String? environment}) async => throw unsupportedStaging;

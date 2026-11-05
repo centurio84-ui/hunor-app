@@ -118,6 +118,27 @@ class AppStore extends ChangeNotifier {
     }
   }
 
+  /// Hitelesített fióktörlési kérelem indítása
+  Future<void> requestAccountDeletion({String reason = 'Felhasználói fióktörlési kérelem a mobilalkalmazásból'}) async {
+    isLoading = true;
+    errorMessage = null;
+    notifyListeners();
+
+    try {
+      await api.requestAccountDeletion(reason: reason);
+      _revision++;
+      _clearLocalData();
+      isAuthenticated = false;
+      await themeController?.onUserSignedOut();
+    } catch (e) {
+      errorMessage = e.toString();
+      rethrow;
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
   void _clearLocalData() {
     currentUserRole=MemberRole.member;
     currentUserProfile = null;
