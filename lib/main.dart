@@ -14,31 +14,83 @@ import 'views/app_shell.dart';
 import 'views/login_page.dart';
 
 const String apiMode = String.fromEnvironment('RESCUE_API_MODE', defaultValue: 'mock');
+const String apiBaseUrl = String.fromEnvironment('RESCUE_API_BASE_URL', defaultValue: '');
 
-Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  // Kiadási (Release) védelmi kapu: production kiadásban tilos a mock vagy az engedélyezetlen API mód
-  if (kReleaseMode && apiMode == 'mock') {
+/// Visszaadja az érvényes, jóváhagyott [RescuePlatformApi] példányt az [apiMode] és [apiBaseUrl] alapján.
+/// Production módban kizárólag érvényes, jóváhagyott production API-adapter használható,
+/// mock vagy nem jóváhagyott adapter/fallback esetén azonnal [StateError] kivételt dob.
+RescuePlatformApi createConfiguredApi({
+  required String mode,
+  required String baseUrl,
+  bool isRelease = kReleaseMode,
+}) {
+  if (isRelease && mode == 'mock') {
     throw StateError(
       'BIZTONSÁGI HIBA: Production Release build nem futtatható Mock API módban! '
       'Állítsd be a jóváhagyott éles RESCUE_API_MODE és RESCUE_API_BASE_URL környezeti változókat.',
     );
   }
 
-  if (!['mock', 'staging', 'production'].contains(apiMode)) {
-    throw StateError('Invalid API mode: $apiMode');
+  if (mode == 'mock') {
+    return MockRescuePlatformApi();
   }
 
-  final RescuePlatformApi selectedApi = apiMode == 'staging'
-      ? StagingApi(baseUrl: const String.fromEnvironment('RESCUE_API_BASE_URL', defaultValue: stagingBase))
-      : MockRescuePlatformApi();
+  if (mode == 'staging') {
+    final effectiveUrl = baseUrl.isEmpty ? stagingBase : baseUrl;
+    return StagingApi(baseUrl: effectiveUrl);
+  }
 
-  final ThemeService themeService = apiMode == 'staging' && selectedApi is StagingApi
-      ? SupabaseThemeService(
-          getAccessToken: () async => selectedApi.accessToken,
-        )
-      : MockThemeService();
+  if (mode == 'production') {
+    // Production mód: kizárólag jóváhagyott production API adapter használható.
+    // Mock vagy staging adapter fallback szigorúan tilos!
+    if (baseUrl.isEmpty) {
+      throw StateError(
+        'BIZTONSÁGI HIBA: Production API módban a RESCUE_API_BASE_URL nem lehet üres! '
+        'A production kiadás nem indulhat el konfigurálatlan végponttal.',
+      );
+    }
+    throw StateError(
+      'BIZTONSÁGI HIBA: A hitelesített Production API adapter implementációja és éles jóváhagyása még nem történt meg. '
+      'Mock vagy teszt adapter fallback production módban szigorúan tilos! A futás biztonságosan leállt.',
+    );
+  }
+
+  throw StateError('Invalid API mode: $mode');
+}
+
+/// Visszaadja az API módnak és kiválasztott API adapternek megfelelő [ThemeService] szolgáltatást.
+ThemeService createConfiguredThemeService({
+  required String mode,
+  required RescuePlatformApi api,
+}) {
+  if (mode == 'staging' && api is StagingApi) {
+    return SupabaseThemeService(
+      getAccessToken: () async => api.accessToken,
+    );
+  }
+
+  if (mode == 'production') {
+    throw StateError(
+      'BIZTONSÁGI HIBA: Production ThemeService adapter nincs konfigurálva vagy jóváhagyva.',
+    );
+  }
+
+  return MockThemeService();
+}
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  final RescuePlatformApi selectedApi = createConfiguredApi(
+    mode: apiMode,
+    baseUrl: apiBaseUrl,
+    isRelease: kReleaseMode,
+  );
+
+  final ThemeService themeService = createConfiguredThemeService(
+    mode: apiMode,
+    api: selectedApi,
+  );
 
   final themeController = ThemeController(
     themeService: themeService,

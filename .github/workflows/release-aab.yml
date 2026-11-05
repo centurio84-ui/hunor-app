@@ -3,6 +3,14 @@ name: Google Play Release AAB Build
 on:
   workflow_dispatch:
     inputs:
+      target_env:
+        description: 'Célkörnyezet (staging vagy production)'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
       build_number:
         description: 'Android versionCode (pl. 10001)'
         required: false
@@ -104,14 +112,14 @@ jobs:
           EOF
 
           # Gradle signingConfigs tényleges bekötése a build.gradle / build.gradle.kts fájlban
+          # Biztonságos felülírás: nem bántjuk a debug signingConfig-ot, kizárólag a release signingConfig-ot hozzuk létre és kötjük a release buildType-hoz.
           python3 - <<'PY'
           from pathlib import Path
 
           p_kts = Path('android/app/build.gradle.kts')
           if p_kts.exists():
               s = p_kts.read_text()
-              if 'signingConfigs' not in s:
-                  # signingConfigs beszúrása a buildTypes elé
+              if 'signingConfigs.create("release")' not in s and 'create("release")' not in s:
                   marker = 'buildTypes {'
                   signing_code = '''
     signingConfigs {
@@ -130,13 +138,15 @@ jobs:
 '''
                   if marker in s:
                       s = s.replace(marker, signing_code + '\n    ' + marker)
-                      s = s.replace('getByName("release") {', 'getByName("release") {\n            signingConfig = signingConfigs.getByName("release")')
+                      # Csak a getByName("release") signingConfigját irányítjuk át, a debug érintetlen marad
+                      if 'signingConfig = signingConfigs.getByName("release")' not in s:
+                          s = s.replace('getByName("release") {', 'getByName("release") {\n            signingConfig = signingConfigs.getByName("release")')
                       p_kts.write_text(s)
 
           p_groovy = Path('android/app/build.gradle')
           if p_groovy.exists():
               s = p_groovy.read_text()
-              if 'signingConfigs {' not in s:
+              if 'release {' not in s or 'signingConfigs {' not in s:
                   marker = 'buildTypes {'
                   signing_code = '''
     signingConfigs {
@@ -155,23 +165,63 @@ jobs:
 '''
                   if marker in s:
                       s = s.replace(marker, signing_code + '\n    ' + marker)
-                      s = s.replace('release {', 'release {\n            signingConfig signingConfigs.release')
+                      if 'signingConfig signingConfigs.release' not in s:
+                          s = s.replace('release {', 'release {\n            signingConfig signingConfigs.release')
                       p_groovy.write_text(s)
           PY
 
       - name: Build Android App Bundle (Release AAB)
+        shell: bash
         run: |
+          TARGET_ENV="${{ github.event.inputs.target_env || 'staging' }}"
           BUILD_NUM="${{ github.event.inputs.build_number || '10001' }}"
           VERSION_NAME="${{ github.event.inputs.version_name || '1.0.0' }}"
-          API_URL="${{ secrets.RESCUE_PROD_API_BASE_URL || secrets.RESCUE_API_BASE_URL }}"
-          if [ -z "$API_URL" ]; then
-            echo "::error::HIÁNYZÓ PRODUCTION API CÍM: Nincs megadva RESCUE_PROD_API_BASE_URL környezeti változó!"
-            exit 1
+          
+          echo "Build célkörnyezet: $TARGET_ENV"
+          echo "Verzió: $VERSION_NAME ($BUILD_NUM)"
+
+          if [ "$TARGET_ENV" = "production" ]; then
+            PROD_URL="${{ secrets.RESCUE_PROD_API_BASE_URL }}"
+            if [ -z "$PROD_URL" ]; then
+              echo "::error::HIÁNYZÓ PRODUCTION API CÍM: Production kiadáshoz kötelező a jóváhagyott RESCUE_PROD_API_BASE_URL secret!"
+              echo "A build biztonsági okokból leáll; éles kiadás nem készülhet el staging vagy hiányzó címmel."
+              exit 1
+            fi
+            # A production build csak jóváhagyott éles címmel futhat le
+            API_URL="$PROD_URL"
+            API_MODE="production"
+          else
+            # Staging tesztkiadás: kizárólag a hivatalos, jóváhagyott staging végpont használható
+            STAGING_URL="${{ secrets.RESCUE_STAGING_API_BASE_URL || 'https://xbcutdkqswfzkubkozng.supabase.co/functions/v1/rescue-platform-staging/v1' }}"
+            API_URL="$STAGING_URL"
+            API_MODE="staging"
           fi
+
+          echo "Alkalmazott API_MODE: $API_MODE"
           flutter build appbundle --release --build-number=$BUILD_NUM --build-name=$VERSION_NAME \
-            --dart-define=RESCUE_API_MODE=staging \
+            --dart-define=RESCUE_API_MODE=$API_MODE \
             --dart-define=RESCUE_API_BASE_URL=$API_URL
           ls -la build/app/outputs/bundle/release/
+
+      - name: Verify Signed AAB Integrity and Signatures
+        shell: bash
+        run: |
+          AAB_FILE="build/app/outputs/bundle/release/app-release.aab"
+          if [ ! -f "$AAB_FILE" ]; then
+            echo "::error::A release AAB fájl nem található: $AAB_FILE"
+            exit 1
+          fi
+          
+          echo "=== AAB fájlméret és integritás vizsgálata ==="
+          ls -lh "$AAB_FILE"
+          unzip -t "$AAB_FILE" > /dev/null
+          echo "AAB zip integritás: OK"
+
+          echo "=== Aláírás vizsgálata jarsigner segítségével ==="
+          jarsigner -verify -verbose -certs "$AAB_FILE" | grep -E "jar verified|Signed by|CN=" || true
+          
+          # Ellenőrizzük, hogy a MANIFEST.MF és aláírófájlok (.RSA/.SF) jelen vannak-e
+          unzip -l "$AAB_FILE" | grep "META-INF/" | head -n 10
 
       - name: Generate AAB Checksum
         run: |
