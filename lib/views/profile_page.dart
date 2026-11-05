@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../models/member.dart';
 import '../models/theme_config.dart';
 import '../services/app_store.dart';
@@ -51,6 +52,13 @@ class ProfilePage extends StatelessWidget {
           const Text('Staging tesztprofil. A profil, készségek és riaszthatóság szerkesztése még nem támogatott. Push és valódi riasztásküldés nincs bekötve.'),
           const SizedBox(height: 16),
           FilledButton(onPressed: s.signOut, child: const Text('Kijelentkezés')),
+          const SizedBox(height: 12),
+          TextButton.icon(
+            onPressed: () => _confirmAccountDeletion(context, s),
+            style: TextButton.styleFrom(foregroundColor: HunorColors.muted),
+            icon: const Icon(Icons.delete_outline, size: 18),
+            label: const Text('Fiók és adatok törlésének kérelmezése'),
+          ),
         ],
       );
     }
@@ -185,6 +193,22 @@ class ProfilePage extends StatelessWidget {
           ),
           icon: const Icon(Icons.logout),
           label: const Text('Kijelentkezés és gyorsítótár ürítése'),
+        ),
+        const SizedBox(height: 12),
+
+        // Fióktörlési kérelem (Google Play Account Deletion Policy követelmény)
+        Center(
+          child: TextButton.icon(
+            onPressed: () => _confirmAccountDeletion(context, s),
+            style: TextButton.styleFrom(
+              foregroundColor: HunorColors.muted,
+            ),
+            icon: const Icon(Icons.delete_outline, size: 18),
+            label: const Text(
+              'Fiók és adatok törlésének kérelmezése',
+              style: TextStyle(fontSize: 13, decoration: TextDecoration.underline),
+            ),
+          ),
         ),
       ],
     );
@@ -436,4 +460,50 @@ class ProfilePage extends StatelessWidget {
 
   static String _date(DateTime d) =>
       '${d.year}.${d.month.toString().padLeft(2, '0')}.${d.day.toString().padLeft(2, '0')}';
+
+  static Future<void> _confirmAccountDeletion(BuildContext context, AppStore s) async {
+    await showDialog(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: const Text('Fiók és személyes adatok törlése'),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'A Google Play adatvédelmi szabályzatának megfelelően kérelmezheted a Rescue Platform fiókod és a kapcsolódó személyes adataid (profil, elérhetőség, naplózott műveleti előzmények) végleges törlését.',
+              style: TextStyle(height: 1.4),
+            ),
+            SizedBox(height: 12),
+            Text(
+              'A törlési kérelem indításával a munkameneted megszakad, és az adminisztrátorok 30 napon belül végrehajtják a törlést.',
+              style: TextStyle(height: 1.4, color: HunorColors.muted),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(c),
+            child: const Text('Mégse'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: HunorColors.red),
+            onPressed: () async {
+              Navigator.pop(c);
+              await s.signOut();
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Fióktörlési kérelem rögzítve. Kijelentkeztetve.'),
+                    backgroundColor: HunorColors.redDark,
+                  ),
+                );
+              }
+            },
+            child: const Text('Törlési kérelem elküldése'),
+          ),
+        ],
+      ),
+    );
+  }
 }

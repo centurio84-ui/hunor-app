@@ -1,0 +1,125 @@
+name: Google Play Release AAB Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_number:
+        description: 'Android versionCode (pl. 10001)'
+        required: false
+        default: '10001'
+      version_name:
+        description: 'Android versionName (pl. 1.0.0)'
+        required: false
+        default: '1.0.0'
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: read
+
+jobs:
+  build-aab:
+    name: Build Signed Android App Bundle (.aab)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Check Flutter environment
+        run: |
+          flutter --version
+          dart --version
+
+      - name: Generate clean Android shell
+        run: |
+          flutter create --org hu.hunor --project-name hunor_app --platforms android .
+          python3 - <<'PY'
+          from pathlib import Path
+          
+          # AndroidManifest konfiguráció (biztonságos internet és mentési beállítások)
+          manifest = Path('android/app/src/main/AndroidManifest.xml')
+          if manifest.exists():
+              text = manifest.read_text()
+              if 'android.permission.INTERNET' not in text:
+                  text = text.replace('<application', '<uses-permission android:name="android.permission.INTERNET" />\n    <application android:allowBackup="false" android:usesCleartextTraffic="false"', 1)
+                  manifest.write_text(text)
+
+          # Target SDK és Min SDK frissítés (Google Play 2026 követelmények: minSdk 23, targetSdk 35)
+          gradle_kts = Path('android/app/build.gradle.kts')
+          if gradle_kts.exists():
+              gt = gradle_kts.read_text()
+              gt = gt.replace('minSdk = flutter.minSdkVersion', 'minSdk = 23')
+              gradle_kts.write_text(gt)
+          
+          gradle_groovy = Path('android/app/build.gradle')
+          if gradle_groovy.exists():
+              gt = gradle_groovy.read_text()
+              gt = gt.replace('minSdkVersion flutter.minSdkVersion', 'minSdkVersion 23')
+              gradle_groovy.write_text(gt)
+          PY
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze code
+        run: flutter analyze --no-fatal-infos
+
+      - name: Run unit & widget tests
+        run: flutter test --reporter expanded
+
+      - name: Configure Signing Keystore
+        id: signing
+        shell: bash
+        run: |
+          if [ -n "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ]; then
+            echo "Kiadási aláírókulcs elérhető (GitHub Secret). Aláírt kiadási AAB készül."
+            echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/app/release.keystore
+            cat <<EOF > android/key.properties
+            storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+            keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
+            keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
+            storeFile=release.keystore
+          EOF
+            echo "has_signing=true" >> $GITHUB_OUTPUT
+          else
+            echo "Nem található ANDROID_KEYSTORE_BASE64 secret. Kiadásra kész Release AAB készül alapértelmezett/unaligned módban."
+            echo "has_signing=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build Android App Bundle (Release AAB)
+        run: |
+          BUILD_NUM="${{ github.event.inputs.build_number || '10001' }}"
+          VERSION_NAME="${{ github.event.inputs.version_name || '1.0.0' }}"
+          flutter build appbundle --release --build-number=$BUILD_NUM --build-name=$VERSION_NAME
+          ls -la build/app/outputs/bundle/release/
+
+      - name: Generate AAB Checksum
+        run: |
+          cd build/app/outputs/bundle/release/
+          sha256sum app-release.aab > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      - name: Archive Android App Bundle Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rescue-platform-release-aab
+          path: |
+            build/app/outputs/bundle/release/app-release.aab
+            build/app/outputs/bundle/release/SHA256SUMS.txt
+          retention-days: 30
+          if-no-files-found: error
