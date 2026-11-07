@@ -218,7 +218,8 @@ jobs:
           echo "AAB zip integritás: OK"
 
           echo "=== Aláírás vizsgálata jarsigner segítségével ==="
-          jarsigner -verify -verbose -certs "$AAB_FILE" | grep -E "jar verified|Signed by|CN=" || true
+          jarsigner -verify -strict -verbose -certs "$AAB_FILE" > /tmp/aab-signature-verification.log
+          grep -E "jar verified|Signed by|CN=" /tmp/aab-signature-verification.log || true
           
           # Ellenőrizzük, hogy a MANIFEST.MF és aláírófájlok (.RSA/.SF) jelen vannak-e
           unzip -l "$AAB_FILE" | grep "META-INF/" | head -n 10
