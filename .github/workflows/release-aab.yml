@@ -20,6 +20,10 @@ on:
         required: false
         default: '1.0.0'
   push:
+    branches:
+      - gemini/rescue-release-002
+    paths:
+      - .github/workflows/release-aab.yml
     tags:
       - 'v*.*.*'
 
