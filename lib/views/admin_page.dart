@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/member.dart';
+import '../models/rescue_alert.dart';
+import '../models/rescue_event.dart';
 import '../services/app_store.dart';
 import '../theme/hunor_theme.dart';
 
@@ -65,7 +67,7 @@ class AdminPage extends StatelessWidget {
     );
   }
 
-  void _showAlertResponses(BuildContext context, HunorAlert alert) {
+  void _showAlertResponses(BuildContext context, RescueAlert alert) {
     final s = context.read<AppStore>();
     final responses = s.alertResponseByMember[alert.id] ?? {};
     final available = s.members.where((m) => responses[m.id] == 'available').toList();
@@ -146,7 +148,7 @@ class AdminPage extends StatelessWidget {
     )));
   }
 
-  void _editEvent(BuildContext context, [HunorEvent? event]) {
+  void _editEvent(BuildContext context, [RescueEvent? event]) {
     final s = context.read<AppStore>();
     final title = TextEditingController(text: event?.title ?? ''), location = TextEditingController(text: event?.location ?? ''), details = TextEditingController(text: event?.details ?? '');
     var date = event?.date ?? DateTime.now().add(const Duration(days: 1));
@@ -200,7 +202,7 @@ class AdminPage extends StatelessWidget {
 }
 
 class _AdminAlertTile extends StatelessWidget {
-  final HunorAlert alert;
+  final RescueAlert alert;
   final VoidCallback onResponses;
   final VoidCallback onClose;
   const _AdminAlertTile({required this.alert, required this.onResponses, required this.onClose});

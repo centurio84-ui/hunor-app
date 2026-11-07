@@ -1,0 +1,3182 @@
+﻿openapi: 3.0.3
+info:
+  title: Rescue Platform ÔÇô k├Âz├Âs API szerz┼Ĺd├ęstervezet
+  version: 0.2.0-draft
+  description: 'CODEX-002 / 2026-10-14. Tervez├ęsi szerz┼Ĺd├ęs, nem implement├ílt API. Kanonikus Supabase projekt: embicteneumubwlqqfik,
+    vezet┼Ĺi kijel├Âl├ęs ├ęs olvasott projektmetaadat alapj├ín. A mobilk├│d konfigur├íci├│j├ít ├ęs az ├ęles API-t ez a dokumentum
+    nem m├│dos├ştja. Tenant-sz├ętv├ílaszt├ís, eszk├Âzprovider, receipt, emberi ack ├ęs r├ęszv├ęteli v├ílasz k├╝l├Ân fogalom.'
+servers:
+- url: https://api.rescue-platform.invalid/v1
+  description: Sz├índ├ękosan nem m┼▒k├Âd┼Ĺ p├ęldac├şm; nincs ├ęles API.
+x-implementation-status: proposal-only
+security:
+- bearerAuth: []
+tags:
+- name: Auth
+- name: Profiles
+- name: Organizations
+- name: Events
+- name: Participation
+- name: Alerts
+- name: RescueCoins
+- name: Devices
+paths:
+  /auth/sessions:
+    post:
+      operationId: createSession
+      summary: Bejelentkez├ęs e-maillel ├ęs jelsz├│val
+      description: Tervezett Supabase Auth adapter. Nem saj├ít jelsz├│-adatb├ízis. TLS; ├íltal├ínos hiba├╝zenet, nincs
+        fi├│kfelder├şt├ęs. Mobilon a refresh token v├ędett OS t├írba ker├╝l; b├Âng├ęsz┼Ĺs HttpOnly BFF k├╝l├Ân d├Ânt├ęs. Jelsz├│,
+        token nem napl├│zhat├│. MFA/passkey challenge nincs ebben az els┼Ĺ szerz┼Ĺd├ęsben; ilyen fi├│kn├íl a j├Âv┼Ĺbeli challenge
+        folyamatig nem adhat├│ ki teljes session.
+      tags:
+      - Auth
+      x-status: proposal-not-implemented
+      x-required-permissions: []
+      parameters: []
+      responses:
+        '200':
+          description: Sikeres v├ílasz
+          headers:
+            X-Request-Id:
+              description: Szerver ├íltal gener├ílt korrel├íci├│s UUID, nem titok.
+              schema:
+                type: string
+                format: uuid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+        '429':
+          $ref: '#/components/responses/Error429'
+        '503':
+          $ref: '#/components/responses/Error503'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      security: []
+  /auth/refresh:
+    post:
+      operationId: refreshSession
+      summary: Munkamenet meg├║j├şt├ísa
+      description: A refresh token hiteles├şt; forgat├ís ├ęs ├║jrafelhaszn├íl├ís-v├ędelem az Auth szolg├íltat├│n├íl. A kliens
+        atomi m├│don lecser├ęli a tokent; p├írhuzamos refresh ker├╝lend┼Ĺ.
+      tags:
+      - Auth
+      x-status: proposal-not-implemented
+      x-required-permissions: []
+      parameters: []
+      responses:
+        '200':
+          description: Sikeres v├ílasz
+          headers:
+            X-Request-Id:
+              description: Szerver ├íltal gener├ílt korrel├íci├│s UUID, nem titok.
+              schema:
+                type: string
+                format: uuid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+        '429':
+          $ref: '#/components/responses/Error429'
+        '503':
+          $ref: '#/components/responses/Error503'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+      security: []
+  /auth/sessions/current:
+    delete:
+      operationId: revokeCurrentSession
+      summary: Aktu├ílis munkamenet visszavon├ísa
+      description: 'v0.2 terv: az aktu├ílis szerver-session visszavon├ísa ├ęs a sessionh├Âz bizony├ştottan k├Ât├Âtt telep├şt├ęs
+        ├Âsszes szervezeti push-k├Ât├ęs├ęnek inaktiv├íl├ísa. Az install├íci├│ azonos├şt├│ja ├Ânmag├íban nem bizony├şt├ęk; a szerver
+        sessionÔÇôinstallation k├Ât├ęst ellen┼Ĺriz. Glob├ílis m├ís k├ęsz├╝l├ękek sessionje nem v├íltozik. Kliens cache/token
+        ├╝r├şt├ęs ├ęs offline queue eldob├ís. JWT ├Ânmag├íban lej├íratig ├ęlhet; kritikus v├ęgpontok session-liveness ellen┼Ĺrz├ęse
+        sz├╝ks├ęges.'
+      tags:
+      - Auth
+      x-status: proposal-not-implemented
+      x-required-permissions: []
+      parameters: []
+      responses:
+        '204':
+          description: Sikeres m┼▒velet, ├╝res t├Ârzs.
+          headers:
+            X-Request-Id:
+              description: Szerver ├íltal gener├ílt korrel├íci├│s UUID, nem titok.
+              schema:
+                type: string
+                format: uuid
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+        '429':
+          $ref: '#/components/responses/Error429'
+        '503':
+          $ref: '#/components/responses/Error503'
+  /me:
+    get:
+      operationId: getMyProfile
+      summary: Saj├ít alapadatok
+      description: Glob├ílis Auth-identit├ís ├ęs minim├ílis profil; szervezeti beoszt├ís az organization tags├ígi n├ęzet├ęben.
+        Eg├ęszs├ęg├╝gyi ├ęs okm├ínyadatot nem ad vissza.
+      tags:
+      - Profiles
+      x-status: proposal-not-implemented
+      x-required-permissions: []
+      parameters: []
+      responses:
+        '200':
+          description: Sikeres v├ílasz
+          headers:
+            X-Request-Id:
+              description: Szerver ├íltal gener├ílt korrel├íci├│s UUID, nem titok.
+              schema:
+                type: string
+                format: uuid
+            ETag:
+              description: Az adott er┼Ĺforr├ís aktu├ílis verzi├│ja, a k├Âvetkez┼Ĺ If-Match-hez.
+              schema:
+                type: string
+                example: '"v3"'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Profile'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+        '429':
+          $ref: '#/components/responses/Error429'
+        '503':
+          $ref: '#/components/responses/Error503'
+    patch:
+      operationId: updateMyProfile
+      summary: Saj├ít alapadatok m├│dos├şt├ísa
+      description: Csak display_name ├ęs contact_phone. Szerepk├Âr, tags├ígi ├íllapot, beoszt├ísi jogosults├íg ├ęs Auth
+        e-mail nem ├şrhat├│ t├Âmeges mez┼Ĺ├ítad├íssal. A szervezeti megye, szolg├ílati hely ├ęs beoszt├ís nem glob├ílis profilmez┼Ĺ;
+        ezek m├│dos├şt├│ API-ja m├ęg nincs ebben a szerz┼Ĺd├ęsben.
+      tags:
+      - Profiles
+      x-status: proposal-not-implemented
+      x-required-permissions: []
+      parameters:
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/IfMatch'
+      responses:
+        '200':
+          description: Sikeres v├ílasz
+          headers:
+            X-Request-Id:
+              description: Szerver ├íltal gener├ílt korrel├íci├│s UUID, nem titok.
+              schema:
+                type: string
+                format: uuid
+            ETag:
+              description: Az adott er┼Ĺforr├ís aktu├ílis verzi├│ja, a k├Âvetkez┼Ĺ If-Match-hez.
+              schema:
+                type: string
+                example: '"v3"'
+            Idempotency-Replayed:
+              schema:
+                type: boolean
+              description: Igaz, ha egy kor├íbbi eredm├ęnyt j├ítszottunk ├║jra.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Profile'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+        '429':
+          $ref: '#/components/responses/Error429'
+        '503':
+          $ref: '#/components/responses/Error503'
+        '412':
+          $ref: '#/components/responses/Error412'
+        '428':
+          $ref: '#/components/responses/Error428'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfilePatch'
+  /organizations:
+    get:
+      operationId: listMyOrganizations
+      summary: Saj├ít szervezetek list├íja
+      description: Kiz├ír├│lag a bejelentkezett felhaszn├íl├│ tags├ígai. Nem nyilv├ínos szervezetjegyz├ęk.
+      tags:
+      - Organizations
+      x-status: proposal-not-implemented
+      x-required-permissions: []
+      parameters:
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: Sikeres v├ílasz
+          headers:
+            X-Request-Id:
+              description: Szerver ├íltal gener├ílt korrel├íci├│s UUID, nem titok.
+              schema:
+                type: string
+                format: uuid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationsPage'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+        '429':
+          $ref: '#/components/responses/Error429'
+        '503':
+          $ref: '#/components/responses/Error503'
+  /organizations/{organization_id}:
+    get:
+      operationId: getOrganization
+      summary: Szervezet r├ęszletei
+      description: ' Tenantv├ílt├ískor ├║j tags├ígellen┼Ĺrz├ęs; m├ís tenant UUID-j├íra 404, kliensoldali org state nem jogosults├ígforr├ís.'
+      tags:
+      - Organizations
+      x-status: proposal-not-implemented
+      x-required-permissions:
+      - organization.read
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      responses:
+        '200':
+          description: Sikeres v├ílasz
+          headers:
+            X-Request-Id:
+              description: Szerver ├íltal gener├ílt korrel├íci├│s UUID, nem titok.
+              schema:
+                type: string
+                format: uuid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+        '429':
+          $ref: '#/components/responses/Error429'
+        '503':
+          $ref: '#/components/responses/Error503'
+  /organizations/{organization_id}/members/me:
+    get:
+      operationId: getMyOrganizationMembership
+      summary: Saj├ít szervezeti profil ├ęs effekt├şv jogok
+      description: A permissions a szerver ├íltal sz├ím├ştott UI-t├íj├ękoztat├ís. Minden k├ęr├ęs k├╝l├Ân, friss szerveroldali
+        ellen┼Ĺrz├ęst kap; a kliens nem k├╝ldhet hiteles joglist├ít. Tenantv├ílt├ískor ├║j tags├ígellen┼Ĺrz├ęs; m├ís tenant
+        UUID-j├íra 404, kliensoldali org state nem jogosults├ígforr├ís.
+      tags:
+      - Profiles
+      x-status: proposal-not-implemented
+      x-required-permissions:
+      - membership.read_self
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      responses:
+        '200':
+          description: Sikeres v├ílasz
+          headers:
+            X-Request-Id:
+              description: Szerver ├íltal gener├ílt korrel├íci├│s UUID, nem titok.
+              schema:
+                type: string
+                format: uuid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationMember'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+        '429':
+          $ref: '#/components/responses/Error429'
+        '503':
+          $ref: '#/components/responses/Error503'
+  /organizations/{organization_id}/members:
+    get:
+      operationId: listOrganizationMembers
+      summary: Szervezeti tagjegyz├ęk
+      description: Csak j├│v├íhagyott tagok megengedett jegyz├ęki adatai; okm├íny, eg├ęszs├ęg├╝gy, priv├ít el├ęrhet┼Ĺs├ęg ├ęs
+        k├ęsz├╝l├ęktoken n├ęlk├╝l. Tenantv├ílt├ískor ├║j tags├ígellen┼Ĺrz├ęs; m├ís tenant UUID-j├íra 404, kliensoldali org state
+        nem jogosults├ígforr├ís.
+      tags:
+      - Organizations
+      x-status: proposal-not-implemented
+      x-required-permissions:
+      - members.read
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Cursor'
+      - name: search
+        in: query
+        schema:
+          type: string
+          maxLength: 160
+      responses:
+        '200':
+          description: Sikeres v├ílasz
+          headers:
+            X-Request-Id:
+              description: Szerver ├íltal gener├ílt korrel├íci├│s UUID, nem titok.
+              schema:
+                type: string
+                format: uuid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MembersPage'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+        '429':
+          $ref: '#/components/responses/Error429'
+        '503':
+          $ref: '#/components/responses/Error503'
+  /organizations/{organization_id}/events:
+    get:
+      operationId: listEvents
+      summary: Esem├ęnylista
+      description: A visibility nem ker├╝li meg a tags├ígellen┼Ĺrz├ęst ezen a bels┼Ĺ API-n. Nyilv├ínos vend├ęg API k├╝l├Ân
+        szerz┼Ĺd├ęs. UTC intervallum [from,to), starts_at alapj├ín; stabil rendez├ęs starts_at,id. Tenantv├ílt├ískor ├║j
+        tags├ígellen┼Ĺrz├ęs; m├ís tenant UUID-j├íra 404, kliensoldali org state nem jogosults├ígforr├ís.
+      tags:
+      - Events
+      x-status: proposal-not-implemented
+      x-required-permissions:
+      - events.read
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Cursor'
+      - name: from
+        in: query
+        schema:
+          type: string
+          format: date-time
+      - name: to
+        in: query
+        schema:
+          type: string
+          format: date-time
+      responses:
+        '200':
+          description: Sikeres v├ílasz
+          headers:
+            X-Request-Id:
+              description: Szerver ├íltal gener├ílt korrel├íci├│s UUID, nem titok.
+              schema:
+                type: string
+                format: uuid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventsPage'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+        '429':
+          $ref: '#/components/responses/Error429'
+        '503':
+          $ref: '#/components/responses/Error503'
+    post:
+      operationId: createEvent
+      summary: Esem├ęny l├ętrehoz├ísa
+      description: ends_at > starts_at. L├ętrehoz├│ szerveroldalon az aktu├ílis tags├íg. Esem├ęny l├ętrehoz├ísa ├Ânmag├íban
+        nem k├╝ld riaszt├íst. Tenantv├ílt├ískor ├║j tags├ígellen┼Ĺrz├ęs; m├ís tenant UUID-j├íra 404, kliensoldali org state
+        nem jogosults├ígforr├ís.
+      tags:
+      - Events
+      x-status: proposal-not-implemented
+      x-required-permissions:
+      - events.manage
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '201':
+          description: Sikeres v├ílasz
+          headers:
+            X-Request-Id:
+              description: Szerver ├íltal gener├ílt korrel├íci├│s UUID, nem titok.
+              schema:
+                type: string
+                format: uuid
+            Idempotency-Replayed:
+              schema:
+                type: boolean
+              description: Igaz, ha egy kor├íbbi eredm├ęnyt j├ítszottunk ├║jra.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+        '429':
+          $ref: '#/components/responses/Error429'
+        '503':
+          $ref: '#/components/responses/Error503'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventCreate'
+  /organizations/{organization_id}/events/{event_id}:
+    get:
+      operationId: getEvent
+      summary: Esem├ęny r├ęszletei
+      description: ' Tenantv├ílt├ískor ├║j tags├ígellen┼Ĺrz├ęs; m├ís tenant UUID-j├íra 404, kliensoldali org state nem jogosults├ígforr├ís.'
+      tags:
+      - Events
+      x-status: proposal-not-implemented
+      x-required-permissions:
+      - events.read
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/EventId'
+      responses:
+        '200':
+          description: Sikeres v├ílasz
+          headers:
+            X-Request-Id:
+              description: Szerver ├íltal gener├ílt korrel├íci├│s UUID, nem titok.
+              schema:
+                type: string
+                format: uuid
+            ETag:
+              description: Az adott er┼Ĺforr├ís aktu├ílis verzi├│ja, a k├Âvetkez┼Ĺ If-Match-hez.
+              schema:
+                type: string
+                example: '"v3"'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+        '429':
+          $ref: '#/components/responses/Error429'
+        '503':
+          $ref: '#/components/responses/Error503'
+    patch:
+      operationId: updateEvent
+      summary: Esem├ęny m├│dos├şt├ísa
+      description: A teljes ered┼Ĺ id┼Ĺszakot ellen┼Ĺrzi. Lez├írt esem├ęny ├ęs akt├şv riaszt├íssal kapcsolatos id┼Ĺpontv├íltoztat├ís
+        409; k├ęs┼Ĺbbi k├╝l├Ân admin folyamat sz├╝ks├ęges. Tenantv├ílt├ískor ├║j tags├ígellen┼Ĺrz├ęs; m├ís tenant UUID-j├íra 404,
+        kliensoldali org state nem jogosults├ígforr├ís.
+      tags:
+      - Events
+      x-status: proposal-not-implemented
+      x-required-permissions:
+      - events.manage
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/EventId'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/IfMatch'
+      responses:
+        '200':
+          description: Sikeres v├ílasz
+          headers:
+            X-Request-Id:
+              description: Szerver ├íltal gener├ílt korrel├íci├│s UUID, nem titok.
+              schema:
+                type: string
+                format: uuid
+            ETag:
+              description: Az adott er┼Ĺforr├ís aktu├ílis verzi├│ja, a k├Âvetkez┼Ĺ If-Match-hez.
+              schema:
+                type: string
+                example: '"v3"'
+            Idempotency-Replayed:
+              schema:
+                type: boolean
+              description: Igaz, ha egy kor├íbbi eredm├ęnyt j├ítszottunk ├║jra.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+        '429':
+          $ref: '#/components/responses/Error429'
+        '503':
+          $ref: '#/components/responses/Error503'
+        '412':
+          $ref: '#/components/responses/Error412'
+        '428':
+          $ref: '#/components/responses/Error428'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventPatch'
+  /organizations/{organization_id}/events/{event_id}/participation/me:
+    get:
+      operationId: getMyEventParticipation
+      summary: Saj├ít esem├ęnyjelentkez├ęs
+      description: Ha m├ęg nincs jelentkez├ęs, pending ├ęs version=0 reprezent├íci├│; ebb┼Ĺl indul az If-Match. Tenantv├ílt├ískor
+        ├║j tags├ígellen┼Ĺrz├ęs; m├ís tenant UUID-j├íra 404, kliensoldali org state nem jogosults├ígforr├ís.
+      tags:
+      - Participation
+      x-status: proposal-not-implemented
+      x-required-permissions:
+      - events.read
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/EventId'
+      responses:
+        '200':
+          description: Sikeres v├ílasz
+          headers:
+            X-Request-Id:
+              description: Szerver ├íltal gener├ílt korrel├íci├│s UUID, nem titok.
+              schema:
+                type: string
+                format: uuid
+            ETag:
+              description: Az adott er┼Ĺforr├ís aktu├ílis verzi├│ja, a k├Âvetkez┼Ĺ If-Match-hez.
+              schema:
+                type: string
+                example: '"v3"'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Participation'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+        '429':
+          $ref: '#/components/responses/Error429'
+        '503':
+          $ref: '#/components/responses/Error503'
+    put:
+      operationId: setMyEventParticipation
+      summary: R├ęsztv├ęteli v├ílasz esem├ęnyre
+      description: 'Csak saj├ít tags├íg. exercise eset├ęn participant vagy excon; excon szerveroldali excon jogosults├ígot
+        ig├ęnyel. Egy├ęb esem├ęnyn├ęl kiz├ír├│lag participant. going = R├ęszt tudok venni, not_going = Nem tudok r├ęszt
+        venni. Lez├írt esem├ęny: 409. Tenantv├ílt├ískor ├║j tags├ígellen┼Ĺrz├ęs; m├ís tenant UUID-j├íra 404, kliensoldali
+        org state nem jogosults├ígforr├ís.'
+      tags:
+      - Participation
+      x-status: proposal-not-implemented
+      x-required-permissions:
+      - events.respond_self
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/EventId'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/IfMatch'
+      responses:
+        '200':
+          description: Sikeres v├ílasz
+          headers:
+            X-Request-Id:
+              description: Szerver ├íltal gener├ílt korrel├íci├│s UUID, nem titok.
+              schema:
+                type: string
+                format: uuid
+            ETag:
+              description: Az adott er┼Ĺforr├ís aktu├ílis verzi├│ja, a k├Âvetkez┼Ĺ If-Match-hez.
+              schema:
+                type: string
+                example: '"v3"'
+            Idempotency-Replayed:
+              schema:
+                type: boolean
+              description: Igaz, ha egy kor├íbbi eredm├ęnyt j├ítszottunk ├║jra.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Participation'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+        '429':
+          $ref: '#/components/responses/Error429'
+        '503':
+          $ref: '#/components/responses/Error503'
+        '412':
+          $ref: '#/components/responses/Error412'
+        '428':
+          $ref: '#/components/responses/Error428'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ParticipationRequest'
+  /organizations/{organization_id}/alerts:
+    get:
+      operationId: listAlerts
+      summary: Saj├ít riaszt├ísok vagy admin ├íttekint├ęs
+      description: Tag csak a saj├ít c├şmzettk├ęnt kapott riaszt├ísait l├ítja; szervezeti admin az adott szervezet ├Âsszes
+        riaszt├ís├ít. M├ís szervezet riaszt├ís├ínak l├ętez├ęs├ęt sem ├írulja el. Tenantv├ílt├ískor ├║j tags├ígellen┼Ĺrz├ęs; m├ís
+        tenant UUID-j├íra 404, kliensoldali org state nem jogosults├ígforr├ís.
+      tags:
+      - Alerts
+      x-status: proposal-not-implemented
+      x-required-permissions:
+      - alerts.read
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: Sikeres v├ílasz
+          headers:
+            X-Request-Id:
+              description: Szerver ├íltal gener├ílt korrel├íci├│s UUID, nem titok.
+              schema:
+                type: string
+                format: uuid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlertsPage'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+        '429':
+          $ref: '#/components/responses/Error429'
+        '503':
+          $ref: '#/components/responses/Error503'
+    post:
+      operationId: createAlertDraft
+      summary: Riaszt├ístervezet l├ętrehoz├ísa, k├╝ld├ęs n├ęlk├╝l
+      description: Csak szervezeti admin. Az esem├ęny ├ęs minden tags├íg ugyanahhoz a szervezethez tartozzon, approved
+        ├ęs riaszthat├│ legyen; a position_key a hiteles├ştett beoszt├ísb├│l v├ílaszthat├│. Duplik├ílt tags├íg/poz├şci├│-slot
+        tiltott, parancsnok ├ęs helyettes max.1. expires_at > now ├ęs <= esem├ęny ends_at. draft ├íllapot; nincs push
+        mell├ękhat├ís. Tenantv├ílt├ískor ├║j tags├ígellen┼Ĺrz├ęs; m├ís tenant UUID-j├íra 404, kliensoldali org state nem jogosults├ígforr├ís.
+      tags:
+      - Alerts
+      x-status: proposal-not-implemented
+      x-required-permissions:
+      - alerts.issue
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '201':
+          description: Sikeres v├ílasz
+          headers:
+            X-Request-Id:
+              description: Szerver ├íltal gener├ílt korrel├íci├│s UUID, nem titok.
+              schema:
+                type: string
+                format: uuid
+            Idempotency-Replayed:
+              schema:
+                type: boolean
+              description: Igaz, ha egy kor├íbbi eredm├ęnyt j├ítszottunk ├║jra.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Alert'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+        '429':
+          $ref: '#/components/responses/Error429'
+        '503':
+          $ref: '#/components/responses/Error503'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertCreate'
+  /organizations/{organization_id}/alerts/{alert_id}:
+    get:
+      operationId: getAlert
+      summary: Riaszt├ís r├ęszletei
+      description: ' Tenantv├ílt├ískor ├║j tags├ígellen┼Ĺrz├ęs; m├ís tenant UUID-j├íra 404, kliensoldali org state nem jogosults├ígforr├ís.'
+      tags:
+      - Alerts
+      x-status: proposal-not-implemented
+      x-required-permissions:
+      - alerts.read
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/AlertId'
+      responses:
+        '200':
+          description: Sikeres v├ílasz
+          headers:
+            X-Request-Id:
+              description: Szerver ├íltal gener├ílt korrel├íci├│s UUID, nem titok.
+              schema:
+                type: string
+                format: uuid
+            ETag:
+              description: Az adott er┼Ĺforr├ís aktu├ílis verzi├│ja, a k├Âvetkez┼Ĺ If-Match-hez.
+              schema:
+                type: string
+                example: '"v3"'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Alert'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+        '429':
+          $ref: '#/components/responses/Error429'
+        '503':
+          $ref: '#/components/responses/Error503'
+  /organizations/{organization_id}/alerts/{alert_id}/dispatch:
+    post:
+      operationId: dispatchAlert
+      summary: Admin ├íltal v├ęgleges├ştett riaszt├ís kiad├ísa
+      description: Csak szervezeti admin. Az adminszerepet, tags├ígot, riaszthat├│s├ígot, beoszt├íst ├ęs lej├íratot tranzakci├│ban
+        ├║jraellen┼Ĺrzi. Riaszt├ís ├ęs outbox atomi r├Âgz├şt├ęs; 202 csak tart├│s sorba├íll├şt├íst jelent. Provider ├ítv├ętel,
+        k├ęsz├╝l├ęk├ítv├ętel ├ęs emberi v├ílasz k├╝l├Ân ├íllapot. Draftb├│l egyszer ind├şthat├│, m├ís kulcs├║ ├║jraind├şt├ís 409.
+        Eredeti idempotens replay nem k├╝ld ├║jra. Tenantv├ílt├ískor ├║j tags├ígellen┼Ĺrz├ęs; m├ís tenant UUID-j├íra 404,
+        kliensoldali org state nem jogosults├ígforr├ís.
+      tags:
+      - Alerts
+      x-status: proposal-not-implemented
+      x-required-permissions:
+      - alerts.issue
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/AlertId'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/IfMatch'
+      responses:
+        '202':
+          description: Sikeres v├ílasz
+          headers:
+            X-Request-Id:
+              description: Szerver ├íltal gener├ílt korrel├íci├│s UUID, nem titok.
+              schema:
+                type: string
+                format: uuid
+            ETag:
+              description: Az adott er┼Ĺforr├ís aktu├ílis verzi├│ja, a k├Âvetkez┼Ĺ If-Match-hez.
+              schema:
+                type: string
+                example: '"v3"'
+            Idempotency-Replayed:
+              schema:
+                type: boolean
+              description: Igaz, ha egy kor├íbbi eredm├ęnyt j├ítszottunk ├║jra.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DispatchAccepted'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+        '429':
+          $ref: '#/components/responses/Error429'
+        '503':
+          $ref: '#/components/responses/Error503'
+        '412':
+          $ref: '#/components/responses/Error412'
+        '428':
+          $ref: '#/components/responses/Error428'
+  /organizations/{organization_id}/alerts/{alert_id}/recipients:
+    get:
+      operationId: listAlertRecipients
+      summary: C├şmzettek ├ęs v├ílasz├íllapotok
+      description: Kiz├ír├│lag szervezeti admin. Nem ad vissza eszk├Âztokent. A nemet v├ílaszol├│ ├ęs helyettes├ştett c├şmzett
+        el┼Ĺzm├ęnye megmarad; megjelen├şt├ęskor rendezhet┼Ĺ alulra. Tenantv├ílt├ískor ├║j tags├ígellen┼Ĺrz├ęs; m├ís tenant UUID-j├íra
+        404, kliensoldali org state nem jogosults├ígforr├ís.
+      tags:
+      - Alerts
+      x-status: proposal-not-implemented
+      x-required-permissions:
+      - alerts.manage
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/AlertId'
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: Sikeres v├ílasz
+          headers:
+            X-Request-Id:
+              description: Szerver ├íltal gener├ílt korrel├íci├│s UUID, nem titok.
+              schema:
+                type: string
+                format: uuid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlertRecipientsPage'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+        '429':
+          $ref: '#/components/responses/Error429'
+        '503':
+          $ref: '#/components/responses/Error503'
+  /organizations/{organization_id}/alerts/{alert_id}/acknowledgement/me:
+    put:
+      operationId: acknowledgeAlert
+      summary: Saj├ít riaszt├ís emberi nyugt├íz├ísa
+      description: 'Csak a saj├ít, akt├şv, m├ęg nem helyettes├ştett megh├şv├ís. Nincs t├Ârzs: a szerver az els┼Ĺ elfogadott
+        emberi m┼▒velet idej├ęt r├Âgz├şti, ism├ętl├ęskor v├íltozatlanul adja vissza. Nem jelent r├ęszv├ęteli igen v├ílaszt,
+        ├ęs automatikus h├ítt├ęr├ítv├ętel nem h├şvhatja. Lej├írt/lez├írt/helyettes├ştett: 409. Tenantv├ílt├ískor ├║j tags├ígellen┼Ĺrz├ęs;
+        m├ís tenant UUID-j├íra 404, kliensoldali org state nem jogosults├ígforr├ís.'
+      tags:
+      - Alerts
+      x-status: proposal-not-implemented
+      x-required-permissions:
+      - alerts.acknowledge_self
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/AlertId'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '200':
+          description: Sikeres v├ílasz
+          headers:
+            X-Request-Id:
+              description: Szerver ├íltal gener├ílt korrel├íci├│s UUID, nem titok.
+              schema:
+                type: string
+                format: uuid
+            Idempotency-Replayed:
+              schema:
+                type: boolean
+              description: Igaz, ha egy kor├íbbi eredm├ęnyt j├ítszottunk ├║jra.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Acknowledgement'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+        '429':
+          $ref: '#/components/responses/Error429'
+        '503':
+          $ref: '#/components/responses/Error503'
+  /organizations/{organization_id}/alerts/{alert_id}/response/me:
+    get:
+      operationId: getMyAlertResponse
+      summary: Saj├ít r├ęszv├ęteli v├ílasz riaszt├ísra
+      description: A saj├ít megh├şv├ísb├│l k├ępzett pending vagy kor├íbbi v├ílasz, verzi├│val. Az ETag kiz├ír├│lag a v├ílasz
+        er┼Ĺforr├ísra vonatkozik. Tenantv├ílt├ískor ├║j tags├ígellen┼Ĺrz├ęs; m├ís tenant UUID-j├íra 404, kliensoldali org
+        state nem jogosults├ígforr├ís.
+      tags:
+      - Alerts
+      x-status: proposal-not-implemented
+      x-required-permissions:
+      - alerts.read
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/AlertId'
+      responses:
+        '200':
+          description: Sikeres v├ílasz
+          headers:
+            X-Request-Id:
+              description: Szerver ├íltal gener├ílt korrel├íci├│s UUID, nem titok.
+              schema:
+                type: string
+                format: uuid
+            ETag:
+              description: Az adott er┼Ĺforr├ís aktu├ílis verzi├│ja, a k├Âvetkez┼Ĺ If-Match-hez.
+              schema:
+                type: string
+                example: '"v3"'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlertResponse'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+        '429':
+          $ref: '#/components/responses/Error429'
+        '503':
+          $ref: '#/components/responses/Error503'
+    put:
+      operationId: setMyAlertResponse
+      summary: R├ęszt tudok venni / Nem tudok r├ęszt venni
+      description: 'Saj├ít megh├şv├ís, akt├şv riaszt├ís ├ęs friss tags├íg. Az igen/nem v├ílasz implicit emberi nyugt├íz├íst
+        is r├Âgz├şt, ha az m├ęg hi├ínyzik. Lej├írt, lez├írt vagy helyettes├ştett megh├şv├ís: 409. A v├ílasz m├│dos├şthat├│ a
+        helyettes├şt├ęsig; ├╝tk├Âz├ęs 412. Nemet v├ílaszol├│ el┼Ĺzm├ęnye nem t├Âr├Âlhet┼Ĺ. Nem m├│dos├ştja a glob├ílis riaszthat├│s├ígot.
+        Tenantv├ílt├ískor ├║j tags├ígellen┼Ĺrz├ęs; m├ís tenant UUID-j├íra 404, kliensoldali org state nem jogosults├ígforr├ís.'
+      tags:
+      - Alerts
+      x-status: proposal-not-implemented
+      x-required-permissions:
+      - alerts.respond_self
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/AlertId'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/IfMatch'
+      responses:
+        '200':
+          description: Sikeres v├ílasz
+          headers:
+            X-Request-Id:
+              description: Szerver ├íltal gener├ílt korrel├íci├│s UUID, nem titok.
+              schema:
+                type: string
+                format: uuid
+            ETag:
+              description: Az adott er┼Ĺforr├ís aktu├ílis verzi├│ja, a k├Âvetkez┼Ĺ If-Match-hez.
+              schema:
+                type: string
+                example: '"v3"'
+            Idempotency-Replayed:
+              schema:
+                type: boolean
+              description: Igaz, ha egy kor├íbbi eredm├ęnyt j├ítszottunk ├║jra.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlertResponse'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+        '429':
+          $ref: '#/components/responses/Error429'
+        '503':
+          $ref: '#/components/responses/Error503'
+        '412':
+          $ref: '#/components/responses/Error412'
+        '428':
+          $ref: '#/components/responses/Error428'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertResponseRequest'
+  /organizations/{organization_id}/alerts/{alert_id}/close:
+    post:
+      operationId: closeAlert
+      summary: Riaszt├ís lez├ír├ísa
+      description: Szervezeti admin. Le├íll├ştja a m├ęg nem ind├ştott k├ęzbes├şt├ęseket; a m├ír ├ítadott push nem vonhat├│
+        megb├şzhat├│an vissza. Audit├ílt indok; kor├íbbi v├ílaszok megmaradnak. Tenantv├ílt├ískor ├║j tags├ígellen┼Ĺrz├ęs;
+        m├ís tenant UUID-j├íra 404, kliensoldali org state nem jogosults├ígforr├ís.
+      tags:
+      - Alerts
+      x-status: proposal-not-implemented
+      x-required-permissions:
+      - alerts.issue
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/AlertId'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/IfMatch'
+      responses:
+        '200':
+          description: Sikeres v├ílasz
+          headers:
+            X-Request-Id:
+              description: Szerver ├íltal gener├ílt korrel├íci├│s UUID, nem titok.
+              schema:
+                type: string
+                format: uuid
+            ETag:
+              description: Az adott er┼Ĺforr├ís aktu├ílis verzi├│ja, a k├Âvetkez┼Ĺ If-Match-hez.
+              schema:
+                type: string
+                example: '"v3"'
+            Idempotency-Replayed:
+              schema:
+                type: boolean
+              description: Igaz, ha egy kor├íbbi eredm├ęnyt j├ítszottunk ├║jra.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Alert'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+        '429':
+          $ref: '#/components/responses/Error429'
+        '503':
+          $ref: '#/components/responses/Error503'
+        '412':
+          $ref: '#/components/responses/Error412'
+        '428':
+          $ref: '#/components/responses/Error428'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloseRequest'
+  /organizations/{organization_id}/members/{membership_id}/rescue-coins/balance:
+    get:
+      operationId: getCoinBalance
+      summary: Rescue Coins egyenleg
+      description: Saj├ít tags├íg vagy coins.manage jog├║ szervezeti admin. Szervezetenk├ęnti, j├│v├íhagyott RC napl├│
+        ├Âsszege, korrekci├│kkal. Nem p├ęnz, nincs bev├ílt├ís/├ítutal├ís; a lakoss├ígi LRC kv├şzt┼Ĺl k├╝l├Ân. F├╝gg┼Ĺ j├│v├í├şr├ís
+        nem r├ęsze. Nagy sz├ímok a JavaScript biztons├ígos eg├ęsz tartom├íny├íban. Tenantv├ílt├ískor ├║j tags├ígellen┼Ĺrz├ęs;
+        m├ís tenant UUID-j├íra 404, kliensoldali org state nem jogosults├ígforr├ís.
+      tags:
+      - RescueCoins
+      x-status: proposal-not-implemented
+      x-required-permissions:
+      - coins.read_self_or_manage
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/MembershipId'
+      responses:
+        '200':
+          description: Sikeres v├ílasz
+          headers:
+            X-Request-Id:
+              description: Szerver ├íltal gener├ílt korrel├íci├│s UUID, nem titok.
+              schema:
+                type: string
+                format: uuid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CoinBalance'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+        '429':
+          $ref: '#/components/responses/Error429'
+        '503':
+          $ref: '#/components/responses/Error503'
+  /organizations/{organization_id}/members/{membership_id}/rescue-coins/transactions:
+    get:
+      operationId: listCoinTransactions
+      summary: Rescue Coins el┼Ĺzm├ęnyek
+      description: Azonos jogosults├íg az egyenleggel. Stabil created_at,id rendez├ęs; a kurzor r├Âgz├ştett ledger watermarkhoz
+        k├Ât├Âtt, a k├ęs┼Ĺbb ├ęrkez┼Ĺ j├│v├í├şr├ís ├║j list├íz├ísban jelenik meg. Nincs k├Âzvetlen kliensoldali pont├şr├ís, m├│dos├şt├ís
+        vagy t├Ârl├ęs. Tenantv├ílt├ískor ├║j tags├ígellen┼Ĺrz├ęs; m├ís tenant UUID-j├íra 404, kliensoldali org state nem jogosults├ígforr├ís.
+      tags:
+      - RescueCoins
+      x-status: proposal-not-implemented
+      x-required-permissions:
+      - coins.read_self_or_manage
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/MembershipId'
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Cursor'
+      - name: from
+        in: query
+        schema:
+          type: string
+          format: date-time
+      - name: to
+        in: query
+        schema:
+          type: string
+          format: date-time
+      responses:
+        '200':
+          description: Sikeres v├ílasz
+          headers:
+            X-Request-Id:
+              description: Szerver ├íltal gener├ílt korrel├íci├│s UUID, nem titok.
+              schema:
+                type: string
+                format: uuid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CoinTransactionsPage'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+        '429':
+          $ref: '#/components/responses/Error429'
+        '503':
+          $ref: '#/components/responses/Error503'
+  /me/installations:
+    get:
+      operationId: listMyInstallations
+      summary: Saj├ít ├ęrtes├şt├ęsi telep├şt├ęsek
+      description: Csak saj├ít install├íci├│k, token/endpoint/kulcs n├ęlk├╝l. A lista nem igazol k├ęzbes├şt├ęst. Regisztr├íci├│
+        ut├ín k├╝l├Ân szervezeti binding kell.
+      tags:
+      - Devices
+      x-status: proposal-not-implemented
+      x-required-permissions: []
+      parameters:
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: Tervezett sikeres v├ílasz
+          headers:
+            X-Request-Id:
+              description: Szerver korrel├íci├│s UUID.
+              schema:
+                type: string
+                format: uuid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InstallationsPage'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+        '429':
+          $ref: '#/components/responses/Error429'
+        '503':
+          $ref: '#/components/responses/Error503'
+    post:
+      operationId: registerMyInstallation
+      summary: Saj├ít telep├şt├ęs ├ęs provider credential regisztr├íci├│ja
+      description: '├Üj install├íci├│: kliens ├íltal gener├ílt tart├│s UUID + hiteles├ştett user. L├ętez┼Ĺ saj├ít UUID ├║j
+        k├ęr├ęssel 409; idempotens replay az eredeti 201. M├ís owner UUID-ja 404. Friss├şt├ęs a PATCH ├║tvonalon If-Match-csel.
+        Csak egy provider. android=fcm; ios=fcm vagy apns; web=webpush. Nyers APNs tokent FCM sender nem haszn├ílhat.
+        Environment/bundle/provider cross-valid├íci├│ 422. Webpush csak j├│v├íhagyott HTTPS host, tiltott userinfo/port/fragment
+        ├ęs priv├ít h├íl├│zat; kulcsok valid├íltak. A provider token hash-egyedis├ęge ├ęs kor├íbbi tulajdonl├ís lev├ílaszt├ísa
+        szerverfolyamat. Idempotens replay nem ism├ętli meg a regisztr├íci├│t. Nincs automatikus push-k├╝ld├ęs.'
+      tags:
+      - Devices
+      x-status: proposal-not-implemented
+      x-required-permissions: []
+      parameters:
+      - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '201':
+          description: Tervezett sikeres v├ílasz
+          headers:
+            X-Request-Id:
+              description: Szerver korrel├íci├│s UUID.
+              schema:
+                type: string
+                format: uuid
+            Idempotency-Replayed:
+              schema:
+                type: boolean
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Installation'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+        '429':
+          $ref: '#/components/responses/Error429'
+        '503':
+          $ref: '#/components/responses/Error503'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InstallationRegistration'
+  /me/installations/{installation_id}:
+    patch:
+      operationId: updateMyInstallation
+      summary: Saj├ít telep├şt├ęs c├şmk├ęj├ęnek vagy tokenj├ęnek friss├şt├ęse
+      description: Saj├ít user tulajdonl├ís + er┼Ĺs If-Match. A platform/environment/provider nem v├íltoztathat├│; credential
+        ugyanazon provider valid├ílt ├║j tokenje/kulcsa. Providerv├ílt├ís k├╝l├Ân letilt├ís ├ęs ├║j install├íci├│. Atomikus
+        token-hash egyedis├ęg ├ęs binding meg┼Ĺrz├ęs, 409 tulajdonl├ísi ├╝tk├Âz├ęs ├íltal├ínos hib├íval. Nem k├╝ld push-t; csak
+        ezt az install├íci├│t m├│dos├ştja. P├írhuzamos r├ęgi tokenfriss├şt├ęs 412, idempotens replay nem ├şrja vissza a kor├íbbi
+        tokent.
+      tags:
+      - Devices
+      x-status: proposal-not-implemented
+      x-required-permissions: []
+      parameters:
+      - $ref: '#/components/parameters/InstallationId'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/IfMatch'
+      responses:
+        '200':
+          description: Tervezett sikeres v├ílasz
+          headers:
+            X-Request-Id:
+              description: Szerver korrel├íci├│s UUID.
+              schema:
+                type: string
+                format: uuid
+            ETag:
+              description: Er┼Ĺforr├ísverzi├│.
+              schema:
+                type: string
+                example: '"v2"'
+            Idempotency-Replayed:
+              schema:
+                type: boolean
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Installation'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+        '429':
+          $ref: '#/components/responses/Error429'
+        '503':
+          $ref: '#/components/responses/Error503'
+        '412':
+          $ref: '#/components/responses/Error412'
+        '428':
+          $ref: '#/components/responses/Error428'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InstallationPatch'
+    delete:
+      operationId: disableMyInstallation
+      summary: Saj├ít telep├şt├ęs ├ęs ├Âsszes push-k├Ât├ęs letilt├ísa
+      description: Saj├ít user tulajdonl├ís + If-Match. Soft disable, valamennyi org-binding inakt├şv. M├ís user telep├şt├ęs├ęre
+        404. A k├ęr├ęs nem t├Âr├Âl auditot ├ęs nem l├ęptet ki m├ís k├ęsz├╝l├ęket.
+      tags:
+      - Devices
+      x-status: proposal-not-implemented
+      x-required-permissions: []
+      parameters:
+      - $ref: '#/components/parameters/InstallationId'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/IfMatch'
+      responses:
+        '204':
+          description: Tervezett sikeres v├ílasz
+          headers:
+            X-Request-Id:
+              description: Szerver korrel├íci├│s UUID.
+              schema:
+                type: string
+                format: uuid
+            ETag:
+              description: Er┼Ĺforr├ísverzi├│.
+              schema:
+                type: string
+                example: '"v2"'
+            Idempotency-Replayed:
+              schema:
+                type: boolean
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+        '429':
+          $ref: '#/components/responses/Error429'
+        '503':
+          $ref: '#/components/responses/Error503'
+        '412':
+          $ref: '#/components/responses/Error412'
+        '428':
+          $ref: '#/components/responses/Error428'
+  /organizations/{organization_id}/installations/{installation_id}/binding/me:
+    post:
+      operationId: bindMyInstallation
+      summary: Saj├ít telep├şt├ęs k├Ât├ęse a szervezeti tags├íghoz
+      description: Az install├íci├│ tulajdonosa a session usere, a tags├íg ugyanazon user approved tags├íga az ├║tvonal
+        szervezet├ęben. Akt├şv telep├şt├ęs sz├╝ks├ęges. A membership_id a szerverb┼Ĺl sz├írmazik, nem k├ęr├ęsmez┼Ĺ. Csak ezt
+        a szervezetet k├Âti; nincs teszt- vagy riaszt├ísi push.
+      tags:
+      - Devices
+      x-status: proposal-not-implemented
+      x-required-permissions:
+      - devices.bind_self
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/InstallationId'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '200':
+          description: Tervezett sikeres v├ílasz
+          headers:
+            X-Request-Id:
+              description: Szerver korrel├íci├│s UUID.
+              schema:
+                type: string
+                format: uuid
+            Idempotency-Replayed:
+              schema:
+                type: boolean
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InstallationBinding'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+        '429':
+          $ref: '#/components/responses/Error429'
+        '503':
+          $ref: '#/components/responses/Error503'
+    delete:
+      operationId: unbindMyInstallation
+      summary: Saj├ít szervezeti push-k├Ât├ęs lev├ílaszt├ísa
+      description: Csak saj├ít user install├íci├│ja ├ęs tags├íga. Egy szervezet k├Ât├ęs├ęt kapcsolja ki; a t├Âbbi saj├ít szervezeti
+        k├Ât├ęs megmarad. Ism├ętl├ęs idempotens. Nem t├Âr├Âl historyt.
+      tags:
+      - Devices
+      x-status: proposal-not-implemented
+      x-required-permissions:
+      - devices.bind_self
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/InstallationId'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '204':
+          description: Tervezett sikeres v├ílasz
+          headers:
+            X-Request-Id:
+              description: Szerver korrel├íci├│s UUID.
+              schema:
+                type: string
+                format: uuid
+            Idempotency-Replayed:
+              schema:
+                type: boolean
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+        '429':
+          $ref: '#/components/responses/Error429'
+        '503':
+          $ref: '#/components/responses/Error503'
+  /organizations/{organization_id}/alerts/{alert_id}/recipients/{recipient_id}:
+    get:
+      operationId: getAlertRecipient
+      summary: Admin c├şmzett├íllapot r├ęszletei
+      description: Csak az adott szervezet adminja. A h├írom path ID ├Âsszetartoz├ísa ellen┼Ĺrz├Âtt; ETag a c├şmzett verzi├│ja.
+        Provider token nincs a v├ílaszban.
+      tags:
+      - Alerts
+      x-status: proposal-not-implemented
+      x-required-permissions:
+      - alerts.manage
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/AlertId'
+      - $ref: '#/components/parameters/RecipientId'
+      responses:
+        '200':
+          description: Tervezett sikeres v├ílasz
+          headers:
+            X-Request-Id:
+              description: Szerver korrel├íci├│s UUID.
+              schema:
+                type: string
+                format: uuid
+            ETag:
+              description: Er┼Ĺforr├ísverzi├│.
+              schema:
+                type: string
+                example: '"v2"'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlertRecipient'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+        '429':
+          $ref: '#/components/responses/Error429'
+        '503':
+          $ref: '#/components/responses/Error503'
+  /organizations/{organization_id}/alerts/{alert_id}/recipients/{recipient_id}/replacement:
+    post:
+      operationId: replaceAlertRecipient
+      summary: Nemet v├ílaszol├│ c├şmzett helyettes├şt├ęse ├ęs az ├║j tag riaszt├ísa
+      description: Csak approved szervezeti admin, akt├şv ├ęs nem lej├írt riaszt├ís, r├ęgi response=not_going, m├ęg nincs
+        replacement. If-Match a r├ęgi c├şmzett verzi├│ja. ├Üj approved/riaszthat├│, azonos szervezet┼▒, megfelel┼Ĺ profilbeoszt├ís├║,
+        m├ís akt├şv slotba m├ęg nem osztott tag. Poz├şci├│/slot a r├ęgi megh├şv├ísb├│l sz├írmazik, a kliens nem ├şrhatja ├ít.
+        Egy tranzakci├│ban r├ęgi link + ├║j megh├şv├ís + outbox; r├ęgi nem v├ílasz ├ęs id┼Ĺpont megmarad. Csak az ├║j tag
+        k├ęsz├╝l├ękei ker├╝lnek sorba, 202 nem k├ęzbes├şt├ęs. Azonos idempotenciakulcs replay nem k├╝ld ├║jra; elt├ęr┼Ĺ ├║j
+        m┼▒velet m├ír replaced esetben 409.
+      tags:
+      - Alerts
+      x-status: proposal-not-implemented
+      x-required-permissions:
+      - alerts.issue
+      parameters:
+      - $ref: '#/components/parameters/OrganizationId'
+      - $ref: '#/components/parameters/AlertId'
+      - $ref: '#/components/parameters/RecipientId'
+      - $ref: '#/components/parameters/IdempotencyKey'
+      - $ref: '#/components/parameters/IfMatch'
+      responses:
+        '202':
+          description: Tervezett sikeres v├ílasz
+          headers:
+            X-Request-Id:
+              description: Szerver korrel├íci├│s UUID.
+              schema:
+                type: string
+                format: uuid
+            ETag:
+              description: Er┼Ĺforr├ísverzi├│.
+              schema:
+                type: string
+                example: '"v2"'
+            Idempotency-Replayed:
+              schema:
+                type: boolean
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReplacementAccepted'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+        '429':
+          $ref: '#/components/responses/Error429'
+        '503':
+          $ref: '#/components/responses/Error503'
+        '412':
+          $ref: '#/components/responses/Error412'
+        '428':
+          $ref: '#/components/responses/Error428'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReplacementRequest'
+  /notification-receipts:
+    post:
+      operationId: confirmDeviceReceipt
+      summary: K├ęsz├╝l├ęk ├íltal ├ítvett push visszaigazol├ísa
+      description: JWT n├ęlk├╝li, sz┼▒k k├ępess├ęgalap├║ v├ęgpont. A 256 bites token csak az adott delivery + tenant +
+        recipient + installation n├ęgyeshez k├Ât├Âtt, hash t├írol├íssal, legfeljebb 15 perces ├ęrv├ęnnyel ├ęs forgalomkorl├íttal.
+        A t├Ârzsben nincs tetsz┼Ĺleges member/org ID. Els┼Ĺ received_at megmarad, ├ęrv├ęnyes id┼Ĺn bel├╝li ism├ętl├ęs azonos
+        eredm├ęnyt ad. Hi├ínyz├│/hib├ís/lej├írt token 403; nem ├írulja el m├ís delivery l├ętez├ęs├ęt. Nem ad emberi ack-ot
+        ├ęs nem v├ílaszt igent. Offline receipt a token lej├írta ut├ín elutas├şthat├│. Az ├ęles megl├ęv┼Ĺ teszt-receipt ett┼Ĺl
+        k├╝l├Ân endpoint, nincs automatikus ├ít├íll├şt├ís.
+      tags:
+      - Alerts
+      x-status: proposal-not-implemented
+      x-required-permissions: []
+      parameters: []
+      responses:
+        '200':
+          description: Tervezett sikeres v├ílasz
+          headers:
+            X-Request-Id:
+              description: Szerver korrel├íci├│s UUID.
+              schema:
+                type: string
+                format: uuid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceReceipt'
+        '400':
+          $ref: '#/components/responses/Error400'
+        '401':
+          $ref: '#/components/responses/Error401'
+        '403':
+          $ref: '#/components/responses/Error403'
+        '404':
+          $ref: '#/components/responses/Error404'
+        '409':
+          $ref: '#/components/responses/Error409'
+        '422':
+          $ref: '#/components/responses/Error422'
+        '429':
+          $ref: '#/components/responses/Error429'
+        '503':
+          $ref: '#/components/responses/Error503'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceReceiptRequest'
+      security: []
+      x-auth-mode: delivery-scoped-capability
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 'Supabase Auth hozz├íf├ęr├ęsi JWT ellen┼Ĺrz├Âtt issuer/audience/signature/exp/session alapj├ín; friss
+        adatb├ízisos tags├íg ├ęs jogellen┼Ĺrz├ęs eg├ęsz├şti ki. v0.2 javaslat: friss approved tags├íg ├ęs adatb├ízisos jog;
+        kritikus dispatch/admin/irat m┼▒velet explicit session-visszavon├ís ellen┼Ĺrz├ęssel. A megl├ęv┼Ĺ HUNOR RPC-k ezt
+        m├ęg nem egys├ęgesen biztos├ştj├ík.'
+  parameters:
+    OrganizationId:
+      name: organization_id
+      in: path
+      required: true
+      description: Szervezeti UUID. Kliens ├íltal v├ílasztott hat├│k├Âr; a szerver friss tags├íggal ellen┼Ĺrzi.
+      schema:
+        type: string
+        format: uuid
+    MembershipId:
+      name: membership_id
+      in: path
+      required: true
+      description: Szervezeti tags├íg UUID-ja, nem az Auth felhaszn├íl├│ azonos├şt├│ja.
+      schema:
+        type: string
+        format: uuid
+    EventId:
+      name: event_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    AlertId:
+      name: alert_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    Limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 25
+    Cursor:
+      name: cursor
+      in: query
+      description: ├ütl├ítszatlan, szervezethez ├ęs sz┼▒r┼Ĺkh├Âz k├Ât├Âtt, al├í├şrt kurzor.
+      schema:
+        type: string
+        maxLength: 4096
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: 'Kliensenk├ęnt gener├ílt UUID. Az eredeti eredm├ęny 24 ├│r├íig ├║jraj├ítszhat├│; elt├ęr┼Ĺ t├Ârzzsel 409.
+        Hat├│k├Âr: actor + organization + operation.'
+      schema:
+        type: string
+        format: uuid
+    IfMatch:
+      name: If-Match
+      in: header
+      required: true
+      description: 'A GET v├ílasz er┼Ĺs ETag-je. Elt├ęr┼Ĺ verzi├│: 412; hi├ínyz├│ fejl├ęc: 428. Nem fogad el * ├ęrt├ęket.'
+      schema:
+        type: string
+        pattern: ^"v[0-9]+"$
+        example: '"v3"'
+    InstallationId:
+      name: installation_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Saj├ít alkalmaz├ístelep├şt├ęs UUID. Nem bearer token ├ęs nem jogosults├íg.
+    RecipientId:
+      name: recipient_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  schemas:
+    Error:
+      type: object
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+          enum:
+          - INVALID_REQUEST
+          - UNAUTHENTICATED
+          - FORBIDDEN
+          - NOT_FOUND
+          - MEMBERSHIP_NOT_APPROVED
+          - IDEMPOTENCY_CONFLICT
+          - VERSION_CONFLICT
+          - PRECONDITION_REQUIRED
+          - ALERT_EXPIRED
+          - ALERT_CLOSED
+          - INVITATION_REPLACED
+          - INVALID_POSITION
+          - INVALID_DEVICE_PROVIDER
+          - RATE_LIMITED
+          - SERVICE_UNAVAILABLE
+          - STATE_CONFLICT
+        message:
+          type: string
+        request_id:
+          type: string
+          format: uuid
+        details:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              field:
+                type: string
+              reason:
+                type: string
+            required:
+            - field
+            - reason
+      required:
+      - code
+      - message
+      - request_id
+      description: A code stabil g├ępi azonos├şt├│. M├ís szervezet er┼Ĺforr├ísa NOT_FOUND; a details csak mez┼Ĺhib├ít tartalmazhat,
+        m├ís tenant azonos├şt├│j├ít vagy SQL-hib├ít nem.
+    LoginRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        password:
+          type: string
+          format: password
+          minLength: 1
+          maxLength: 256
+          writeOnly: true
+      required:
+      - email
+      - password
+    RefreshRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        refresh_token:
+          type: string
+          minLength: 1
+          maxLength: 8192
+          writeOnly: true
+      required:
+      - refresh_token
+    Session:
+      type: object
+      additionalProperties: false
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+        token_type:
+          type: string
+          enum:
+          - Bearer
+        expires_at:
+          type: string
+          format: date-time
+        user:
+          $ref: '#/components/schemas/User'
+      required:
+      - access_token
+      - refresh_token
+      - token_type
+      - expires_at
+      - user
+    User:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        display_name:
+          type: string
+          minLength: 1
+          maxLength: 160
+        avatar_url:
+          type: string
+          format: uri
+          nullable: true
+      required:
+      - id
+      - email
+      - display_name
+    ProfilePatch:
+      type: object
+      additionalProperties: false
+      properties:
+        display_name:
+          type: string
+          minLength: 1
+          maxLength: 160
+        contact_phone:
+          type: string
+          maxLength: 40
+          nullable: true
+      minProperties: 1
+    Profile:
+      type: object
+      additionalProperties: false
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+        contact_phone:
+          type: string
+          nullable: true
+        version:
+          type: integer
+          minimum: 0
+          maximum: 2147483647
+      required:
+      - user
+      - version
+    Organization:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          minLength: 1
+          maxLength: 160
+        slug:
+          type: string
+          pattern: ^[a-z0-9][a-z0-9-]{1,62}$
+        timezone:
+          type: string
+          example: Europe/Budapest
+        status:
+          type: string
+          enum:
+          - active
+          - suspended
+        my_membership_id:
+          type: string
+          format: uuid
+      required:
+      - id
+      - name
+      - slug
+      - timezone
+      - status
+      - my_membership_id
+    OrganizationMember:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        organization_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        display_name:
+          type: string
+          minLength: 1
+          maxLength: 160
+        membership_status:
+          type: string
+          enum:
+          - pending
+          - approved
+          - suspended
+          - left
+        positions:
+          type: array
+          items:
+            type: string
+        skills:
+          type: array
+          items:
+            type: string
+        county:
+          type: string
+          nullable: true
+          maxLength: 160
+        workplace:
+          type: string
+          nullable: true
+          maxLength: 240
+        alertable:
+          type: boolean
+        permissions:
+          type: array
+          items:
+            type: string
+        version:
+          type: integer
+          minimum: 0
+          maximum: 2147483647
+        permissions_version:
+          type: integer
+          minimum: 0
+          maximum: 2147483647
+      required:
+      - id
+      - organization_id
+      - user_id
+      - display_name
+      - membership_status
+      - positions
+      - skills
+      - alertable
+      - permissions
+      - version
+      - permissions_version
+    EventCreate:
+      type: object
+      additionalProperties: false
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 240
+        description:
+          type: string
+          maxLength: 12000
+        location:
+          type: string
+          maxLength: 500
+        kind:
+          type: string
+          enum:
+          - training
+          - exercise
+          - deployment
+          - demonstration
+          - meeting
+          - other
+        starts_at:
+          type: string
+          format: date-time
+        ends_at:
+          type: string
+          format: date-time
+        visibility:
+          type: string
+          enum:
+          - members
+          - public
+      required:
+      - title
+      - kind
+      - starts_at
+      - ends_at
+      - visibility
+    EventPatch:
+      type: object
+      additionalProperties: false
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 240
+        description:
+          type: string
+          maxLength: 12000
+        location:
+          type: string
+          maxLength: 500
+        starts_at:
+          type: string
+          format: date-time
+        ends_at:
+          type: string
+          format: date-time
+        visibility:
+          type: string
+          enum:
+          - members
+          - public
+      minProperties: 1
+    Event:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        organization_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          minLength: 1
+          maxLength: 240
+        description:
+          type: string
+        location:
+          type: string
+        kind:
+          type: string
+          enum:
+          - training
+          - exercise
+          - deployment
+          - demonstration
+          - meeting
+          - other
+        starts_at:
+          type: string
+          format: date-time
+        ends_at:
+          type: string
+          format: date-time
+        visibility:
+          type: string
+          enum:
+          - members
+          - public
+        status:
+          type: string
+          enum:
+          - draft
+          - open
+          - closed
+          - cancelled
+        created_by_membership_id:
+          type: string
+          format: uuid
+        version:
+          type: integer
+          minimum: 0
+          maximum: 2147483647
+      required:
+      - id
+      - organization_id
+      - title
+      - kind
+      - starts_at
+      - ends_at
+      - visibility
+      - status
+      - version
+    ParticipationRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        response:
+          type: string
+          enum:
+          - going
+          - not_going
+        role:
+          type: string
+          enum:
+          - participant
+          - excon
+      required:
+      - response
+      - role
+    Participation:
+      type: object
+      additionalProperties: false
+      properties:
+        event_id:
+          type: string
+          format: uuid
+        membership_id:
+          type: string
+          format: uuid
+        response:
+          type: string
+          enum:
+          - pending
+          - going
+          - not_going
+        role:
+          type: string
+          enum:
+          - participant
+          - excon
+        responded_at:
+          type: string
+          format: date-time
+          nullable: true
+        version:
+          type: integer
+          minimum: 0
+          maximum: 2147483647
+      required:
+      - event_id
+      - membership_id
+      - response
+      - role
+      - responded_at
+      - version
+    AlertRecipientInput:
+      type: object
+      additionalProperties: false
+      properties:
+        membership_id:
+          type: string
+          format: uuid
+        position_key:
+          type: string
+          pattern: ^[a-z][a-z0-9_]{0,63}$
+        slot:
+          type: integer
+          minimum: 1
+          maximum: 50
+      required:
+      - membership_id
+      - position_key
+      - slot
+    AlertCreate:
+      type: object
+      additionalProperties: false
+      properties:
+        event_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          minLength: 1
+          maxLength: 240
+        message:
+          type: string
+          minLength: 1
+          maxLength: 4000
+        kind:
+          type: string
+          enum:
+          - exercise
+          - standby
+          - operational
+        expires_at:
+          type: string
+          format: date-time
+        recipients:
+          type: array
+          items:
+            $ref: '#/components/schemas/AlertRecipientInput'
+          minItems: 1
+          maxItems: 500
+      required:
+      - event_id
+      - title
+      - message
+      - kind
+      - expires_at
+      - recipients
+    Alert:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        organization_id:
+          type: string
+          format: uuid
+        event_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          minLength: 1
+          maxLength: 240
+        message:
+          type: string
+          minLength: 1
+          maxLength: 4000
+        kind:
+          type: string
+          enum:
+          - exercise
+          - standby
+          - operational
+        status:
+          type: string
+          enum:
+          - draft
+          - dispatching
+          - active
+          - closed
+          - cancelled
+        expires_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        issued_by_membership_id:
+          type: string
+          format: uuid
+          nullable: true
+        version:
+          type: integer
+          minimum: 0
+          maximum: 2147483647
+      required:
+      - id
+      - organization_id
+      - event_id
+      - title
+      - message
+      - kind
+      - status
+      - expires_at
+      - created_at
+      - version
+    AlertRecipient:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        alert_id:
+          type: string
+          format: uuid
+        membership_id:
+          type: string
+          format: uuid
+        position_key:
+          type: string
+        slot:
+          type: integer
+          minimum: 1
+        delivery_state:
+          type: string
+          enum:
+          - queued
+          - provider_accepted
+          - device_received
+          - failed
+          - unavailable
+        acknowledged_at:
+          type: string
+          format: date-time
+          nullable: true
+        participation_response:
+          type: string
+          enum:
+          - pending
+          - going
+          - not_going
+        responded_at:
+          type: string
+          format: date-time
+          nullable: true
+        replaced_by_recipient_id:
+          type: string
+          format: uuid
+          nullable: true
+        version:
+          type: integer
+          minimum: 0
+          maximum: 2147483647
+        replaces_recipient_id:
+          type: string
+          format: uuid
+          nullable: true
+      required:
+      - id
+      - alert_id
+      - membership_id
+      - position_key
+      - slot
+      - delivery_state
+      - acknowledged_at
+      - participation_response
+      - responded_at
+      - replaced_by_recipient_id
+      - version
+      - replaces_recipient_id
+    DispatchAccepted:
+      type: object
+      additionalProperties: false
+      properties:
+        alert_id:
+          type: string
+          format: uuid
+        job_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+          - queued
+        requested_at:
+          type: string
+          format: date-time
+      required:
+      - alert_id
+      - job_id
+      - status
+      - requested_at
+    Acknowledgement:
+      type: object
+      additionalProperties: false
+      properties:
+        alert_id:
+          type: string
+          format: uuid
+        membership_id:
+          type: string
+          format: uuid
+        acknowledged_at:
+          type: string
+          format: date-time
+      required:
+      - alert_id
+      - membership_id
+      - acknowledged_at
+    AlertResponseRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        response:
+          type: string
+          enum:
+          - going
+          - not_going
+      required:
+      - response
+    AlertResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        alert_id:
+          type: string
+          format: uuid
+        membership_id:
+          type: string
+          format: uuid
+        response:
+          type: string
+          enum:
+          - pending
+          - going
+          - not_going
+        responded_at:
+          type: string
+          format: date-time
+          nullable: true
+        version:
+          type: integer
+          minimum: 0
+          maximum: 2147483647
+      required:
+      - alert_id
+      - membership_id
+      - response
+      - responded_at
+      - version
+    CloseRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 2000
+      required:
+      - reason
+    CoinBalance:
+      type: object
+      additionalProperties: false
+      properties:
+        organization_id:
+          type: string
+          format: uuid
+        membership_id:
+          type: string
+          format: uuid
+        unit:
+          type: string
+          enum:
+          - RC
+        balance:
+          type: integer
+          format: int64
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        as_of:
+          type: string
+          format: date-time
+        ledger_version:
+          type: string
+      required:
+      - organization_id
+      - membership_id
+      - unit
+      - balance
+      - as_of
+      - ledger_version
+    CoinTransaction:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        organization_id:
+          type: string
+          format: uuid
+        membership_id:
+          type: string
+          format: uuid
+        unit:
+          type: string
+          enum:
+          - RC
+        delta:
+          type: integer
+          format: int64
+          minimum: -9007199254740991
+          maximum: 9007199254740991
+        kind:
+          type: string
+          enum:
+          - attendance
+          - acquisition
+          - level_up
+          - renewal
+          - material
+          - mentoring
+          - correction
+        event_id:
+          type: string
+          format: uuid
+          nullable: true
+        correction_of:
+          type: string
+          format: uuid
+          nullable: true
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 4000
+        rule_version:
+          type: string
+        earned_on:
+          type: string
+          format: date
+        created_at:
+          type: string
+          format: date-time
+      required:
+      - id
+      - organization_id
+      - membership_id
+      - unit
+      - delta
+      - kind
+      - event_id
+      - correction_of
+      - reason
+      - rule_version
+      - earned_on
+      - created_at
+    Page:
+      type: object
+      additionalProperties: false
+      properties:
+        next_cursor:
+          type: string
+          nullable: true
+          maxLength: 4096
+      required:
+      - next_cursor
+    OrganizationsPage:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Organization'
+        page:
+          $ref: '#/components/schemas/Page'
+      required:
+      - items
+      - page
+    MembersPage:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrganizationMember'
+        page:
+          $ref: '#/components/schemas/Page'
+      required:
+      - items
+      - page
+    EventsPage:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Event'
+        page:
+          $ref: '#/components/schemas/Page'
+      required:
+      - items
+      - page
+    AlertsPage:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Alert'
+        page:
+          $ref: '#/components/schemas/Page'
+      required:
+      - items
+      - page
+    AlertRecipientsPage:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AlertRecipient'
+        page:
+          $ref: '#/components/schemas/Page'
+      required:
+      - items
+      - page
+    CoinTransactionsPage:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CoinTransaction'
+        page:
+          $ref: '#/components/schemas/Page'
+      required:
+      - items
+      - page
+    InstallationRegistration:
+      type: object
+      additionalProperties: false
+      properties:
+        installation_id:
+          type: string
+          format: uuid
+        platform:
+          type: string
+          enum:
+          - ios
+          - android
+          - web
+        environment:
+          type: string
+          enum:
+          - development
+          - production
+        label:
+          type: string
+          minLength: 1
+          maxLength: 100
+        credential:
+          $ref: '#/components/schemas/PushCredential'
+      required:
+      - installation_id
+      - platform
+      - environment
+      - label
+      - credential
+    InstallationPatch:
+      type: object
+      additionalProperties: false
+      properties:
+        label:
+          type: string
+          minLength: 1
+          maxLength: 100
+        credential:
+          $ref: '#/components/schemas/PushCredential'
+      minProperties: 1
+    PushCredential:
+      oneOf:
+      - $ref: '#/components/schemas/FcmCredential'
+      - $ref: '#/components/schemas/ApnsCredential'
+      - $ref: '#/components/schemas/WebPushCredential'
+      discriminator:
+        propertyName: provider
+        mapping:
+          fcm: '#/components/schemas/FcmCredential'
+          apns: '#/components/schemas/ApnsCredential'
+          webpush: '#/components/schemas/WebPushCredential'
+    FcmCredential:
+      type: object
+      additionalProperties: false
+      properties:
+        provider:
+          type: string
+          enum:
+          - fcm
+        token:
+          type: string
+          minLength: 16
+          maxLength: 4096
+          writeOnly: true
+      required:
+      - provider
+      - token
+    ApnsCredential:
+      type: object
+      additionalProperties: false
+      properties:
+        provider:
+          type: string
+          enum:
+          - apns
+        token:
+          type: string
+          minLength: 32
+          maxLength: 512
+          pattern: ^[0-9a-fA-F]+$
+          writeOnly: true
+        apns_environment:
+          type: string
+          enum:
+          - sandbox
+          - production
+        bundle_id:
+          type: string
+          minLength: 3
+          maxLength: 240
+      required:
+      - provider
+      - token
+      - apns_environment
+      - bundle_id
+    WebPushCredential:
+      type: object
+      additionalProperties: false
+      properties:
+        provider:
+          type: string
+          enum:
+          - webpush
+        endpoint:
+          type: string
+          format: uri
+          maxLength: 2048
+          writeOnly: true
+        p256dh:
+          type: string
+          pattern: ^[A-Za-z0-9_-]{87}$
+          writeOnly: true
+        auth:
+          type: string
+          pattern: ^[A-Za-z0-9_-]{22,24}$
+          writeOnly: true
+      required:
+      - provider
+      - endpoint
+      - p256dh
+      - auth
+    Installation:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        platform:
+          type: string
+          enum:
+          - ios
+          - android
+          - web
+        provider:
+          type: string
+          enum:
+          - fcm
+          - apns
+          - webpush
+        environment:
+          type: string
+          enum:
+          - development
+          - production
+        label:
+          type: string
+          maxLength: 100
+        active:
+          type: boolean
+        version:
+          type: integer
+          minimum: 0
+          maximum: 2147483647
+      required:
+      - id
+      - platform
+      - provider
+      - environment
+      - label
+      - active
+      - version
+    InstallationsPage:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Installation'
+        page:
+          $ref: '#/components/schemas/Page'
+      required:
+      - items
+      - page
+    InstallationBinding:
+      type: object
+      additionalProperties: false
+      properties:
+        organization_id:
+          type: string
+          format: uuid
+        membership_id:
+          type: string
+          format: uuid
+        installation_id:
+          type: string
+          format: uuid
+        active:
+          type: boolean
+      required:
+      - organization_id
+      - membership_id
+      - installation_id
+      - active
+    ReplacementRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        new_membership_id:
+          type: string
+          format: uuid
+        reason:
+          type: string
+          minLength: 3
+          maxLength: 2000
+      required:
+      - new_membership_id
+      - reason
+    ReplacementAccepted:
+      type: object
+      additionalProperties: false
+      properties:
+        old_recipient:
+          $ref: '#/components/schemas/AlertRecipient'
+        new_recipient:
+          $ref: '#/components/schemas/AlertRecipient'
+        job_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+          - queued
+      required:
+      - old_recipient
+      - new_recipient
+      - job_id
+      - status
+    DeviceReceiptRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        delivery_id:
+          type: string
+          format: uuid
+        receipt_token:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+          writeOnly: true
+      required:
+      - delivery_id
+      - receipt_token
+    DeviceReceipt:
+      type: object
+      additionalProperties: false
+      properties:
+        received:
+          type: boolean
+          enum:
+          - true
+        received_at:
+          type: string
+          format: date-time
+      required:
+      - received
+      - received_at
+  responses:
+    Error400:
+      description: Hib├ís k├ęr├ęs vagy kurzor.
+      headers:
+        X-Request-Id:
+          description: Szerver ├íltal gener├ílt korrel├íci├│s UUID, nem titok.
+          schema:
+            type: string
+            format: uuid
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Error401:
+      description: Hi├ínyz├│, lej├írt vagy visszavont hiteles├şt├ęs.
+      headers:
+        X-Request-Id:
+          description: Szerver ├íltal gener├ílt korrel├íci├│s UUID, nem titok.
+          schema:
+            type: string
+            format: uuid
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Error403:
+      description: Nincs m┼▒veleti jogosults├íg az igazolt szervezetben.
+      headers:
+        X-Request-Id:
+          description: Szerver ├íltal gener├ílt korrel├íci├│s UUID, nem titok.
+          schema:
+            type: string
+            format: uuid
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Error404:
+      description: Az er┼Ĺforr├ís nem tal├ílhat├│ vagy m├ís szervezethez tartozik.
+      headers:
+        X-Request-Id:
+          description: Szerver ├íltal gener├ílt korrel├íci├│s UUID, nem titok.
+          schema:
+            type: string
+            format: uuid
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Error409:
+      description: ├üllapot├╝tk├Âz├ęs, ism├ętelt kulcs elt├ęr┼Ĺ t├Ârzzsel vagy helyettes├ştett megh├şv├ís.
+      headers:
+        X-Request-Id:
+          description: Szerver ├íltal gener├ílt korrel├íci├│s UUID, nem titok.
+          schema:
+            type: string
+            format: uuid
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Error412:
+      description: Az If-Match verzi├│ja elavult.
+      headers:
+        X-Request-Id:
+          description: Szerver ├íltal gener├ílt korrel├íci├│s UUID, nem titok.
+          schema:
+            type: string
+            format: uuid
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Error422:
+      description: ├ërv├ęnytelen id┼Ĺszak, beoszt├ís vagy ├╝zleti felt├ętel.
+      headers:
+        X-Request-Id:
+          description: Szerver ├íltal gener├ílt korrel├íci├│s UUID, nem titok.
+          schema:
+            type: string
+            format: uuid
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Error428:
+      description: A k├Âtelez┼Ĺ If-Match fejl├ęc hi├ínyzik.
+      headers:
+        X-Request-Id:
+          description: Szerver ├íltal gener├ílt korrel├íci├│s UUID, nem titok.
+          schema:
+            type: string
+            format: uuid
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Error429:
+      description: K├ęr├ęssz├ímkorl├ít el├ęrve.
+      headers:
+        X-Request-Id:
+          description: Szerver ├íltal gener├ílt korrel├íci├│s UUID, nem titok.
+          schema:
+            type: string
+            format: uuid
+        Retry-After:
+          schema:
+            type: integer
+            minimum: 1
+          description: ├Üjrapr├│b├ílkoz├ís el┼Ĺtt v├írand├│ m├ísodpercek.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Error503:
+      description: ├ütmeneti szolg├íltat├ísi hiba; a k├ęzbes├şt├ęs nem igazolt.
+      headers:
+        X-Request-Id:
+          description: Szerver ├íltal gener├ílt korrel├íci├│s UUID, nem titok.
+          schema:
+            type: string
+            format: uuid
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+x-canonical-backend:
+  project_ref: embicteneumubwlqqfik
+  configuration_change_applied: false
+x-decision-status: proposed-for-review
