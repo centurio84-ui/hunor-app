@@ -73,6 +73,12 @@ jobs:
           curl --fail --location --retry 3 --retry-all-errors --proto '=https' --tlsv1.2 \
             https://downloads.gradle.org/distributions/gradle-9.3.1-bin.zip -o "$RUNNER_TEMP/gradle-9.3.1-bin.zip"
           python3 tool/release/use_verified_gradle.py "$RUNNER_TEMP/gradle-9.3.1-bin.zip"
+      - name: Cache checksum-verified official Kotlin compiler
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download v2.2.21 --repo JetBrains/kotlin --pattern kotlin-compiler-embeddable-2.2.21.jar --dir "$RUNNER_TEMP"
+          python3 tool/release/cache_verified_kotlin.py "$RUNNER_TEMP/kotlin-compiler-embeddable-2.2.21.jar"
       - name: Configure existing release keystore
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
