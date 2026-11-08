@@ -145,8 +145,22 @@ jobs:
                   if marker in s:
                       s = s.replace(marker, signing_code + '\n    ' + marker)
                       # Csak a getByName("release") signingConfigját irányítjuk át, a debug érintetlen marad
-                      if 'signingConfig = signingConfigs.getByName("release")' not in s:
-                          s = s.replace('getByName("release") {', 'getByName("release") {\n            signingConfig = signingConfigs.getByName("release")')
+                      # Flutter's generated Kotlin DSL commonly uses release { ... }, not getByName("release") {.
+                      # Replace the default debug signing assignment in the release buildType only.
+                      import re
+                      s, patched = re.subn(
+                          r'(buildTypes\s*\{\s*(?:getByName\("release"\)|release)\s*\{)([^}]*)(\})',
+                          lambda m: m.group(1) + re.sub(
+                              r'signingConfig\s*=\s*signingConfigs\.getByName\("debug"\)',
+                              'signingConfig = signingConfigs.getByName("release")',
+                              m.group(2)
+                          ) + m.group(3),
+                          s,
+                          count=1
+                      )
+                      if patched != 1 or 'signingConfig = signingConfigs.getByName("release")' not in s:
+                          raise RuntimeError("Release signingConfig was not correctly configured")
+                      p_kts.write_text(s)
                       p_kts.write_text(s)
 
           p_groovy = Path('android/app/build.gradle')
@@ -238,6 +252,16 @@ jobs:
           fi
           grep -E "jar verified|Signed by|CN=|Warning:" /tmp/aab-signature-verification.log || true
           
+          # Never publish a debug-signed AAB: compare actual signer with release keystore certificate.
+          keytool -exportcert -alias "${{ secrets.ANDROID_KEY_ALIAS }}" -keystore android/app/release.keystore -storepass "${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" -rfc > /tmp/expected-upload-cert.pem
+          keytool -printcert -file /tmp/expected-upload-cert.pem | grep "SHA256:" > /tmp/expected-signer-sha256.txt
+          keytool -printcert -jarfile "$AAB_FILE" | grep "SHA256:" > /tmp/actual-signer-sha256.txt
+          if ! diff -u /tmp/expected-signer-sha256.txt /tmp/actual-signer-sha256.txt; then
+            echo "::error::AAB signer does not match the configured release upload keystore"
+            exit 1
+          fi
+          echo "AAB signer matches configured release upload keystore"
+
           # Ellenőrizzük, hogy a MANIFEST.MF és aláírófájlok (.RSA/.SF) jelen vannak-e
           unzip -l "$AAB_FILE" | grep "META-INF/" | head -n 10
 
