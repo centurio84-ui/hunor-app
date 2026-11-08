@@ -224,8 +224,19 @@ jobs:
           echo "AAB zip integritás: OK"
 
           echo "=== Aláírás vizsgálata jarsigner segítségével ==="
-          jarsigner -verify -strict -verbose -certs "$AAB_FILE" > /tmp/aab-signature-verification.log
-          grep -E "jar verified|Signed by|CN=" /tmp/aab-signature-verification.log || true
+          # jarsigner -strict returns exit 4 for certificate warnings (e.g. self-signed upload key).
+          # Non-strict verification still fails on invalid/unsigned JAR signatures.
+          jarsigner -verify -verbose -certs "$AAB_FILE" > /tmp/aab-signature-verification.log 2>&1 || {
+            cat /tmp/aab-signature-verification.log
+            echo "::error::AAB signature verification failed"
+            exit 1
+          }
+          if ! grep -q "jar verified" /tmp/aab-signature-verification.log; then
+            cat /tmp/aab-signature-verification.log
+            echo "::error::AAB is not cryptographically verified"
+            exit 1
+          fi
+          grep -E "jar verified|Signed by|CN=|Warning:" /tmp/aab-signature-verification.log || true
           
           # Ellenőrizzük, hogy a MANIFEST.MF és aláírófájlok (.RSA/.SF) jelen vannak-e
           unzip -l "$AAB_FILE" | grep "META-INF/" | head -n 10
