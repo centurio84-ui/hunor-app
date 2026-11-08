@@ -263,7 +263,8 @@ jobs:
           echo "AAB signer matches configured release upload keystore"
 
           # Ellenőrizzük, hogy a MANIFEST.MF és aláírófájlok (.RSA/.SF) jelen vannak-e
-          unzip -Z1 "$AAB_FILE" | grep -m 10 "^META-INF/" || {
+          unzip -Z1 "$AAB_FILE" > /tmp/aab-entries.txt
+          grep -m 10 "^META-INF/" /tmp/aab-entries.txt || {
             echo "::error::AAB signing metadata is missing"
             exit 1
           }
