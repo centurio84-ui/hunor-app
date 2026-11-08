@@ -50,3 +50,7 @@ Nem futott valódi bejelentkezési/API-/telefonos teszt, nem változott adatbáz
 - Android applicationId és namespace: https://developer.android.com/build/configure-app-module
 - Flutter Android kiadás: https://docs.flutter.dev/deployment/android
 - Rögzített bundletool: https://github.com/google/bundletool/releases/tag/1.18.3
+
+### Gradle-letöltési hiba kezelése
+
+A 42467663319 run első két próbája a fordítás előtt HTTP 504 hibát kapott a Gradle 9.3.1 all disztribúció GitHub-letöltésére. A kiadás ezért a változatlan 9.3.1 verzió hivatalos bin disztribúcióját rögzíti (b266d5ff6b90eada6dc3b20cb090e3731302e553a27c5d3e4df1f0d76beaff06). A CI curl újrapróbálással tölti le, SHA-256-tal ellenőrzi, majd csak a hash-azonos helyi archívumot adja a wrappernek. TLS- és hash-ellenőrzés nem lett kikapcsolva. A forrásban továbbra is a hivatalos HTTPS URL marad; a file URL csak az ideiglenes runneren keletkezik. A flutter create --no-pub után enforce-lockfile és git diff ellenőrzi, hogy a pubspec.lock sem változik.

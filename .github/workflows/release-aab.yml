@@ -56,14 +56,21 @@ jobs:
           python3 tool/release/resolve_build.py
       - name: Generate Android shell and verify committed identity
         run: |
-          flutter create --org hu.madtech --project-name hunor_app --platforms android .
+          flutter create --no-pub --org hu.madtech --project-name hunor_app --platforms android .
           python3 tool/release/check_android_branding.py
       - name: Install dependencies
-        run: flutter pub get --enforce-lockfile
+        run: |
+          flutter pub get --enforce-lockfile
+          git diff --exit-code -- pubspec.lock
       - name: Analyze code
         run: flutter analyze --no-fatal-infos
       - name: Run unit and widget tests
         run: flutter test --reporter expanded
+      - name: Download and checksum official Gradle distribution
+        run: |
+          curl --fail --location --retry 3 --retry-all-errors --proto '=https' --tlsv1.2 \
+            https://downloads.gradle.org/distributions/gradle-9.3.1-bin.zip -o "$RUNNER_TEMP/gradle-9.3.1-bin.zip"
+          python3 tool/release/use_verified_gradle.py "$RUNNER_TEMP/gradle-9.3.1-bin.zip"
       - name: Configure existing release keystore
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
