@@ -1,5 +1,8 @@
 name: MADtech lockfile reference reconciliation
 on:
+  push:
+    branches: [codex/madtech-rescue-release-015]
+    paths: [.github/workflows/madtech-lockfile-reconciliation.yml]
   workflow_dispatch:
 permissions:
   contents: read
