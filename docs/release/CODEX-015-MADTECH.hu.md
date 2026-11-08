@@ -17,7 +17,7 @@ A main ág korábbi mobilállapotot tartalmaz. A main felé kért PR emiatt a re
 - AndroidManifest.xml, MainActivity.kt, values/strings.xml: alkalmazásnév és teljesen minősített új Activity; backup=false, cleartext=false és internetjog megmarad.
 - A flutter create továbbra is előállítja a hiányzó platformhéjat. A verziókezelt natív fájlokat használja; a tool/release/check_android_branding.py utána ellenőrzi az eredményt. Kizárólag az ismert, változatlan generált extra MainActivity-stub távolítható el; egyedi natív kód esetén leáll.
 - Dart: csak MaterialApp-title, bejelentkezési cím és a szervezetnév hiányában mutatott fallback márkanév változik. Az üzleti kód, API-k, modellek, Supabase-konfiguráció és jogosultságok változatlanok.
-- pubspec: leírás és verzió; a függőségek és pubspec.lock változatlanok. Magyar felületi szövegek megmaradnak. A Play-adatlap alapnyelvét kézzel hu-HU-ra kell állítani; az Android launcher neve nem módosítja automatikusan a Console adatlapját.
+- pubspec: leírás és verzió; a deklarált függőségek változatlanok. A lockfile a referenciafolyamat ténylegesen feloldott állapotára rögzítve, az alábbi diagnosztika szerint. Magyar felületi szövegek megmaradnak. A Play-adatlap alapnyelvét kézzel hu-HU-ra kell állítani; az Android launcher neve nem módosítja automatikusan a Console adatlapját.
 
 ## Release workflow
 
@@ -54,3 +54,17 @@ Nem futott valódi bejelentkezési/API-/telefonos teszt, nem változott adatbáz
 ### Gradle-letöltési hiba kezelése
 
 A 42467663319 run első két próbája a fordítás előtt HTTP 504 hibát kapott a Gradle 9.3.1 all disztribúció GitHub-letöltésére. A kiadás ezért a változatlan 9.3.1 verzió hivatalos bin disztribúcióját rögzíti (b266d5ff6b90eada6dc3b20cb090e3731302e553a27c5d3e4df1f0d76beaff06). A CI curl újrapróbálással tölti le, SHA-256-tal ellenőrzi, majd csak a hash-azonos helyi archívumot adja a wrappernek. TLS- és hash-ellenőrzés nem lett kikapcsolva. A forrásban továbbra is a hivatalos HTTPS URL marad; a file URL csak az ideiglenes runneren keletkezik. A flutter create --no-pub után enforce-lockfile és git diff ellenőrzi, hogy a pubspec.lock sem változik.
+
+### További ellenőrzési bizonyítékok
+
+A felhasználó megerősítette, hogy hu.madtech.rescue csomagnév alatt még nem volt Play-feltöltés, ezért az 10001 buildszám marad. A referenciából letöltött AAB SHA-256-ja egyezik a korábbi futásban közölt fd0557dd67dd1a80b5874120606553f8f7dfa36c04795ec6c36c5ba19318e50a értékkel. Nyilvános upload tanúsítványának SHA-256-ja: 1657bd390ddd205adcab5e5e971dff63ba45f1a4b32c0861099ec415739c6bd3.
+
+A Java verifier helyi kriptográfiai pozitív tesztje a referencia-AAB-val sikeres. Ehhez kizárólag a referencia nyilvános tanúsítványából készült lokális certificate-only teszttárat használtam, privát kulcs vagy új aláírókulcs nélkül. A reference archívum fiktív módosított másolatával a negatív próba sikeres: az ellenőrző a digest-eltérést elutasította. A módosított tesztarchívum nem kiadási artifact.
+
+A main felé a GitHub jelenleg kizárólag .github/workflows/release-aab.yml add/add konfliktust jelez. A main három eltérő commitja csak ezt a fájlt érinti. A PR Draft marad; nem hajtottam végre merge-et vagy másik ág felülírását. A teljes release-teszt a saját commit kézi Actions-futtatásában fut, nem feltételezett PR-ellenőrzésként.
+
+### Lockfile-eltérés és reprodukálható javítás
+
+A régi forrás-lock 109 csomagot rögzített, miközben a referencia release workflow a platformgenerálás utáni pub get során 114 csomagot használt. Ezt a szigorú --enforce-lockfile leplezte le: a korábbi folyamat észrevétlenül feloldotta a fájlt a build közben. A 42468667995 titkok nélküli diagnosztika reprodukálta a sikeres referencia sorrendjét és kiadta az aktuális 114 csomagos lockot. A korábbi referencia naplójában megjelenő, ellenőrizhető csomagverziók közül egy sem tér el. A teljes korábbi runtime lock nem volt a régi artifact része, ezért nem állítjuk, hogy 114/114 korábbi verziót közvetlenül visszaolvastunk.
+
+A tényleges feloldott lock most verziókezelt; a meglévő pubspec függőségdeklarációkat nem írtuk át. A flutter create --no-pub körül a forrás-lock mentése/visszaállítása történik, majd pub get --enforce-lockfile és git diff --exit-code ellenőrzi a változatlanságot. Az ideiglenes diagnosztikai workflow a vizsgálat után eltávolítva. A változásfüggő funkciókat az eredeti teljes Flutter-tesztsorral újra ellenőrzi a végső release build.

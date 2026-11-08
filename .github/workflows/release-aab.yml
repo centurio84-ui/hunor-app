@@ -56,7 +56,9 @@ jobs:
           python3 tool/release/resolve_build.py
       - name: Generate Android shell and verify committed identity
         run: |
+          cp pubspec.lock "$RUNNER_TEMP/madtech-source-pubspec.lock"
           flutter create --no-pub --org hu.madtech --project-name hunor_app --platforms android .
+          cp "$RUNNER_TEMP/madtech-source-pubspec.lock" pubspec.lock
           python3 tool/release/check_android_branding.py
       - name: Install dependencies
         run: |
