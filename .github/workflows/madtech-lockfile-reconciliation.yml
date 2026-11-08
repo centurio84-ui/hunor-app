@@ -1,0 +1,30 @@
+name: MADtech lockfile reference reconciliation
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  resolve:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.9'
+          channel: stable
+          cache: true
+      - name: Resolve existing pubspec under reference SDK
+        run: |
+          cp pubspec.lock /tmp/source-pubspec.lock
+          flutter pub get
+          dart pub deps --json > dependency-tree.json
+          git diff -- pubspec.lock > lockfile-diff.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: madtech-lockfile-reference-reconciliation
+          path: |
+            pubspec.lock
+            dependency-tree.json
+            lockfile-diff.txt
+          retention-days: 7
+          if-no-files-found: error
