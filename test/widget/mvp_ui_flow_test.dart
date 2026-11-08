@@ -37,7 +37,7 @@ void main() {
 
       // Bejelentkező oldal ellenőrzése
       expect(find.byType(LoginPage), findsOneWidget);
-      expect(find.text('Rescue Platform'), findsOneWidget);
+      expect(find.text('MADtech Rescue Platform'), findsOneWidget);
       expect(find.text('Gyors belépés (Mock fiók)'), findsOneWidget);
 
       // Gyors belépés megnyomása
