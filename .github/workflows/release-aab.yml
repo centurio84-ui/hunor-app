@@ -69,9 +69,10 @@ jobs:
       - name: Run unit and widget tests
         run: flutter test --reporter expanded
       - name: Download and checksum official Gradle distribution
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          curl --fail --location --retry 3 --retry-all-errors --proto '=https' --tlsv1.2 \
-            https://downloads.gradle.org/distributions/gradle-9.3.1-bin.zip -o "$RUNNER_TEMP/gradle-9.3.1-bin.zip"
+          gh release download v9.3.1 --repo gradle/gradle-distributions --pattern gradle-9.3.1-bin.zip --dir "$RUNNER_TEMP"
           python3 tool/release/use_verified_gradle.py "$RUNNER_TEMP/gradle-9.3.1-bin.zip"
       - name: Cache checksum-verified official Kotlin compiler
         env:
