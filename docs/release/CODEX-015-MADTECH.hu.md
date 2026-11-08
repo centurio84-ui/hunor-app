@@ -72,3 +72,6 @@ A tényleges feloldott lock most verziókezelt; a meglévő pubspec függőségd
 A 42468823682 futásban minden teszt és a zárolt függőségek ellenőrzése sikeres; a Kotlin 2.2.21 compiler letöltése HTTP 504-et kapott. Az azonos hivatalos JetBrains JAR előtöltése SHA-256 és Maven Central SHA-1 ellenőrzéssel történik a Gradle tartalomcímzett gyorsítótárába. Verzió és repository-jogosultság nem változik.
 
 A 42503133653 futás tényleges fordítási hibát mutatott: az AGP 9 alatt a legacy kotlin-android/kotlinOptions már elutasított. A konfiguráció a használt Flutter 3.47.9 hivatalos sablonját követve beépített Kotlinra és compilerOptions JVM_17-re vált; minSdk/targetSdk, signing és üzleti kód változatlan. Forrás: https://github.com/flutter/flutter/blob/3.47.9/packages/flutter_tools/templates/app/android-kotlin.tmpl/app/build.gradle.kts.tmpl
+
+## Lezárás
+A 42503577454 futás sikeres; a tényleges AAB és helyi ellenőrzés eredményei, hash, artifact és tesztek a ../reports/CODEX-015-MADTECH.hu.md jelentésben szerepelnek.
