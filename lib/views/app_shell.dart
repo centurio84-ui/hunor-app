@@ -90,7 +90,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
                 const SizedBox(width: 8),
                 Flexible(
                   child: Text(
-                    currentOrg?.name ?? 'Rescue Platform',
+                    currentOrg?.name ?? 'MADtech Rescue Platform',
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
                   ),

@@ -38,7 +38,7 @@ class _LoginPageState extends State<LoginPage> {
                   const Icon(Icons.shield_outlined, size: 72, color: HunorColors.red),
                   const SizedBox(height: 16),
                   Text(
-                    'Rescue Platform',
+                    'MADtech Rescue Platform',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w900),
                   ),
