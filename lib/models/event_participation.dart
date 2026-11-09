@@ -61,18 +61,24 @@ class EventRegistrationInfo {
   }
 
   factory EventRegistrationInfo.fromJson(Map<String, dynamic> json) {
+    final opensAtRaw = json['opens_at'] ?? json['registration_opens_at'];
+    final regClosesRaw = json['registration_deadline'] ?? json['registration_closes_at'];
+    final cancelClosesRaw = json['cancellation_deadline'] ?? json['cancellation_closes_at'];
+    final cap = json['max_capacity'] ?? json['capacity'];
+    final goingCount = json['current_going_count'] ?? (cap != null && json['available_places'] != null ? ((cap as num).toInt() - (json['available_places'] as num).toInt()) : 0);
+
     return EventRegistrationInfo(
       eventId: json['event_id']?.toString() ?? '',
       organizationId: json['organization_id']?.toString() ?? '',
-      opensAt: json['opens_at'] != null ? DateTime.tryParse(json['opens_at'].toString()) : null,
-      registrationDeadline: json['registration_deadline'] != null
-          ? DateTime.tryParse(json['registration_deadline'].toString())
+      opensAt: opensAtRaw != null ? DateTime.tryParse(opensAtRaw.toString()) : null,
+      registrationDeadline: regClosesRaw != null
+          ? DateTime.tryParse(regClosesRaw.toString())
           : null,
-      cancellationDeadline: json['cancellation_deadline'] != null
-          ? DateTime.tryParse(json['cancellation_deadline'].toString())
+      cancellationDeadline: cancelClosesRaw != null
+          ? DateTime.tryParse(cancelClosesRaw.toString())
           : null,
-      maxCapacity: (json['max_capacity'] as num?)?.toInt(),
-      currentGoingCount: (json['current_going_count'] as num?)?.toInt() ?? 0,
+      maxCapacity: (cap as num?)?.toInt(),
+      currentGoingCount: (goingCount as num?)?.toInt() ?? 0,
       rulesVersion: (json['rules_version'] as num?)?.toInt() ?? 1,
       isEligible: json['is_eligible'] != false,
       eligibilityReason: json['eligibility_reason']?.toString(),

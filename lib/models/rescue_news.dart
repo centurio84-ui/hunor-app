@@ -53,14 +53,16 @@ class RescueNewsItem {
   });
 
   factory RescueNewsItem.fromJson(Map<String, dynamic> json) {
+    final summaryVal = json['summary'] ?? json['lead'] ?? '';
+    final contentVal = json['content'] ?? json['body'] ?? '';
     return RescueNewsItem(
-      id: json['id']?.toString() ?? '',
+      id: (json['id'] ?? json['content_id'])?.toString() ?? '',
       organizationId: json['organization_id']?.toString() ?? '',
       title: json['title']?.toString() ?? '',
-      summary: json['summary']?.toString() ?? '',
-      content: json['content']?.toString() ?? '',
-      authorName: json['author_name']?.toString(),
-      publishedAt: DateTime.tryParse(json['published_at']?.toString() ?? '') ?? DateTime.now(),
+      summary: summaryVal.toString(),
+      content: contentVal.toString(),
+      authorName: (json['author_name'] ?? json['author_display_name'])?.toString(),
+      publishedAt: DateTime.tryParse((json['published_at'] ?? json['created_at'])?.toString() ?? '') ?? DateTime.now(),
       audience: NewsAudienceX.fromString(json['audience']?.toString()),
       isPinned: json['is_pinned'] == true,
       tags: (json['tags'] as List?)?.map((e) => e.toString()).toList() ?? const [],

@@ -88,8 +88,16 @@ class StagingApi implements RescuePlatformApi {
     Map<String,dynamic> data = {};
     try { if(response.body.isNotEmpty) data = jsonDecode(response.body) as Map<String,dynamic>; } catch (_) { throw const ApiException(statusCode: 503, code: 'INVALID_RESPONSE', message: 'A szerver válasza nem értelmezhető.'); }
     if(response.statusCode < 200 || response.statusCode >= 300) {
-      if(response.statusCode == 401) throw const UnauthorizedException();
-      throw ApiException(statusCode: response.statusCode, code: data['code']?.toString() ?? 'API_ERROR', message: 'A műveletet a staging szerver elutasította (${response.statusCode}, ${data['code'] ?? 'API_ERROR'}).', requestId: data['request_id']?.toString());
+      final code = data['code']?.toString() ?? 'API_ERROR';
+      final message = data['message']?.toString() ?? 'A műveletet a staging szerver elutasította (${response.statusCode}, $code).';
+      final requestId = data['request_id']?.toString();
+      if(response.statusCode == 401) throw UnauthorizedException(code: code, message: message, requestId: requestId);
+      if(response.statusCode == 403) throw ForbiddenException(code: code, message: message, requestId: requestId);
+      if(response.statusCode == 404) throw NotFoundException(code: code, message: message, requestId: requestId);
+      if(response.statusCode == 409) throw ConflictException(code: code, message: message, requestId: requestId);
+      if(response.statusCode == 412) throw PreconditionFailedException(code: code, message: message, requestId: requestId);
+      if(response.statusCode == 422) throw UnprocessableEntityException(code: code, message: message, requestId: requestId);
+      throw ApiException(statusCode: response.statusCode, code: code, message: message, requestId: requestId);
     }
     return data;
   }
