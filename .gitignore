@@ -9,3 +9,11 @@ android/.gradle/
 .env
 *.jks
 *.keystore
+
+android/key.properties
+*.aab
+*.der
+*.pem
+
+__pycache__/
+*.class

@@ -1,7 +1,7 @@
 name: hunor_app
-description: HUNOR internal operations app
+description: MADtech Rescue Platform – mentőszervezeti műveleti alkalmazás
 publish_to: "none"
-version: 1.0.0+1
+version: 1.0.1+10002
 
 environment:
   sdk: ">=3.4.0 <4.0.0"

@@ -34,6 +34,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
+          flutter-version: '3.47.9'
           cache: true
 
       - name: Környezet ellenőrzése
@@ -65,7 +66,8 @@ jobs:
 
       - name: Android és Web platformfájlok biztosítása
         run: |
-          flutter create --org hu.hunor --platforms android,web .
+          flutter create --no-pub --org hu.madtech --platforms android,web .
+          python3 tool/release/check_android_branding.py
 
       - name: Android Debug APK építése (Valódi Staging API)
         run: |

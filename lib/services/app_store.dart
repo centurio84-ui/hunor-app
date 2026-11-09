@@ -369,6 +369,8 @@ class AppStore extends ChangeNotifier {
   }
 
   Future<void> respondToEvent(String eventId, bool going) async {
+    lastResponseMessage = '';
+    errorMessage = null;
     try {
       final currentPart = eventParticipations[eventId];
       final currentVersion = currentPart?.version ?? 0;
@@ -397,9 +399,15 @@ class AppStore extends ChangeNotifier {
       try {
         final freshPart = await api.getMyEventParticipation(eventId);
         eventParticipations[eventId] = freshPart;
-        if (freshPart.response != null) eventResponses[eventId] = freshPart.response!.value;
+        if (freshPart.response != null) {
+          eventResponses[eventId] = freshPart.response!.value;
+        } else {
+          eventResponses.remove(eventId);
+        }
       } catch (_) {}
       notifyListeners();
+      // The widget must not report success for a rejected command.
+      rethrow;
     } catch (e) {
       errorMessage = e.toString();
       notifyListeners();

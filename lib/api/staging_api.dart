@@ -126,8 +126,10 @@ class StagingApi implements RescuePlatformApi {
   Future<List<Map<String,dynamic>>> _pages(String path) async {
     final items = <Map<String,dynamic>>[], cursors = <String>{}; String? cursor;
     do {
-      final sep = path.contains('?') ? '&' : '?';
-      final url = cursor == null ? path : '$path${sep}cursor=${Uri.encodeQueryComponent(cursor)}';
+      final uri = Uri.parse(path);
+      final parameters = Map<String, String>.from(uri.queryParameters);
+      if (cursor != null) parameters['cursor'] = cursor;
+      final url = uri.replace(queryParameters: parameters.isEmpty ? null : parameters).toString();
       final data = await request(url);
       items.addAll((data['items'] as List).map((e) => Map<String,dynamic>.from(e as Map)));
       cursor = (data['page'] as Map?)?['next_cursor'] as String?;

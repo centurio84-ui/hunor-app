@@ -36,7 +36,7 @@ class EventRegistrationInfo {
   const EventRegistrationInfo({
     required this.eventId,
     required this.organizationId,
-    this.publicationState = 'published',
+    this.publicationState = 'unknown',
     this.opensAt,
     this.registrationDeadline,
     this.cancellationDeadline,
@@ -68,24 +68,10 @@ class EventRegistrationInfo {
   bool get isPublished => publicationState == 'published';
 
   /// Regisztráció nyitottsága: a szerveres serverRegistrationOpen flag az elsődleges igazságforrás
-  bool get isRegistrationOpen {
-    if (!isPublished) return false;
-    if (serverRegistrationOpen != null) return serverRegistrationOpen!;
-    final now = DateTime.now();
-    if (opensAt != null && now.isBefore(opensAt!)) return false;
-    if (registrationDeadline != null && now.isAfter(registrationDeadline!)) return false;
-    return true;
-  }
+  bool get isRegistrationOpen => isPublished && serverRegistrationOpen == true;
 
-  /// Lemondás nyitottsága: a szerveres serverCancellationOpen flag az elsődleges igazságforrás
-  bool get isCancellationOpen {
-    if (!isPublished) return false;
-    if (serverCancellationOpen != null) return serverCancellationOpen!;
-    final now = DateTime.now();
-    final deadline = cancellationDeadline ?? registrationDeadline;
-    if (deadline != null && now.isAfter(deadline)) return false;
-    return true;
-  }
+  /// Missing or unknown server state never authorizes a mutation.
+  bool get isCancellationOpen => isPublished && serverCancellationOpen == true;
 
   factory EventRegistrationInfo.fromJson(Map<String, dynamic> json) {
     final opensAtRaw = json['opens_at'] ?? json['registration_opens_at'];
@@ -107,7 +93,7 @@ class EventRegistrationInfo {
     return EventRegistrationInfo(
       eventId: (json['event_id'] ?? json['id'])?.toString() ?? '',
       organizationId: json['organization_id']?.toString() ?? '',
-      publicationState: json['publication_state']?.toString() ?? 'published',
+      publicationState: json['publication_state']?.toString() ?? 'unknown',
       opensAt: opensAtRaw != null ? DateTime.tryParse(opensAtRaw.toString()) : null,
       registrationDeadline: regClosesRaw != null
           ? DateTime.tryParse(regClosesRaw.toString())
@@ -127,6 +113,9 @@ class EventRegistrationInfo {
   }
 
   Map<String, dynamic> toJson() => {
+    'publication_state': publicationState,
+    'registration_open': serverRegistrationOpen,
+    'cancellation_open': serverCancellationOpen,
     'event_id': eventId,
     'organization_id': organizationId,
     if (opensAt != null) 'opens_at': opensAt!.toIso8601String(),

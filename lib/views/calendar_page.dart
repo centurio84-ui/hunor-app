@@ -218,12 +218,12 @@ class CalendarPage extends StatelessWidget {
               // Gombok a szerveres nyitottság, kapacitás és jogosultság alapján
               if (!past && (reg == null || reg.isPublished)) ...[
                 () {
-                  final canParticipate = s.capabilities == null || s.capabilities!.allows('events.participate_self');
+                  final canParticipate = s.capabilities?.allows('events.participate_self') == true;
                   final isRegistered = part?.isGoing == true;
                   // Jelentkezés engedélyezett: van jog + regisztráció nyitva + nincs betelve (kivéve ha már jelentkezett)
-                  final canRegister = canParticipate && (reg == null || (reg.isRegistrationOpen && (!reg.isFull || isRegistered)));
+                  final canRegister = canParticipate && (reg != null && reg.isRegistrationOpen && (!reg.isFull || isRegistered));
                   // Lemondás engedélyezett: van jog + lemondás nyitva + ha már regisztrált volt, vagy regisztráció nyitva
-                  final canCancel = canParticipate && (reg == null || reg.isCancellationOpen);
+                  final canCancel = canParticipate && (reg != null && reg.isCancellationOpen);
 
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,

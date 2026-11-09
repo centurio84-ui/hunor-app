@@ -539,6 +539,9 @@ class MockRescuePlatformApi implements RescuePlatformApi {
         EventRegistrationInfo(
           eventId: eventId,
           organizationId: _currentOrganizationId!,
+          publicationState: 'published',
+          serverRegistrationOpen: true,
+          serverCancellationOpen: true,
           maxCapacity: 20,
           currentGoingCount: 8,
           registrationDeadline: DateTime.now().add(const Duration(days: 7)),
