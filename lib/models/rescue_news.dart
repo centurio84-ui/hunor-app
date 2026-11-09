@@ -54,13 +54,27 @@ class RescueNewsItem {
 
   factory RescueNewsItem.fromJson(Map<String, dynamic> json) {
     final summaryVal = json['summary'] ?? json['lead'] ?? '';
-    final contentVal = json['content'] ?? json['body'] ?? '';
+    
+    // Body lehet közvetlen String, vagy a szerződés szerinti blokkok/bekezdések tömbje
+    String contentVal = '';
+    final rawBody = json['content'] ?? json['body'];
+    if (rawBody is List) {
+      contentVal = rawBody
+          .map((b) => b is Map ? (b['text'] ?? b['content'] ?? '') : b.toString())
+          .where((s) => s.toString().trim().isNotEmpty)
+          .join('\n\n');
+    } else if (rawBody != null) {
+      contentVal = rawBody.toString();
+    } else {
+      contentVal = summaryVal.toString();
+    }
+
     return RescueNewsItem(
       id: (json['id'] ?? json['content_id'])?.toString() ?? '',
       organizationId: json['organization_id']?.toString() ?? '',
       title: json['title']?.toString() ?? '',
       summary: summaryVal.toString(),
-      content: contentVal.toString(),
+      content: contentVal,
       authorName: (json['author_name'] ?? json['author_display_name'])?.toString(),
       publishedAt: DateTime.tryParse((json['published_at'] ?? json['created_at'])?.toString() ?? '') ?? DateTime.now(),
       audience: NewsAudienceX.fromString(json['audience']?.toString()),

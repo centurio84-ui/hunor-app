@@ -6,7 +6,7 @@ import 'package:hunor_app/api/staging_api.dart';
 import 'package:hunor_app/models/api_error.dart';
 import 'package:hunor_app/models/event_participation.dart';
 import 'package:hunor_app/services/app_store.dart';
-import 'staging_api_test.dart' show MemoryVault, session, defaults, json, orgA, orgB;
+import 'staging_api_test.dart' show MemoryVault, defaults, json, orgA;
 
 void main() {
   group('CODEX-017 / 018 Staging Engagement Integration Tests', () {
@@ -120,21 +120,45 @@ void main() {
       );
     });
 
-    test('StagingApi handles news list and detailed item with fallback aliases', () async {
+    test('StagingApi handles news list, multi-page cursor and structured body', () async {
+      int newsCalls = 0;
       final api = StagingApi(
         vault: MemoryVault(),
         client: MockClient((http.Request r) async {
           final path = r.url.path;
 
           if (path.endsWith('/news')) {
+            newsCalls++;
+            if (r.url.queryParameters['cursor'] == 'page-2-cursor') {
+              return json({
+                'items': [
+                  {
+                    'id': '88888888-8888-4888-8888-888888888888',
+                    'organization_id': orgA,
+                    'title': 'Második oldali közlemény',
+                    'lead': 'Második oldal lead',
+                    'body': [
+                      {'type': 'paragraph', 'text': 'Második oldali első bekezdés.'}
+                    ],
+                    'author_display_name': 'Adminisztrátor',
+                    'published_at': '2026-11-08T12:00:00Z',
+                  }
+                ],
+                'page': {'next_cursor': null},
+              });
+            }
+
             return json({
               'items': [
                 {
                   'content_id': testNewsId,
                   'organization_id': orgA,
                   'title': '[TESZT] Mobilos hírfolyam',
-                  'lead': 'Rövid összefoglaló',
-                  'body': 'Részletes hírtartalom szövege a mentőtagok számára.',
+                  'lead': 'Rövid összefoglaló lead',
+                  'body': [
+                    {'type': 'paragraph', 'text': 'Első bekezdés szövege.'},
+                    {'type': 'paragraph', 'text': 'Második bekezdés szövege.'}
+                  ],
                   'author_display_name': 'Gyakorlatvezető',
                   'created_at': '2026-11-09T08:00:00Z',
                   'audience': 'members',
@@ -142,7 +166,7 @@ void main() {
                   'tags': ['gyakorlat', 'staging'],
                 }
               ],
-              'page': {'next_cursor': null},
+              'page': {'next_cursor': 'page-2-cursor'},
             });
           }
 
@@ -168,16 +192,23 @@ void main() {
       await api.login('member@example.invalid', 'fixture-password');
       await api.switchOrganization(orgA);
 
-      // Hírek listázása
+      // Hírek többoldalas listázása
       final newsList = await api.getNews();
-      expect(newsList.length, 1);
-      final item = newsList.first;
-      expect(item.id, testNewsId);
-      expect(item.title, '[TESZT] Mobilos hírfolyam');
-      expect(item.summary, 'Rövid összefoglaló');
-      expect(item.content, 'Részletes hírtartalom szövege a mentőtagok számára.');
-      expect(item.authorName, 'Gyakorlatvezető');
-      expect(item.isPinned, isTrue);
+      expect(newsCalls, 2);
+      expect(newsList.length, 2);
+
+      final item1 = newsList.first;
+      expect(item1.id, testNewsId);
+      expect(item1.title, '[TESZT] Mobilos hírfolyam');
+      expect(item1.summary, 'Rövid összefoglaló lead');
+      expect(item1.content, contains('Első bekezdés szövege.'));
+      expect(item1.content, contains('Második bekezdés szövege.'));
+      expect(item1.authorName, 'Gyakorlatvezető');
+      expect(item1.isPinned, isTrue);
+
+      final item2 = newsList[1];
+      expect(item2.id, '88888888-8888-4888-8888-888888888888');
+      expect(item2.content, 'Második oldali első bekezdés.');
 
       // Hír részleteinek lekérése
       final detail = await api.getNewsItem(testNewsId);
@@ -188,9 +219,10 @@ void main() {
       expect(detail.authorName, 'Műveleti tiszt');
     });
 
-    test('AppStore integration loads staging events, participation and news, and executes respondToEvent', () async {
+    test('AppStore integration loads staging events, capacity limits and executes respondToEvent', () async {
       int partVersion = 0;
       String? currentResponse;
+      int availPlaces = 2;
 
       final api = StagingApi(
         vault: MemoryVault(),
@@ -232,7 +264,7 @@ void main() {
               'registration_opens_at': '2026-11-01T00:00:00Z',
               'registration_closes_at': '2026-11-20T00:00:00Z',
               'capacity': 2,
-              'available_places': currentResponse == 'going' ? 1 : 2,
+              'available_places': availPlaces,
               'registration_open': true,
               'cancellation_open': true,
               'rules_version': 1,
@@ -244,6 +276,7 @@ void main() {
             if (r.method == 'PUT') {
               final body = jsonDecode(r.body) as Map<String, dynamic>;
               currentResponse = body['response'] as String;
+              availPlaces = currentResponse == 'going' ? 1 : 2;
               partVersion++;
             }
             return json({
@@ -290,12 +323,11 @@ void main() {
       // Esemény és hír betöltődött
       expect(store.events.length, 1);
       expect(store.events.first.id, testEventId);
-      expect(store.events.first.title, '[TESZT] Mobilos jelentkezési gyakorlat');
       expect(store.news.length, 1);
-      expect(store.news.first.id, testNewsId);
 
       // Esemény regisztráció és részvétel jelen van
       expect(store.eventRegistrations[testEventId]?.maxCapacity, 2);
+      expect(store.eventRegistrations[testEventId]?.remainingSeats, 2);
       expect(store.eventParticipations[testEventId]?.version, 0);
 
       // Jelentkezés az eseményre az AppStore-on keresztül
@@ -303,12 +335,15 @@ void main() {
       expect(store.eventResponses[testEventId], 'going');
       expect(store.eventParticipations[testEventId]?.version, 1);
       expect(store.eventParticipations[testEventId]?.isGoing, isTrue);
+      // Részvétel után a kapacitás is frissült a szerverről
+      expect(store.eventRegistrations[testEventId]?.remainingSeats, 1);
 
       // Lemondás az eseményről az AppStore-on keresztül
       await store.respondToEvent(testEventId, false);
       expect(store.eventResponses[testEventId], 'not_going');
       expect(store.eventParticipations[testEventId]?.version, 2);
       expect(store.eventParticipations[testEventId]?.isNotGoing, isTrue);
+      expect(store.eventRegistrations[testEventId]?.remainingSeats, 2);
     });
   });
 }

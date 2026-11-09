@@ -67,17 +67,25 @@ jobs:
         run: |
           flutter create --org hu.hunor --platforms android,web .
 
-      - name: Android Debug APK építése (Mock Tesztverzió)
+      - name: Android Debug APK építése (Valódi Staging API)
         run: |
-          flutter build apk --debug
-          echo "### Android Debug APK Építés" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Android tesztverzió (APK) sikeresen lefordult." >> $GITHUB_STEP_SUMMARY
+          flutter build apk --debug \
+            --dart-define=RESCUE_API_MODE=staging \
+            --dart-define=RESCUE_API_BASE_URL=https://xbcutdkqswfzkubkozng.supabase.co/functions/v1/rescue-platform-staging/v1
+          
+          cd build/app/outputs/flutter-apk
+          sha256sum app-debug.apk > SHA256SUMS.txt
+          echo "### Android Staging Debug APK Építés" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Valódi HTTPS staging backenddel működő Android tesztverzió (APK) sikeresen lefordult." >> $GITHUB_STEP_SUMMARY
+          echo "SHA-256: \`$(cat SHA256SUMS.txt)\`" >> $GITHUB_STEP_SUMMARY
 
       - name: Android APK artifact archiválása
         uses: actions/upload-artifact@v4
         with:
-          name: rescue-platform-android-apk
-          path: build/app/outputs/flutter-apk/app-debug.apk
+          name: rescue-platform-staging-android-debug
+          path: |
+            build/app/outputs/flutter-apk/app-debug.apk
+            build/app/outputs/flutter-apk/SHA256SUMS.txt
           retention-days: 14
 
       - name: Flutter Web demó építés (Release Web Build)

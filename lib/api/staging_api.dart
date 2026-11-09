@@ -126,7 +126,9 @@ class StagingApi implements RescuePlatformApi {
   Future<List<Map<String,dynamic>>> _pages(String path) async {
     final items = <Map<String,dynamic>>[], cursors = <String>{}; String? cursor;
     do {
-      final data = await request(path + (cursor == null ? '' : '?cursor=${Uri.encodeQueryComponent(cursor)}'));
+      final sep = path.contains('?') ? '&' : '?';
+      final url = cursor == null ? path : '$path${sep}cursor=${Uri.encodeQueryComponent(cursor)}';
+      final data = await request(url);
       items.addAll((data['items'] as List).map((e) => Map<String,dynamic>.from(e as Map)));
       cursor = (data['page'] as Map?)?['next_cursor'] as String?;
       if(cursor != null && !cursors.add(cursor)) throw const ApiException(statusCode:503,code:'INVALID_CURSOR',message:'Hibás lapozási válasz.');

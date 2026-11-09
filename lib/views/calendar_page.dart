@@ -171,24 +171,42 @@ class CalendarPage extends StatelessWidget {
                           const SizedBox(width: 8),
                           Text(
                             reg.hasCapacityLimit
-                                ? 'Létszámkeret: ${reg.currentGoingCount} / ${reg.maxCapacity} fő'
+                                ? (reg.maxCapacity == 0
+                                    ? 'Kapacitás: 0 fő (Nincs férőhely)'
+                                    : 'Létszámkeret: ${reg.remainingSeats ?? 0} szabad / ${reg.maxCapacity} fő')
                                 : 'Korlátlan létszámkeret',
-                            style: const TextStyle(fontWeight: FontWeight.w700),
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              color: reg.isFull ? HunorColors.warning : Colors.white,
+                            ),
                           ),
                         ],
                       ),
+                      if (!reg.isPublished) ...[
+                        const SizedBox(height: 6),
+                        Text(
+                          'Státusz: ${reg.publicationState == "cancelled" ? "Törölve" : reg.publicationState == "archived" ? "Archiválva" : reg.publicationState}',
+                          style: const TextStyle(fontSize: 12, color: HunorColors.red, fontWeight: FontWeight.bold),
+                        ),
+                      ],
                       if (reg.registrationDeadline != null) ...[
                         const SizedBox(height: 6),
                         Text(
-                          'Jelentkezési határidő: ${_date(reg.registrationDeadline!)}',
-                          style: const TextStyle(fontSize: 12, color: HunorColors.muted),
+                          'Jelentkezési határidő: ${_date(reg.registrationDeadline!)} (${reg.isRegistrationOpen ? "Nyitva" : "Lezárult"})',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: reg.isRegistrationOpen ? HunorColors.muted : HunorColors.warning,
+                          ),
                         ),
                       ],
                       if (reg.cancellationDeadline != null) ...[
                         const SizedBox(height: 2),
                         Text(
-                          'Lemondási határidő: ${_date(reg.cancellationDeadline!)}',
-                          style: const TextStyle(fontSize: 12, color: HunorColors.muted),
+                          'Lemondási határidő: ${_date(reg.cancellationDeadline!)} (${reg.isCancellationOpen ? "Nyitva" : "Lezárult"})',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: reg.isCancellationOpen ? HunorColors.muted : HunorColors.warning,
+                          ),
                         ),
                       ],
                     ],
@@ -197,24 +215,89 @@ class CalendarPage extends StatelessWidget {
                 const SizedBox(height: 16),
               ],
 
-              if (!past) ...[
-                FilledButton.icon(
-                  onPressed: () {
-                    Navigator.pop(c);
-                    s.respondToEvent(e.id, true);
-                  },
-                  icon: Icon(part?.isGoing == true ? Icons.check_circle : Icons.check_circle_outline),
-                  label: Text(part?.isGoing == true ? 'Részt veszek ✓' : 'Részt veszek'),
-                ),
-                const SizedBox(height: 8),
-                OutlinedButton.icon(
-                  onPressed: () {
-                    Navigator.pop(c);
-                    s.respondToEvent(e.id, false);
-                  },
-                  icon: Icon(part?.isNotGoing == true ? Icons.cancel : Icons.cancel_outlined),
-                  label: Text(part?.isNotGoing == true ? 'Nem veszek részt ✓' : 'Nem veszek részt'),
-                ),
+              // Gombok a szerveres nyitottság, kapacitás és jogosultság alapján
+              if (!past && (reg == null || reg.isPublished)) ...[
+                () {
+                  final canParticipate = s.capabilities == null || s.capabilities!.allows('events.participate_self');
+                  final isRegistered = part?.isGoing == true;
+                  // Jelentkezés engedélyezett: van jog + regisztráció nyitva + nincs betelve (kivéve ha már jelentkezett)
+                  final canRegister = canParticipate && (reg == null || (reg.isRegistrationOpen && (!reg.isFull || isRegistered)));
+                  // Lemondás engedélyezett: van jog + lemondás nyitva + ha már regisztrált volt, vagy regisztráció nyitva
+                  final canCancel = canParticipate && (reg == null || reg.isCancellationOpen);
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      FilledButton.icon(
+                        onPressed: canRegister
+                            ? () async {
+                                final messenger = ScaffoldMessenger.of(context);
+                                Navigator.pop(c);
+                                try {
+                                  await s.respondToEvent(e.id, true);
+                                  messenger.showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Sikeres eseményjelentkezés!'),
+                                      backgroundColor: HunorColors.success,
+                                    ),
+                                  );
+                                } catch (err) {
+                                  messenger.showSnackBar(
+                                    SnackBar(
+                                      content: Text('Hiba a jelentkezéskor: $err'),
+                                      backgroundColor: HunorColors.red,
+                                    ),
+                                  );
+                                }
+                              }
+                            : null,
+                        icon: Icon(isRegistered ? Icons.check_circle : Icons.check_circle_outline),
+                        label: Text(
+                          isRegistered
+                              ? 'Részt veszek ✓'
+                              : (reg != null && reg.isFull && !isRegistered)
+                                  ? 'Betelt létszámkeret'
+                                  : (reg != null && !reg.isRegistrationOpen)
+                                      ? 'Jelentkezés lezárult'
+                                      : 'Részt veszek',
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      OutlinedButton.icon(
+                        onPressed: canCancel
+                            ? () async {
+                                final messenger = ScaffoldMessenger.of(context);
+                                Navigator.pop(c);
+                                try {
+                                  await s.respondToEvent(e.id, false);
+                                  messenger.showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Eseményrészvétel sikeresen lemondva!'),
+                                      backgroundColor: HunorColors.muted,
+                                    ),
+                                  );
+                                } catch (err) {
+                                  messenger.showSnackBar(
+                                    SnackBar(
+                                      content: Text('Hiba a lemondáskor: $err'),
+                                      backgroundColor: HunorColors.red,
+                                    ),
+                                  );
+                                }
+                              }
+                            : null,
+                        icon: Icon(part?.isNotGoing == true ? Icons.cancel : Icons.cancel_outlined),
+                        label: Text(
+                          part?.isNotGoing == true
+                              ? 'Nem veszek részt ✓'
+                              : (reg != null && !reg.isCancellationOpen)
+                                  ? 'Lemondási határidő lejárt'
+                                  : 'Nem veszek részt',
+                        ),
+                      ),
+                    ],
+                  );
+                }(),
               ],
             ],
           ),

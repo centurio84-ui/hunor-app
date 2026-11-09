@@ -20,11 +20,15 @@ extension EventParticipationStatusX on EventParticipationStatus {
 class EventRegistrationInfo {
   final String eventId;
   final String organizationId;
+  final String publicationState;
   final DateTime? opensAt;
   final DateTime? registrationDeadline;
   final DateTime? cancellationDeadline;
   final int? maxCapacity;
+  final int? availablePlaces;
   final int currentGoingCount;
+  final bool? serverRegistrationOpen;
+  final bool? serverCancellationOpen;
   final int rulesVersion;
   final bool isEligible;
   final String? eligibilityReason;
@@ -32,28 +36,51 @@ class EventRegistrationInfo {
   const EventRegistrationInfo({
     required this.eventId,
     required this.organizationId,
+    this.publicationState = 'published',
     this.opensAt,
     this.registrationDeadline,
     this.cancellationDeadline,
     this.maxCapacity,
+    this.availablePlaces,
     this.currentGoingCount = 0,
+    this.serverRegistrationOpen,
+    this.serverCancellationOpen,
     this.rulesVersion = 1,
     this.isEligible = true,
     this.eligibilityReason,
   });
 
-  bool get hasCapacityLimit => maxCapacity != null && maxCapacity! > 0;
-  int? get remainingSeats => hasCapacityLimit ? (maxCapacity! - currentGoingCount).clamp(0, maxCapacity!) : null;
+  /// Szerződés szerinti kapacitás: ha null, akkor korlátlan.
+  /// Ha egész szám (akár 0!), akkor kapacitáskorlátos.
+  bool get hasCapacityLimit => maxCapacity != null;
+
+  /// Szabad helyek száma. Ha a szerver rendelkezésre bocsátja az availablePlaces mezőt, azt használjuk.
+  int? get remainingSeats {
+    if (availablePlaces != null) return availablePlaces;
+    if (maxCapacity != null) return (maxCapacity! - currentGoingCount).clamp(0, maxCapacity!);
+    return null;
+  }
+
+  /// Betelt-e a keret
   bool get isFull => hasCapacityLimit && (remainingSeats ?? 0) <= 0;
 
+  /// Esemény érvényes/nyitott státusza
+  bool get isPublished => publicationState == 'published';
+
+  /// Regisztráció nyitottsága: a szerveres serverRegistrationOpen flag az elsődleges igazságforrás
   bool get isRegistrationOpen {
+    if (!isPublished) return false;
+    if (serverRegistrationOpen != null) return serverRegistrationOpen!;
     final now = DateTime.now();
     if (opensAt != null && now.isBefore(opensAt!)) return false;
     if (registrationDeadline != null && now.isAfter(registrationDeadline!)) return false;
     return true;
   }
 
+  /// Lemondás nyitottsága: a szerveres serverCancellationOpen flag az elsődleges igazságforrás
   bool get isCancellationOpen {
+    if (!isPublished) return false;
+    if (serverCancellationOpen != null) return serverCancellationOpen!;
     final now = DateTime.now();
     final deadline = cancellationDeadline ?? registrationDeadline;
     if (deadline != null && now.isAfter(deadline)) return false;
@@ -64,12 +91,21 @@ class EventRegistrationInfo {
     final opensAtRaw = json['opens_at'] ?? json['registration_opens_at'];
     final regClosesRaw = json['registration_deadline'] ?? json['registration_closes_at'];
     final cancelClosesRaw = json['cancellation_deadline'] ?? json['cancellation_closes_at'];
-    final cap = json['max_capacity'] ?? json['capacity'];
-    final goingCount = json['current_going_count'] ?? (cap != null && json['available_places'] != null ? ((cap as num).toInt() - (json['available_places'] as num).toInt()) : 0);
+    final cap = json['capacity'] ?? json['max_capacity'];
+    final avail = json['available_places'];
+    
+    // Számított vagy szerveres létszám
+    int calculatedGoing = 0;
+    if (json['current_going_count'] != null) {
+      calculatedGoing = (json['current_going_count'] as num).toInt();
+    } else if (cap != null && avail != null) {
+      calculatedGoing = ((cap as num).toInt() - (avail as num).toInt()).clamp(0, (cap as num).toInt());
+    }
 
     return EventRegistrationInfo(
-      eventId: json['event_id']?.toString() ?? '',
+      eventId: (json['event_id'] ?? json['id'])?.toString() ?? '',
       organizationId: json['organization_id']?.toString() ?? '',
+      publicationState: json['publication_state']?.toString() ?? 'published',
       opensAt: opensAtRaw != null ? DateTime.tryParse(opensAtRaw.toString()) : null,
       registrationDeadline: regClosesRaw != null
           ? DateTime.tryParse(regClosesRaw.toString())
@@ -77,8 +113,11 @@ class EventRegistrationInfo {
       cancellationDeadline: cancelClosesRaw != null
           ? DateTime.tryParse(cancelClosesRaw.toString())
           : null,
-      maxCapacity: (cap as num?)?.toInt(),
-      currentGoingCount: (goingCount as num?)?.toInt() ?? 0,
+      maxCapacity: cap != null ? (cap as num).toInt() : null,
+      availablePlaces: avail != null ? (avail as num).toInt() : null,
+      currentGoingCount: calculatedGoing,
+      serverRegistrationOpen: json['registration_open'] as bool?,
+      serverCancellationOpen: json['cancellation_open'] as bool?,
       rulesVersion: (json['rules_version'] as num?)?.toInt() ?? 1,
       isEligible: json['is_eligible'] != false,
       eligibilityReason: json['eligibility_reason']?.toString(),

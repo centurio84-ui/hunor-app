@@ -383,6 +383,13 @@ class AppStore extends ChangeNotifier {
       eventParticipations[eventId] = updated;
       eventResponses[eventId] = updated.response?.value ?? (going ? 'going' : 'not_going');
       lastResponseMessage = 'Részvételi szándék (${going ? "Részt veszek" : "Nem veszek részt"}) rögzítve.';
+
+      // Részvételi válasz után frissítjük az esemény kapacitás/szabály információit a legfrissebb szerverállapotra
+      try {
+        final freshReg = await api.getEventRegistrationInfo(eventId);
+        eventRegistrations[eventId] = freshReg;
+      } catch (_) {}
+
       notifyListeners();
     } on PreconditionFailedException catch (_) {
       // 412 VERSION_CONFLICT: frissítjük az állapotot
