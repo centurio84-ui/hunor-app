@@ -99,7 +99,9 @@ class EventRegistrationInfo {
     if (json['current_going_count'] != null) {
       calculatedGoing = (json['current_going_count'] as num).toInt();
     } else if (cap != null && avail != null) {
-      calculatedGoing = ((cap as num).toInt() - (avail as num).toInt()).clamp(0, (cap as num).toInt());
+      final capInt = (cap as num).toInt();
+      final availInt = (avail as num).toInt();
+      calculatedGoing = (capInt - availInt).clamp(0, capInt);
     }
 
     return EventRegistrationInfo(
