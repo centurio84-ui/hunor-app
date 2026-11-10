@@ -1,0 +1,15 @@
+{
+  "sha256": "e8a24ed412c99860d865dfa3a61f8c3bdf938a5c3d2a26f74ec83edeba64de0b",
+  "size": 53178432,
+  "package": "hu.madtech.rescue",
+  "version": "1.0.1",
+  "build_number": 10002,
+  "environment": "staging",
+  "source_commit": "f7eeca14fb0ab7a00ed1315d10e3aa082a8a9c5e",
+  "zip_crc_valid": true,
+  "signature_verified": true,
+  "previous_upload_certificate_matches": true,
+  "internet_permission": true,
+  "bundletool_valid": true,
+  "production_published": false
+}
