@@ -5,6 +5,8 @@ import '../services/app_store.dart';
 import '../theme/hunor_theme.dart';
 import 'alerts_page.dart';
 import 'calendar_page.dart';
+import 'excon_dashboard_screen.dart';
+import 'excon_screen.dart';
 import 'home_page.dart';
 import 'news_feed_page.dart';
 import 'organization_switcher_view.dart';
@@ -35,6 +37,8 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
       const AlertsPage(),
       const CalendarPage(),
       const NewsFeedPage(),
+      const ExconScreen(),
+      const ExconDashboardScreen(),
       const ProfilePage(),
       OrganizationSwitcherView(
         api: store.api,
@@ -47,6 +51,8 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
       'Riasztások',
       'Naptár',
       'Hírek',
+      'EXCON',
+      'Műszerfal',
       'Profil',
       'Szervezetek',
     ];
@@ -56,6 +62,8 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
       Icons.warning_amber_rounded,
       Icons.calendar_month_rounded,
       Icons.newspaper_rounded,
+      Icons.fact_check_outlined,
+      Icons.insert_chart_outlined_rounded,
       Icons.person_rounded,
       Icons.business_rounded,
     ];

@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:provider/provider.dart';
 
 import 'api/mock_rescue_platform_api.dart';
@@ -11,6 +12,8 @@ import 'services/theme_service.dart';
 import 'services/theme_vault.dart';
 import 'theme/hunor_theme.dart';
 import 'views/app_shell.dart';
+import 'views/excon_dashboard_screen.dart';
+import 'views/excon_screen.dart';
 import 'views/login_page.dart';
 
 const String apiMode = String.fromEnvironment('RESCUE_API_MODE', defaultValue: 'mock');
@@ -81,6 +84,9 @@ ThemeService createConfiguredThemeService({
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Tiszta webes URL stratégia (eltávolítja a '#' hash jelet a webes URL-ből, pl. /excon, /dashboard)
+  usePathUrlStrategy();
+
   final RescuePlatformApi selectedApi = createConfiguredApi(
     mode: apiMode,
     baseUrl: apiBaseUrl,
@@ -125,9 +131,13 @@ class HunorApp extends StatelessWidget {
     final theme = themeController?.currentTheme ?? HunorTheme.dark;
 
     return MaterialApp(
-      title: 'Rescue Platform',
+      title: 'HUNOR USAR - Rescue Platform',
       debugShowCheckedModeBanner: false,
       theme: theme,
+      routes: {
+        '/excon': (context) => const Scaffold(body: ExconScreen()),
+        '/dashboard': (context) => const Scaffold(body: ExconDashboardScreen()),
+      },
       home: Consumer<AppStore>(
         builder: (context, store, _) {
           if (!store.initialized) {
