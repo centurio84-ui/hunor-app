@@ -6,12 +6,16 @@ class HunorColors {
   static const redDark = Color(0xFFA80F14);
   static const graphite = Color(0xFF121417);
   static const surface = Color(0xFF1B1F23);
+  static const surface1 = Color(0xFF1B1F23);
   static const surface2 = Color(0xFF24292E);
+  static const border = Color(0xFF30353B);
   static const text = Color(0xFFF5F7F9);
   static const muted = Color(0xFF9AA3AD);
   static const success = Color(0xFF39B86F);
+  static const green = Color(0xFF39B86F);
   static const warning = Color(0xFFFF9F1C);
   static const exercise = Color(0xFF3B82F6);
+  static const blue = Color(0xFF3B82F6);
 }
 
 class HunorTheme {

@@ -584,11 +584,13 @@ class SupabaseRescuePlatformApi implements RescuePlatformApi {
 
   @override
   Future<CoinBalance> getCoinBalance() async {
-    return const CoinBalance(
+    return CoinBalance(
+      organizationId: 'hunor',
+      membershipId: _currentUserId ?? 'guest',
+      unit: 'RC',
       balance: 0,
-      monthlyTotal: 0,
-      lifetimeTotal: 0,
-      updatedAt: null,
+      asOf: DateTime.now(),
+      ledgerVersion: 'v1',
     );
   }
 

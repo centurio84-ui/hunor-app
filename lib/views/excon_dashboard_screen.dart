@@ -355,7 +355,6 @@ class _ExconDashboardScreenState extends State<ExconDashboardScreen> {
         ),
       ),
     );
-    );
   }
 
   Widget _buildLegendItem(String label, Color color) {

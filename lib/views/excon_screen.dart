@@ -351,7 +351,8 @@ class _ExconScreenState extends State<ExconScreen> {
         ),
       ),
     ),
-  );
+  ),
+);
 }
 
   Widget _buildScoreButton({
