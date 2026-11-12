@@ -174,9 +174,12 @@ jobs:
       - name: Build Android App Bundle (Release AAB)
         shell: bash
         run: |
-          TARGET_ENV="${{ github.event.inputs.target_env || 'staging' }}"
-          BUILD_NUM="${{ github.event.inputs.build_number || '10001' }}"
-          VERSION_NAME="${{ github.event.inputs.version_name || '1.0.0' }}"
+          TARGET_ENV="${{ github.event.inputs.target_env }}"
+          if [ -z "$TARGET_ENV" ]; then TARGET_ENV="supabase"; fi
+          BUILD_NUM="${{ github.event.inputs.build_number }}"
+          if [ -z "$BUILD_NUM" ]; then BUILD_NUM="10002"; fi
+          VERSION_NAME="${{ github.event.inputs.version_name }}"
+          if [ -z "$VERSION_NAME" ]; then VERSION_NAME="1.0.1"; fi
           
           echo "Build célkörnyezet: $TARGET_ENV"
           echo "Verzió: $VERSION_NAME ($BUILD_NUM)"
@@ -201,7 +204,10 @@ jobs:
               --dart-define=RESCUE_API_MODE=$API_MODE \
               --dart-define=RESCUE_API_BASE_URL=$API_URL
           else
-            STAGING_URL="${{ secrets.RESCUE_STAGING_API_BASE_URL || 'https://xbcutdkqswfzkubkozng.supabase.co/functions/v1/rescue-platform-staging/v1' }}"
+            STAGING_URL="${{ secrets.RESCUE_STAGING_API_BASE_URL }}"
+            if [ -z "$STAGING_URL" ]; then
+              STAGING_URL="https://xbcutdkqswfzkubkozng.supabase.co/functions/v1/rescue-platform-staging/v1"
+            fi
             API_URL="$STAGING_URL"
             API_MODE="staging"
             flutter build appbundle --release --build-number=$BUILD_NUM --build-name=$VERSION_NAME \
