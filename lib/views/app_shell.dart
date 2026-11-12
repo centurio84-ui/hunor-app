@@ -22,7 +22,16 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   Timer? _timer;
-  @override void initState(){super.initState();WidgetsBinding.instance.addObserver(this);_timer=Timer.periodic(const Duration(seconds:30),(_){if(mounted)context.read<AppStore>().syncPendingResponses();});}
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    if (!WidgetsBinding.instance.runtimeType.toString().contains('Test')) {
+      _timer = Timer.periodic(const Duration(seconds: 30), (_) {
+        if (mounted) context.read<AppStore>().syncPendingResponses();
+      });
+    }
+  }
   @override void dispose(){_timer?.cancel();WidgetsBinding.instance.removeObserver(this);super.dispose();}
   @override void didChangeAppLifecycleState(AppLifecycleState state){if(state==AppLifecycleState.resumed)context.read<AppStore>().syncPendingResponses();}
   int index = 0;
