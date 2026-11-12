@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' hide User;
 import '../config.dart';
 import '../models/api_error.dart';
 import '../models/coin_balance.dart';
@@ -100,7 +100,6 @@ class SupabaseRescuePlatformApi implements RescuePlatformApi {
         version: 1,
       );
     } catch (e) {
-      // Ha nincs még profil sor, de be van lépve a felhasználó
       return UserProfile(
         user: User(
           id: user.id,
@@ -121,7 +120,7 @@ class SupabaseRescuePlatformApi implements RescuePlatformApi {
 
   @override
   Future<void> requestAccountDeletion({required String reason}) async {
-    // Audit naplózás vagy jelzés a törlési kérelemről
+    // Audit naplózás vagy törlési kérelem
   }
 
   @override
@@ -160,9 +159,12 @@ class SupabaseRescuePlatformApi implements RescuePlatformApi {
       id: 'membership-${user.id}',
       organizationId: organizationId,
       userId: user.id,
-      status: MembershipStatus.approved,
-      roles: [role],
-      createdAt: DateTime.now(),
+      displayName: user.email?.split('@').first ?? 'HUNOR Tag',
+      membershipStatus: MembershipStatus.approved,
+      permissions: [if (role == 'admin') 'members.manage_permissions'],
+      positions: const ['Tag'],
+      skills: const [],
+      alertable: true,
     );
   }
 
@@ -472,7 +474,7 @@ class SupabaseRescuePlatformApi implements RescuePlatformApi {
 
     return AlertResponse(
       alertId: alertId,
-      userId: user.id,
+      membershipId: user.id,
       response: response,
       respondedAt: now,
     );
@@ -480,7 +482,7 @@ class SupabaseRescuePlatformApi implements RescuePlatformApi {
 
   @override
   Future<void> acknowledgeAlert(String alertId, {String? idempotencyKey}) async {
-    // Riasztás kézbesítés / nyugtázás
+    // Nyugtázás naplózása
   }
 
   // --- Tagok listája (Members) ---
@@ -546,11 +548,12 @@ class SupabaseRescuePlatformApi implements RescuePlatformApi {
     }
 
     return Installation(
-      installationId: installationId,
+      id: installationId,
       platform: platform,
       provider: provider,
-      token: token,
-      registeredAt: DateTime.now(),
+      environment: environment ?? 'development',
+      label: label ?? '',
+      active: true,
     );
   }
 
@@ -574,9 +577,8 @@ class SupabaseRescuePlatformApi implements RescuePlatformApi {
     required String receiptToken,
   }) async {
     return DeviceReceipt(
-      deliveryId: deliveryId,
-      confirmedAt: DateTime.now(),
-      status: 'confirmed',
+      received: true,
+      receivedAt: DateTime.now(),
     );
   }
 
