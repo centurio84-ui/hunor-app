@@ -48,6 +48,9 @@ void main() {
       expect(store.isAuthenticated, isTrue);
       expect(find.text('HUNOR Mentőszervezet'), findsWidgets);
       expect(find.text('120 RC'), findsNothing);
+
+      // Időzítő lezárása a widget fa leszerelésével
+      await tester.pumpWidget(const SizedBox.shrink());
     });
 
     testWidgets('2. Cross-tenant adatelkülönítés a felületen (HUNOR vs BMSZ)', (tester) async {
