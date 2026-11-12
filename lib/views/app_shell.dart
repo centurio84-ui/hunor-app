@@ -73,6 +73,165 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
     ];
 
     return Scaffold(
+      drawer: Drawer(
+        backgroundColor: HunorColors.graphite,
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            DrawerHeader(
+              decoration: const BoxDecoration(
+                color: HunorColors.surface1,
+                border: Border(bottom: BorderSide(color: HunorColors.border)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: HunorColors.redDark,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(Icons.shield_outlined, color: Colors.white, size: 28),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              currentOrg?.name ?? 'HUNOR USAR',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+                            ),
+                            const Text(
+                              'Műveleti Rendszer',
+                              style: TextStyle(color: HunorColors.muted, fontSize: 12),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.home_rounded, color: HunorColors.muted),
+              title: const Text('Főoldal'),
+              selected: index == 0,
+              onTap: () {
+                Navigator.pop(context);
+                setState(() => index = 0);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.warning_amber_rounded, color: HunorColors.muted),
+              title: const Text('Riasztások'),
+              selected: index == 1,
+              onTap: () {
+                Navigator.pop(context);
+                setState(() => index = 1);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.calendar_month_rounded, color: HunorColors.muted),
+              title: const Text('Naptár'),
+              selected: index == 2,
+              onTap: () {
+                Navigator.pop(context);
+                setState(() => index = 2);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.newspaper_rounded, color: HunorColors.muted),
+              title: const Text('Hírek'),
+              selected: index == 3,
+              onTap: () {
+                Navigator.pop(context);
+                setState(() => index = 3);
+              },
+            ),
+            const Divider(color: HunorColors.border),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              child: Text(
+                'ÉRTÉKELÉS & ELEMZÉS',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: HunorColors.muted,
+                  letterSpacing: 1.1,
+                ),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.fact_check_outlined, color: HunorColors.red),
+              title: const Text('EXCON Értékelő'),
+              selected: index == 4,
+              onTap: () {
+                Navigator.pop(context);
+                setState(() => index = 4);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.insert_chart_rounded, color: HunorColors.blue),
+              title: const Text(
+                'Értékelő Műszerfal',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
+              subtitle: const Text(
+                'Élő KPI-k és grafikonok (/dashboard)',
+                style: TextStyle(fontSize: 11, color: HunorColors.muted),
+              ),
+              selected: index == 5,
+              onTap: () {
+                Navigator.pop(context);
+                setState(() => index = 5);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.assignment_rounded, color: HunorColors.success),
+              title: const Text(
+                'T0 / T1 Űrlapok',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
+              subtitle: const Text(
+                'Beavatkozói önértékelés (/t0, /t1)',
+                style: TextStyle(fontSize: 11, color: HunorColors.muted),
+              ),
+              selected: index == 6,
+              onTap: () {
+                Navigator.pop(context);
+                setState(() => index = 6);
+              },
+            ),
+            const Divider(color: HunorColors.border),
+            ListTile(
+              leading: const Icon(Icons.person_rounded, color: HunorColors.muted),
+              title: const Text('Profil'),
+              selected: index == 7,
+              onTap: () {
+                Navigator.pop(context);
+                setState(() => index = 7);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.business_rounded, color: HunorColors.muted),
+              title: const Text('Szervezetek'),
+              selected: index == 8,
+              onTap: () {
+                Navigator.pop(context);
+                setState(() => index = 8);
+              },
+            ),
+          ],
+        ),
+      ),
       appBar: AppBar(
         titleSpacing: 16,
         title: InkWell(

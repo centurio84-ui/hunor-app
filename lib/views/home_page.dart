@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/app_store.dart';
 import '../theme/hunor_theme.dart';
+import 'excon_dashboard_screen.dart';
 import 'organization_switcher_view.dart';
 
 class HomePage extends StatelessWidget {
@@ -166,6 +167,41 @@ class HomePage extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 16),
+
+          // EXCON szakmai értékelések és objektív mérések gomb
+          Card(
+            color: HunorColors.surface1,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+              side: const BorderSide(color: HunorColors.border),
+            ),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(14),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ExconDashboardScreen()),
+                );
+              },
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                child: Row(
+                  children: [
+                    Icon(Icons.insert_chart_outlined_rounded, color: HunorColors.red),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'EXCON szakmai értékelések és objektív mérések ->',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                      ),
+                    ),
+                    Icon(Icons.arrow_forward_ios_rounded, size: 14, color: HunorColors.muted),
+                  ],
+                ),
+              ),
+            ),
           ),
           const SizedBox(height: 16),
 
