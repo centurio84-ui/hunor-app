@@ -20,11 +20,17 @@ void main() {
     });
 
     Widget createTestApp({Widget? home}) {
+      if (home != null) {
+        return ChangeNotifierProvider<AppStore>.value(
+          value: store,
+          child: MaterialApp(
+            home: Scaffold(body: home),
+          ),
+        );
+      }
       return ChangeNotifierProvider<AppStore>.value(
         value: store,
-        child: MaterialApp(
-          home: home != null ? Scaffold(body: home) : const HunorApp(),
-        ),
+        child: const HunorApp(),
       );
     }
 
@@ -49,8 +55,9 @@ void main() {
       expect(find.text('HUNOR Mentőszervezet'), findsWidgets);
       expect(find.text('120 RC'), findsNothing);
 
-      // Időzítő lezárása a widget fa leszerelésével
+      // Widget fa leszerelése és hátralévő időzítők lecsengése
       await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(const Duration(seconds: 100));
     });
 
     testWidgets('2. Cross-tenant adatelkülönítés a felületen (HUNOR vs BMSZ)', (tester) async {
