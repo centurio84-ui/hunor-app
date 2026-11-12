@@ -100,12 +100,18 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(8),
+                        padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
-                          color: HunorColors.redDark,
+                          color: HunorColors.surface2,
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Icon(Icons.shield_outlined, color: Colors.white, size: 28),
+                        child: Image.asset(
+                          'assets/images/hunor_logo.png',
+                          width: 38,
+                          height: 38,
+                          fit: BoxFit.contain,
+                          errorBuilder: (_, __, ___) => const Icon(Icons.shield_outlined, color: Colors.white, size: 28),
+                        ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(

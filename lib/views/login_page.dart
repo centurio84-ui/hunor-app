@@ -35,7 +35,18 @@ class _LoginPageState extends State<LoginPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Icon(Icons.shield_outlined, size: 72, color: HunorColors.red),
+                  Center(
+                    child: Image.asset(
+                      'assets/images/hunor_logo.png',
+                      height: 84,
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, __, ___) => const Icon(
+                        Icons.shield_outlined,
+                        size: 72,
+                        color: HunorColors.red,
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: 16),
                   Text(
                     'Rescue Platform',

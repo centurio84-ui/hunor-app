@@ -61,11 +61,16 @@ class HomePage extends StatelessWidget {
                     Container(
                       width: 52,
                       height: 52,
+                      padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
                         color: Colors.white.withAlpha(30),
                         borderRadius: BorderRadius.circular(14),
                       ),
-                      child: const Icon(Icons.shield_outlined, size: 30, color: Colors.white),
+                      child: Image.asset(
+                        'assets/images/hunor_logo.png',
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, __, ___) => const Icon(Icons.shield_outlined, size: 30, color: Colors.white),
+                      ),
                     ),
                     const SizedBox(width: 14),
                     Expanded(
