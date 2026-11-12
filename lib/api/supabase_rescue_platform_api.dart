@@ -586,7 +586,7 @@ class SupabaseRescuePlatformApi implements RescuePlatformApi {
   Future<CoinBalance> getCoinBalance() async {
     return CoinBalance(
       organizationId: 'hunor',
-      membershipId: _currentUserId ?? 'guest',
+      membershipId: currentUserId ?? 'guest',
       unit: 'RC',
       balance: 0,
       asOf: DateTime.now(),
