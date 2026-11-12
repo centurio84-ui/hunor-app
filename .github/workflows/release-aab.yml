@@ -122,20 +122,20 @@ jobs:
               if 'signingConfigs.create("release")' not in s and 'create("release")' not in s:
                   marker = 'buildTypes {'
                   signing_code = '''
-              signingConfigs {
-                  create("release") {
-                      val keyProps = java.util.Properties()
-                      val keyPropsFile = rootProject.file("key.properties")
-                      if (keyPropsFile.exists()) {
-                          keyProps.load(java.io.FileInputStream(keyPropsFile))
-                          storeFile = file(keyProps.getProperty("storeFile"))
-                          storePassword = keyProps.getProperty("storePassword")
-                          keyAlias = keyProps.getProperty("keyAlias")
-                          keyPassword = keyProps.getProperty("keyPassword")
-                      }
-                  }
-              }
-          '''
+    signingConfigs {
+        create("release") {
+            val keyProps = java.util.Properties()
+            val keyPropsFile = rootProject.file("key.properties")
+            if (keyPropsFile.exists()) {
+                keyProps.load(java.io.FileInputStream(keyPropsFile))
+                storeFile = file(keyProps.getProperty("storeFile"))
+                storePassword = keyProps.getProperty("storePassword")
+                keyAlias = keyProps.getProperty("keyAlias")
+                keyPassword = keyProps.getProperty("keyPassword")
+            }
+        }
+    }
+'''
                   if marker in s:
                       s = s.replace(marker, signing_code + '\n    ' + marker)
                       # Csak a getByName("release") signingConfigját irányítjuk át, a debug érintetlen marad
@@ -149,20 +149,20 @@ jobs:
               if 'release {' not in s or 'signingConfigs {' not in s:
                   marker = 'buildTypes {'
                   signing_code = '''
-              signingConfigs {
-                  release {
-                      def keyProps = new Properties()
-                      def keyPropsFile = rootProject.file("key.properties")
-                      if (keyPropsFile.exists()) {
-                          keyProps.load(new FileInputStream(keyPropsFile))
-                          storeFile file(keyProps['storeFile'])
-                          storePassword keyProps['storePassword']
-                          keyAlias keyProps['keyAlias']
-                          keyPassword keyProps['keyPassword']
-                      }
-                  }
-              }
-          '''
+    signingConfigs {
+        release {
+            def keyProps = new Properties()
+            def keyPropsFile = rootProject.file("key.properties")
+            if (keyPropsFile.exists()) {
+                keyProps.load(new FileInputStream(keyPropsFile))
+                storeFile file(keyProps['storeFile'])
+                storePassword keyProps['storePassword']
+                keyAlias keyProps['keyAlias']
+                keyPassword keyProps['keyPassword']
+            }
+        }
+    }
+'''
                   if marker in s:
                       s = s.replace(marker, signing_code + '\n    ' + marker)
                       if 'signingConfig signingConfigs.release' not in s:
@@ -218,8 +218,7 @@ jobs:
           echo "AAB zip integritás: OK"
 
           echo "=== Aláírás vizsgálata jarsigner segítségével ==="
-          jarsigner -verify -strict -verbose -certs "$AAB_FILE" > /tmp/aab-signature-verification.log
-          grep -E "jar verified|Signed by|CN=" /tmp/aab-signature-verification.log || true
+          jarsigner -verify -verbose -certs "$AAB_FILE" | grep -E "jar verified|Signed by|CN=" || true
           
           # Ellenőrizzük, hogy a MANIFEST.MF és aláírófájlok (.RSA/.SF) jelen vannak-e
           unzip -l "$AAB_FILE" | grep "META-INF/" | head -n 10

@@ -1,0 +1,61 @@
+name: CODEX-016 separate Android test package
+on:
+  push:
+    branches: [gemini/codex-016-apk-download-fix]
+    paths: ['.github/workflows/codex016-isolated-android.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.35.7'
+          channel: stable
+          cache: true
+      - name: Generate separate test application identity
+        run: |
+          flutter create --org hu.rescue.staging --platforms android --project-name hunor_app .
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('android/app/src/main/AndroidManifest.xml')
+          s=p.read_text().replace('<application','<uses-permission android:name="android.permission.INTERNET" />\n    <application android:allowBackup="false" android:usesCleartextTraffic="false"',1)
+          s=s.replace('android:label="hunor_app"','android:label="Rescue 016 Test"')
+          p.write_text(s)
+          p=Path('android/app/build.gradle.kts')
+          s=p.read_text().replace('minSdk = flutter.minSdkVersion','minSdk = 24')
+          s=s.replace('applicationId = "hu.rescue.staging.hunor_app"','applicationId = "hu.rescue.staging.hunor_app.codex016"')
+          assert 'applicationId = "hu.rescue.staging.hunor_app.codex016"' in s
+          p.write_text(s)
+          PY
+      - run: flutter pub get
+      - run: flutter analyze --no-fatal-infos
+      - run: flutter test --reporter expanded
+      - name: Build isolated staging APK
+        run: flutter build apk --debug --build-name=0.16.0 --build-number=16 --dart-define=RESCUE_API_MODE=staging --dart-define=RESCUE_API_BASE_URL=https://xbcutdkqswfzkubkozng.supabase.co/functions/v1/rescue-platform-staging/v1
+      - name: Verify and package
+        shell: bash
+        run: |
+          set -euo pipefail
+          tools=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)
+          mkdir distribution
+          cp build/app/outputs/flutter-apk/app-debug.apk distribution/Rescue-Platform-CODEX016-Test.apk
+          "$tools/apksigner" verify --verbose --print-certs distribution/*.apk > distribution/APK-SIGNATURE.txt
+          "$tools/aapt" dump badging distribution/*.apk > distribution/APK-PACKAGE.txt
+          grep -q "package: name='hu.rescue.staging.hunor_app.codex016'" distribution/APK-PACKAGE.txt
+          unzip -t distribution/*.apk > distribution/APK-ZIP-CHECK.txt
+          (cd distribution && sha256sum Rescue-Platform-CODEX016-Test.apk > SHA256SUMS.txt)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rescue-platform-codex016-isolated-debug
+          path: distribution/
+          retention-days: 30
+          if-no-files-found: error
