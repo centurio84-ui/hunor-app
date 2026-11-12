@@ -15,6 +15,8 @@ import 'views/app_shell.dart';
 import 'views/excon_dashboard_screen.dart';
 import 'views/excon_screen.dart';
 import 'views/login_page.dart';
+import 'views/t0_screen.dart';
+import 'views/t1_screen.dart';
 
 const String apiMode = String.fromEnvironment('RESCUE_API_MODE', defaultValue: 'mock');
 const String apiBaseUrl = String.fromEnvironment('RESCUE_API_BASE_URL', defaultValue: '');
@@ -137,6 +139,8 @@ class HunorApp extends StatelessWidget {
       routes: {
         '/excon': (context) => const Scaffold(body: ExconScreen()),
         '/dashboard': (context) => const Scaffold(body: ExconDashboardScreen()),
+        '/t0': (context) => const Scaffold(body: T0Screen()),
+        '/t1': (context) => const Scaffold(body: T1Screen()),
       },
       home: Consumer<AppStore>(
         builder: (context, store, _) {

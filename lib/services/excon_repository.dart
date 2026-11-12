@@ -2,6 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../config.dart';
 import '../models/excon_evaluation.dart';
 import '../models/excon_category_summary.dart';
+import '../models/participant_evaluation.dart';
 
 class ExconRepository {
   final SupabaseClient _client;
@@ -54,6 +55,23 @@ class ExconRepository {
       throw Exception('Adatbázis hiba az összegzés lekérésekor: ${e.message}');
     } catch (e) {
       throw Exception('Nem sikerült betölteni az összegzéseket: $e');
+    }
+  }
+
+  /// Beavatkozói önértékelés (T0 vagy T1) beküldése
+  Future<ParticipantEvaluation> submitParticipantEvaluation(ParticipantEvaluation evaluation) async {
+    try {
+      final response = await _client
+          .from('participant_evaluations')
+          .insert(evaluation.toJson())
+          .select()
+          .single();
+
+      return ParticipantEvaluation.fromJson(response);
+    } on PostgrestException catch (e) {
+      throw Exception('Adatbázis hiba az önértékelés mentésekor: ${e.message}');
+    } catch (e) {
+      throw Exception('Hiba történt az önértékelés mentésekor: $e');
     }
   }
 }

@@ -10,6 +10,7 @@ import 'excon_screen.dart';
 import 'home_page.dart';
 import 'news_feed_page.dart';
 import 'organization_switcher_view.dart';
+import 'participant_evaluation_hub_screen.dart';
 import 'profile_page.dart';
 
 class AppShell extends StatefulWidget {
@@ -39,6 +40,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
       const NewsFeedPage(),
       const ExconScreen(),
       const ExconDashboardScreen(),
+      const ParticipantEvaluationHubScreen(),
       const ProfilePage(),
       OrganizationSwitcherView(
         api: store.api,
@@ -53,6 +55,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
       'Hírek',
       'EXCON',
       'Műszerfal',
+      'Önértékelés',
       'Profil',
       'Szervezetek',
     ];
@@ -64,6 +67,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
       Icons.newspaper_rounded,
       Icons.fact_check_outlined,
       Icons.insert_chart_outlined_rounded,
+      Icons.psychology_outlined,
       Icons.person_rounded,
       Icons.business_rounded,
     ];
