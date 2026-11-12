@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../api/mock_rescue_platform_api.dart';
 import '../api/staging_api.dart';
+import '../api/supabase_rescue_platform_api.dart';
 import '../models/api_error.dart';
 import '../api/rescue_platform_api.dart';
 import '../models/coin_balance.dart';
@@ -27,6 +28,7 @@ class AppStore extends ChangeNotifier {
 
   int _revision = 0;
   bool get isStaging => api is StagingApi;
+  bool get isSupabase => api is SupabaseRescuePlatformApi;
   String lastResponseMessage = '';
   List<Map<String,dynamic>> get pendingResponses => api is StagingApi ? (api as StagingApi).pendingResponses : [];
   UserProfile? currentUserProfile;
@@ -84,7 +86,13 @@ class AppStore extends ChangeNotifier {
       if (api is MockRescuePlatformApi) {
         (api as MockRescuePlatformApi).setAuthenticated(true);
       }
-      if(api is StagingApi) await (api as StagingApi).login(email,password);
+      if (api is StagingApi) await (api as StagingApi).login(email, password);
+      if (api is SupabaseRescuePlatformApi) {
+        await (api as SupabaseRescuePlatformApi).signInWithPassword(
+          email: email,
+          password: password,
+        );
+      }
       isAuthenticated = api.isAuthenticated;
       await loadData();
     } catch (e) {
@@ -213,7 +221,15 @@ class AppStore extends ChangeNotifier {
           ? ((capabilities?.allows('members.manage_permissions')??false)?MemberRole.admin:MemberRole.member)
           : ((membership?.hasPermission('members.manage_permissions')??false)?MemberRole.admin:MemberRole.member);
       events=nextEvents;alerts=nextAlerts;news=nextNews;eventParticipations=nextParticipations;eventRegistrations=nextRegistrations;coinBalance=null;alertResponses=responses;
-      if(api is MockRescuePlatformApi){_loadMembersForCurrentOrganization(orgId??'');}else{members=[];memberRoles.clear();alertResponseByMember.clear();}
+      if (api is SupabaseRescuePlatformApi) {
+        members = await (api as SupabaseRescuePlatformApi).getMembers();
+      } else if (api is MockRescuePlatformApi) {
+        _loadMembersForCurrentOrganization(orgId ?? '');
+      } else {
+        members = [];
+        memberRoles.clear();
+        alertResponseByMember.clear();
+      }
       currentUser=Member(id:profile.user.id,name:profile.user.displayName,rank:membership?.positions.firstOrNull??'Tag',workplace:currentOrganization?.name??'',position:membership?.positions.join(', ')??'',phone:profile.contactPhone??'',skills:membership?.skills??const [],status:(membership?.alertable??false)?AvailabilityStatus.available:AvailabilityStatus.unavailable);
       isAuthenticated=true;
       if (themeController != null && orgId != null) {

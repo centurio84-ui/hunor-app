@@ -56,9 +56,17 @@ class _LoginPageState extends State<LoginPage> {
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
-                      store.isStaging ? 'STAGING · kizárólag fiktív tesztfiókok' : 'Fejlesztői mód: Mock API (Offline)',
+                      store.isSupabase
+                          ? 'HUNOR Rendszer · Éles Supabase összeköttetés'
+                          : store.isStaging
+                              ? 'STAGING · kizárólag fiktív tesztfiókok'
+                              : 'Fejlesztői mód: Mock API (Offline)',
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: HunorColors.warning, fontSize: 12, fontWeight: FontWeight.w700),
+                      style: TextStyle(
+                        color: store.isSupabase ? HunorColors.green : HunorColors.warning,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 28),
@@ -92,7 +100,7 @@ class _LoginPageState extends State<LoginPage> {
                         : const Text('Bejelentkezés', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
                   ),
                   const SizedBox(height: 12),
-                  if(!store.isStaging) OutlinedButton.icon(
+                  if (!store.isStaging && !store.isSupabase) OutlinedButton.icon(
                     onPressed: store.isLoading
                         ? null
                         : () => store.signIn('mock@example.invalid', 'password'),

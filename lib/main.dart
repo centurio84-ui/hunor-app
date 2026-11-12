@@ -2,9 +2,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'config.dart';
 import 'api/mock_rescue_platform_api.dart';
 import 'api/staging_api.dart';
+import 'api/supabase_rescue_platform_api.dart';
 import 'api/rescue_platform_api.dart';
 import 'services/app_store.dart';
 import 'services/theme_controller.dart';
@@ -18,12 +21,10 @@ import 'views/login_page.dart';
 import 'views/t0_screen.dart';
 import 'views/t1_screen.dart';
 
-const String apiMode = String.fromEnvironment('RESCUE_API_MODE', defaultValue: 'mock');
+const String apiMode = String.fromEnvironment('RESCUE_API_MODE', defaultValue: 'supabase');
 const String apiBaseUrl = String.fromEnvironment('RESCUE_API_BASE_URL', defaultValue: '');
 
 /// Visszaadja az érvényes, jóváhagyott [RescuePlatformApi] példányt az [apiMode] és [apiBaseUrl] alapján.
-/// Production módban kizárólag érvényes, jóváhagyott production API-adapter használható,
-/// mock vagy nem jóváhagyott adapter/fallback esetén azonnal [StateError] kivételt dob.
 RescuePlatformApi createConfiguredApi({
   required String mode,
   required String baseUrl,
@@ -45,9 +46,11 @@ RescuePlatformApi createConfiguredApi({
     return StagingApi(baseUrl: effectiveUrl);
   }
 
+  if (mode == 'supabase') {
+    return SupabaseRescuePlatformApi();
+  }
+
   if (mode == 'production') {
-    // Production mód: kizárólag jóváhagyott production API adapter használható.
-    // Mock vagy staging adapter fallback szigorúan tilos!
     if (baseUrl.isEmpty) {
       throw StateError(
         'BIZTONSÁGI HIBA: Production API módban a RESCUE_API_BASE_URL nem lehet üres! '
@@ -74,6 +77,12 @@ ThemeService createConfiguredThemeService({
     );
   }
 
+  if (mode == 'supabase' && api is SupabaseRescuePlatformApi) {
+    return SupabaseThemeService(
+      getAccessToken: () async => api.client.auth.currentSession?.accessToken,
+    );
+  }
+
   if (mode == 'production') {
     throw StateError(
       'BIZTONSÁGI HIBA: Production ThemeService adapter nincs konfigurálva vagy jóváhagyva.',
@@ -85,6 +94,15 @@ ThemeService createConfiguredThemeService({
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  try {
+    await Supabase.initialize(
+      url: SupabaseConfig.url,
+      anonKey: SupabaseConfig.publishableKey,
+    );
+  } catch (_) {
+    // Ha már inicializálva van vagy teszt/offline környezetben fut
+  }
 
   // Tiszta webes URL stratégia (eltávolítja a '#' hash jelet a webes URL-ből, pl. /excon, /dashboard)
   usePathUrlStrategy();

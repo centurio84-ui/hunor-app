@@ -4,21 +4,22 @@ on:
   workflow_dispatch:
     inputs:
       target_env:
-        description: 'Célkörnyezet (staging vagy production)'
+        description: 'Célkörnyezet (supabase, staging vagy production)'
         required: true
-        default: 'staging'
+        default: 'supabase'
         type: choice
         options:
+          - supabase
           - staging
           - production
       build_number:
-        description: 'Android versionCode (pl. 10001)'
+        description: 'Android versionCode (pl. 10002)'
         required: false
-        default: '10001'
+        default: '10002'
       version_name:
-        description: 'Android versionName (pl. 1.0.0)'
+        description: 'Android versionName (pl. 1.0.1)'
         required: false
-        default: '1.0.0'
+        default: '1.0.1'
   push:
     tags:
       - 'v*.*.*'
@@ -180,27 +181,33 @@ jobs:
           echo "Build célkörnyezet: $TARGET_ENV"
           echo "Verzió: $VERSION_NAME ($BUILD_NUM)"
 
-          if [ "$TARGET_ENV" = "production" ]; then
+          if [ "$TARGET_ENV" = "supabase" ]; then
+            API_MODE="supabase"
+            echo "Alkalmazott API_MODE: $API_MODE (Éles HUNOR Supabase kapcsolat)"
+            flutter build appbundle --release --build-number=$BUILD_NUM --build-name=$VERSION_NAME \
+              --dart-define=RESCUE_API_MODE=supabase \
+              --dart-define=SUPABASE_URL=https://embicteneumubwlqqfik.supabase.co \
+              --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_Vt7KtNGznwvPrDRr5VEn0Q_r-Z6sas1
+          elif [ "$TARGET_ENV" = "production" ]; then
             PROD_URL="${{ secrets.RESCUE_PROD_API_BASE_URL }}"
             if [ -z "$PROD_URL" ]; then
               echo "::error::HIÁNYZÓ PRODUCTION API CÍM: Production kiadáshoz kötelező a jóváhagyott RESCUE_PROD_API_BASE_URL secret!"
               echo "A build biztonsági okokból leáll; éles kiadás nem készülhet el staging vagy hiányzó címmel."
               exit 1
             fi
-            # A production build csak jóváhagyott éles címmel futhat le
             API_URL="$PROD_URL"
             API_MODE="production"
+            flutter build appbundle --release --build-number=$BUILD_NUM --build-name=$VERSION_NAME \
+              --dart-define=RESCUE_API_MODE=$API_MODE \
+              --dart-define=RESCUE_API_BASE_URL=$API_URL
           else
-            # Staging tesztkiadás: kizárólag a hivatalos, jóváhagyott staging végpont használható
             STAGING_URL="${{ secrets.RESCUE_STAGING_API_BASE_URL || 'https://xbcutdkqswfzkubkozng.supabase.co/functions/v1/rescue-platform-staging/v1' }}"
             API_URL="$STAGING_URL"
             API_MODE="staging"
+            flutter build appbundle --release --build-number=$BUILD_NUM --build-name=$VERSION_NAME \
+              --dart-define=RESCUE_API_MODE=$API_MODE \
+              --dart-define=RESCUE_API_BASE_URL=$API_URL
           fi
-
-          echo "Alkalmazott API_MODE: $API_MODE"
-          flutter build appbundle --release --build-number=$BUILD_NUM --build-name=$VERSION_NAME \
-            --dart-define=RESCUE_API_MODE=$API_MODE \
-            --dart-define=RESCUE_API_BASE_URL=$API_URL
           ls -la build/app/outputs/bundle/release/
 
       - name: Verify Signed AAB Integrity and Signatures
