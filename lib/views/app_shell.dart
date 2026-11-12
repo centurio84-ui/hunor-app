@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/app_store.dart';
@@ -26,7 +27,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    if (!WidgetsBinding.instance.runtimeType.toString().contains('Test')) {
+    if (kReleaseMode) {
       _timer = Timer.periodic(const Duration(seconds: 30), (_) {
         if (mounted) context.read<AppStore>().syncPendingResponses();
       });
