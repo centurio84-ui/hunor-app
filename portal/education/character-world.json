@@ -1,0 +1,33 @@
+{
+  "id": "matyi-andras",
+  "version": 1,
+  "style": "Barátságos, háromdimenziós, meseszerű oktatási illusztráció",
+  "reference": {
+    "status": "provided",
+    "file": "/education/references/matyi-andras-reference.png",
+    "sha256": "fccc9bd3d855a7fb3e3dd2f1e6a634cb9e6e91b3d72073019d85a1279b426f14",
+    "note": "A felhasználó által átadott képcsomag kiválasztott karakterreferenciája; az illusztrációk orvosszakmai ellenőrzése még szükséges."
+  },
+  "characters": [
+    {
+      "id": "matyi",
+      "name": "Matyi",
+      "clothing": "Piros tűzoltó-védőruha",
+      "personality": "Fiatalos, energikus",
+      "design": "Kizárólag az elfogadott referenciából."
+    },
+    {
+      "id": "andras",
+      "name": "András",
+      "clothing": "Sötétkék tűzoltó-védőruha",
+      "personality": "Nyugodtabb, tapasztaltabb",
+      "design": "Kizárólag az elfogadott referenciából."
+    }
+  ],
+  "consistency": [
+    "Arc, testalkat, ruházat és színvilág következetes megőrzése.",
+    "Minden leckében mindkét szereplő témához illő illusztrációja.",
+    "Referencia hiányában csak egyértelmű, karaktert nem ábrázoló helyőrző.",
+    "Egészségügyi beavatkozás képe szakmai jóváhagyásig demonstráció."
+  ]
+}

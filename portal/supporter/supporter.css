@@ -1,0 +1,11 @@
+.hunor-supporter{box-sizing:border-box;display:flex;justify-content:center;align-items:center;gap:20px;max-width:1120px;margin:0 auto;padding:12px 24px;color:#94a3b8;font:500 12px/1.5 Inter,system-ui,sans-serif;text-align:left;isolation:isolate}
+.hunor-supporter__label{letter-spacing:.16em;text-transform:uppercase;font-size:10px;color:inherit}
+.hunor-supporter__brand{display:block;flex:0 0 auto;width:176px;height:58px;border-radius:12px;overflow:hidden;background:#000;border:1px solid rgba(255,255,255,.12)}
+.hunor-supporter__logo{display:block!important;max-width:none!important;width:100%!important;height:100%!important;object-fit:cover!important;object-position:50% 50%;transform:scale(1.16);filter:none!important;opacity:1!important}
+.hunor-supporter__rule{display:block;width:42px;height:1px;background:rgba(148,163,184,.35)}
+.app>main:has(.hk-embed)>.hunor-supporter{display:none}
+@media(max-width:640px){.hunor-supporter{gap:12px;padding:10px 16px;margin-top:0;flex-wrap:wrap}.hunor-supporter__brand{width:150px;height:50px}.hunor-supporter__rule{width:20px}}
+@media print{.hunor-supporter{break-inside:avoid;color:#334155}.hunor-supporter__brand{print-color-adjust:exact}}
+
+/* The dock remains the sole chat entry point, including its unread badge. */
+#nav #navTeamChat{display:none!important}

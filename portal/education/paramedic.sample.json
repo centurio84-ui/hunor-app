@@ -1,0 +1,993 @@
+{
+  "id": "paramedic",
+  "version": 3,
+  "status": "sample",
+  "title": "Paramedic",
+  "description": "11 modulos illusztrációs előnézet Matyival és Andrással. Orvosszakmai ellenőrzés alatt; nem hitelesített képzés.",
+  "modules": [
+    {
+      "id": "module-intro",
+      "number": 1,
+      "title": "Bevezetés",
+      "lessons": [
+        {
+          "id": "lesson-intro",
+          "title": "Bevezetés",
+          "blocks": [
+            {
+              "type": "callout",
+              "text": "DEMONSTRÁCIÓ – Orvosszakmai ellenőrzésre váró ábra. A képi feliratok és mozdulatok nem tekinthetők jóváhagyott ellátási protokollnak."
+            },
+            {
+              "type": "image",
+              "src": "/education/illustrations/module-01-intro.png",
+              "alt": "Matyi és András – Bevezetés. Felhasználó által átadott, szakmai ellenőrzésre váró demonstrációs ábra.",
+              "width": 1672,
+              "height": 941,
+              "illustration": {
+                "world": "matyi-andras",
+                "characters": [
+                  "matyi",
+                  "andras"
+                ],
+                "status": "demonstration",
+                "topic": "Bevezetés",
+                "medical": true,
+                "professionalApproval": "pending",
+                "referenceSha256": "fccc9bd3d855a7fb3e3dd2f1e6a634cb9e6e91b3d72073019d85a1279b426f14",
+                "sourceFile": "01_bevezetes_teljes_kep.png",
+                "sourceSha256": "f11c06302bea4fb15457dc9e442d4ebab1fcf285313b48e7717b12c1e63ba662",
+                "lowResolutionPreview": false
+              }
+            },
+            {
+              "type": "text",
+              "text": "A részletes, szakmailag jóváhagyott tananyagszöveg és a hozzá tartozó valódi ellenőrző kérdések később kerülnek ide."
+            }
+          ]
+        },
+        {
+          "id": "lesson-paramedic-tasks",
+          "title": "Paramedic feladatok",
+          "blocks": [
+            {
+              "type": "callout",
+              "text": "DEMONSTRÁCIÓ – Orvosszakmai ellenőrzésre váró ábra. A képi feliratok és mozdulatok nem tekinthetők jóváhagyott ellátási protokollnak."
+            },
+            {
+              "type": "image",
+              "src": "/education/illustrations/extra-paramedic-tasks.png",
+              "alt": "Matyi és András – Paramedic feladatok. Felhasználó által átadott, szakmai ellenőrzésre váró demonstrációs ábra.",
+              "width": 500,
+              "height": 334,
+              "illustration": {
+                "world": "matyi-andras",
+                "characters": [
+                  "matyi",
+                  "andras"
+                ],
+                "status": "demonstration",
+                "topic": "Paramedic feladatok",
+                "medical": true,
+                "professionalApproval": "pending",
+                "referenceSha256": "fccc9bd3d855a7fb3e3dd2f1e6a634cb9e6e91b3d72073019d85a1279b426f14",
+                "sourceFile": "extra_paramedic_feladatok.png",
+                "sourceSha256": "4db2f2a01a08ba77554eb11aaa55c476cc3d4b8dcb5fc9fe207c221ccf885991",
+                "lowResolutionPreview": true
+              }
+            },
+            {
+              "type": "text",
+              "text": "A részletes, szakmailag jóváhagyott tananyagszöveg és a hozzá tartozó valódi ellenőrző kérdések később kerülnek ide."
+            }
+          ]
+        },
+        {
+          "id": "lesson-basic-concepts",
+          "title": "Alapfogalmak",
+          "blocks": [
+            {
+              "type": "callout",
+              "text": "DEMONSTRÁCIÓ – Orvosszakmai ellenőrzésre váró ábra. A képi feliratok és mozdulatok nem tekinthetők jóváhagyott ellátási protokollnak."
+            },
+            {
+              "type": "image",
+              "src": "/education/illustrations/extra-basic-concepts.png",
+              "alt": "Matyi és András – Alapfogalmak. Felhasználó által átadott, szakmai ellenőrzésre váró demonstrációs ábra.",
+              "width": 471,
+              "height": 334,
+              "illustration": {
+                "world": "matyi-andras",
+                "characters": [
+                  "matyi",
+                  "andras"
+                ],
+                "status": "demonstration",
+                "topic": "Alapfogalmak",
+                "medical": true,
+                "professionalApproval": "pending",
+                "referenceSha256": "fccc9bd3d855a7fb3e3dd2f1e6a634cb9e6e91b3d72073019d85a1279b426f14",
+                "sourceFile": "extra_alapfogalmak.png",
+                "sourceSha256": "d12347a4d73ebd806572896c51ff8ca9079379b2259830610f2a6584c0917573",
+                "lowResolutionPreview": true
+              }
+            },
+            {
+              "type": "text",
+              "text": "A részletes, szakmailag jóváhagyott tananyagszöveg és a hozzá tartozó valódi ellenőrző kérdések később kerülnek ide."
+            },
+            {
+              "type": "callout",
+              "text": "Az alábbi két interakció csak a felület használatát bemutató mintafeladat; nem orvosszakmai tudásmérés."
+            },
+            {
+              "type": "question",
+              "question": {
+                "id": "demo-q-practice",
+                "type": "single",
+                "prompt": "Minta: mi jelzi, hogy ez nem valódi képzés?",
+                "answers": [
+                  {
+                    "id": "a",
+                    "text": "Minta / demonstráció",
+                    "correct": true
+                  },
+                  {
+                    "id": "b",
+                    "text": "Hivatalos képesítés",
+                    "correct": false
+                  }
+                ],
+                "explanation": "Ez kizárólag a felület működését bemutató próba; nem szakmai tudásmérés."
+              }
+            },
+            {
+              "type": "case",
+              "question": {
+                "id": "demo-q-decision",
+                "type": "case",
+                "prompt": "Minta helyzet: bemutató leckét fejeztél be. Milyen eredmény keletkezik?",
+                "answers": [
+                  {
+                    "id": "a",
+                    "text": "Minta / demonstráció",
+                    "correct": true
+                  },
+                  {
+                    "id": "b",
+                    "text": "Hivatalos képesítés",
+                    "correct": false
+                  }
+                ],
+                "explanation": "Ez kizárólag a felület működését bemutató próba; nem szakmai tudásmérés."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "module-adult-airway-corrected",
+      "number": 2,
+      "title": "Légúti idegentest felnőtteknél",
+      "lessons": [
+        {
+          "id": "lesson-adult-airway-corrected",
+          "title": "Légúti idegentest felnőtteknél",
+          "blocks": [
+            {
+              "type": "callout",
+              "text": "DEMONSTRÁCIÓ – Orvosszakmai ellenőrzésre váró ábra. A képi feliratok és mozdulatok nem tekinthetők jóváhagyott ellátási protokollnak."
+            },
+            {
+              "type": "image",
+              "src": "/education/illustrations/module-02-adult-airway-corrected.png",
+              "alt": "Matyi és András – Légúti idegentest felnőtteknél. Felhasználó által átadott, szakmai ellenőrzésre váró demonstrációs ábra.",
+              "width": 1536,
+              "height": 1024,
+              "illustration": {
+                "world": "matyi-andras",
+                "characters": [
+                  "matyi",
+                  "andras"
+                ],
+                "status": "demonstration",
+                "topic": "Légúti idegentest felnőtteknél",
+                "medical": true,
+                "professionalApproval": "pending",
+                "referenceSha256": "fccc9bd3d855a7fb3e3dd2f1e6a634cb9e6e91b3d72073019d85a1279b426f14",
+                "sourceFile": "02_leguti_idegentest_felnott_javitott.png",
+                "sourceSha256": "4b6a78761a20a82a2ee0d7062781a51438ca6a4ecc134be99cc604c9ecc3b5c7",
+                "lowResolutionPreview": false
+              }
+            },
+            {
+              "type": "text",
+              "text": "A részletes, szakmailag jóváhagyott tananyagszöveg és a hozzá tartozó valódi ellenőrző kérdések később kerülnek ide."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "module-infant-airway",
+      "number": 3,
+      "title": "Légúti idegentest csecsemőknél",
+      "lessons": [
+        {
+          "id": "lesson-infant-airway",
+          "title": "Légúti idegentest csecsemőknél",
+          "blocks": [
+            {
+              "type": "callout",
+              "text": "DEMONSTRÁCIÓ – Orvosszakmai ellenőrzésre váró ábra. A képi feliratok és mozdulatok nem tekinthetők jóváhagyott ellátási protokollnak."
+            },
+            {
+              "type": "image",
+              "src": "/education/illustrations/module-03-infant-airway.png",
+              "alt": "Matyi és András – Légúti idegentest csecsemőknél. Felhasználó által átadott, szakmai ellenőrzésre váró demonstrációs ábra.",
+              "width": 374,
+              "height": 295,
+              "illustration": {
+                "world": "matyi-andras",
+                "characters": [
+                  "matyi",
+                  "andras"
+                ],
+                "status": "demonstration",
+                "topic": "Légúti idegentest csecsemőknél",
+                "medical": true,
+                "professionalApproval": "pending",
+                "referenceSha256": "fccc9bd3d855a7fb3e3dd2f1e6a634cb9e6e91b3d72073019d85a1279b426f14",
+                "sourceFile": "03_leguti_idegentest_csecsemo.png",
+                "sourceSha256": "4dd429af6a3cb5eb88c8d07e082946f96279dc6a7cd6f2042f65aafe29e7f9a0",
+                "lowResolutionPreview": true
+              }
+            },
+            {
+              "type": "text",
+              "text": "A részletes, szakmailag jóváhagyott tananyagszöveg és a hozzá tartozó valódi ellenőrző kérdések később kerülnek ide."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "module-stroke",
+      "number": 4,
+      "title": "Agyi stroke",
+      "lessons": [
+        {
+          "id": "lesson-stroke",
+          "title": "Agyi stroke",
+          "blocks": [
+            {
+              "type": "callout",
+              "text": "DEMONSTRÁCIÓ – Orvosszakmai ellenőrzésre váró ábra. A képi feliratok és mozdulatok nem tekinthetők jóváhagyott ellátási protokollnak."
+            },
+            {
+              "type": "image",
+              "src": "/education/illustrations/module-04-stroke.png",
+              "alt": "Matyi és András – Agyi stroke. Felhasználó által átadott, szakmai ellenőrzésre váró demonstrációs ábra.",
+              "width": 426,
+              "height": 295,
+              "illustration": {
+                "world": "matyi-andras",
+                "characters": [
+                  "matyi",
+                  "andras"
+                ],
+                "status": "demonstration",
+                "topic": "Agyi stroke",
+                "medical": true,
+                "professionalApproval": "pending",
+                "referenceSha256": "fccc9bd3d855a7fb3e3dd2f1e6a634cb9e6e91b3d72073019d85a1279b426f14",
+                "sourceFile": "04_stroke.png",
+                "sourceSha256": "784ea8b0f2c8dfd5e07d8656180cb58e3f173a02f4783e3b8dc698d89bbc746e",
+                "lowResolutionPreview": true
+              }
+            },
+            {
+              "type": "text",
+              "text": "A részletes, szakmailag jóváhagyott tananyagszöveg és a hozzá tartozó valódi ellenőrző kérdések később kerülnek ide."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "module-diabetes",
+      "number": 5,
+      "title": "Cukorbetegség",
+      "lessons": [
+        {
+          "id": "lesson-diabetes",
+          "title": "Cukorbetegség",
+          "blocks": [
+            {
+              "type": "callout",
+              "text": "DEMONSTRÁCIÓ – Orvosszakmai ellenőrzésre váró ábra. A képi feliratok és mozdulatok nem tekinthetők jóváhagyott ellátási protokollnak."
+            },
+            {
+              "type": "image",
+              "src": "/education/illustrations/module-05-diabetes.png",
+              "alt": "Matyi és András – Cukorbetegség. Felhasználó által átadott, szakmai ellenőrzésre váró demonstrációs ábra.",
+              "width": 303,
+              "height": 295,
+              "illustration": {
+                "world": "matyi-andras",
+                "characters": [
+                  "matyi",
+                  "andras"
+                ],
+                "status": "demonstration",
+                "topic": "Cukorbetegség",
+                "medical": true,
+                "professionalApproval": "pending",
+                "referenceSha256": "fccc9bd3d855a7fb3e3dd2f1e6a634cb9e6e91b3d72073019d85a1279b426f14",
+                "sourceFile": "05_cukorbetegseg.png",
+                "sourceSha256": "45d9bbe5cad275313b2da13a2aa8d8685a107568be2d298bd273240efd70b3ee",
+                "lowResolutionPreview": true
+              }
+            },
+            {
+              "type": "text",
+              "text": "A részletes, szakmailag jóváhagyott tananyagszöveg és a hozzá tartozó valódi ellenőrző kérdések később kerülnek ide."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "module-epilepsy",
+      "number": 6,
+      "title": "Epilepszia",
+      "lessons": [
+        {
+          "id": "lesson-epilepsy",
+          "title": "Epilepszia",
+          "blocks": [
+            {
+              "type": "callout",
+              "text": "DEMONSTRÁCIÓ – Orvosszakmai ellenőrzésre váró ábra. A képi feliratok és mozdulatok nem tekinthetők jóváhagyott ellátási protokollnak."
+            },
+            {
+              "type": "image",
+              "src": "/education/illustrations/module-06-epilepsy.png",
+              "alt": "Matyi és András – Epilepszia. Felhasználó által átadott, szakmai ellenőrzésre váró demonstrációs ábra.",
+              "width": 332,
+              "height": 372,
+              "illustration": {
+                "world": "matyi-andras",
+                "characters": [
+                  "matyi",
+                  "andras"
+                ],
+                "status": "demonstration",
+                "topic": "Epilepszia",
+                "medical": true,
+                "professionalApproval": "pending",
+                "referenceSha256": "fccc9bd3d855a7fb3e3dd2f1e6a634cb9e6e91b3d72073019d85a1279b426f14",
+                "sourceFile": "06_epilepszia.png",
+                "sourceSha256": "e1084c193dffc8d08da71d809cb78ffa8b8408a5908f8185c3aeb911c70a8e62",
+                "lowResolutionPreview": true
+              }
+            },
+            {
+              "type": "text",
+              "text": "A részletes, szakmailag jóváhagyott tananyagszöveg és a hozzá tartozó valódi ellenőrző kérdések később kerülnek ide."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "module-immobilization",
+      "number": 7,
+      "title": "Sérültek rögzítése",
+      "lessons": [
+        {
+          "id": "lesson-immobilization",
+          "title": "Sérültek rögzítése",
+          "blocks": [
+            {
+              "type": "callout",
+              "text": "DEMONSTRÁCIÓ – Orvosszakmai ellenőrzésre váró ábra. A képi feliratok és mozdulatok nem tekinthetők jóváhagyott ellátási protokollnak."
+            },
+            {
+              "type": "image",
+              "src": "/education/illustrations/module-07-immobilization.png",
+              "alt": "Matyi és András – Sérültek rögzítése. Felhasználó által átadott, szakmai ellenőrzésre váró demonstrációs ábra.",
+              "width": 302,
+              "height": 372,
+              "illustration": {
+                "world": "matyi-andras",
+                "characters": [
+                  "matyi",
+                  "andras"
+                ],
+                "status": "demonstration",
+                "topic": "Sérültek rögzítése",
+                "medical": true,
+                "professionalApproval": "pending",
+                "referenceSha256": "fccc9bd3d855a7fb3e3dd2f1e6a634cb9e6e91b3d72073019d85a1279b426f14",
+                "sourceFile": "07_serult_rogzitese.png",
+                "sourceSha256": "c644020b17370bd2f5c4d651505a2ee20789059c75bf557721ee69d5f19296f8",
+                "lowResolutionPreview": true
+              }
+            },
+            {
+              "type": "text",
+              "text": "A részletes, szakmailag jóváhagyott tananyagszöveg és a hozzá tartozó valódi ellenőrző kérdések később kerülnek ide."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "module-transport",
+      "number": 8,
+      "title": "Sérültek szállítása",
+      "lessons": [
+        {
+          "id": "lesson-transport",
+          "title": "Sérültek szállítása",
+          "blocks": [
+            {
+              "type": "callout",
+              "text": "DEMONSTRÁCIÓ – Orvosszakmai ellenőrzésre váró ábra. A képi feliratok és mozdulatok nem tekinthetők jóváhagyott ellátási protokollnak."
+            },
+            {
+              "type": "image",
+              "src": "/education/illustrations/module-08-transport.png",
+              "alt": "Matyi és András – Sérültek szállítása. Felhasználó által átadott, szakmai ellenőrzésre váró demonstrációs ábra.",
+              "width": 297,
+              "height": 372,
+              "illustration": {
+                "world": "matyi-andras",
+                "characters": [
+                  "matyi",
+                  "andras"
+                ],
+                "status": "demonstration",
+                "topic": "Sérültek szállítása",
+                "medical": true,
+                "professionalApproval": "pending",
+                "referenceSha256": "fccc9bd3d855a7fb3e3dd2f1e6a634cb9e6e91b3d72073019d85a1279b426f14",
+                "sourceFile": "08_serult_szallitasa.png",
+                "sourceSha256": "e0457f47261f3a82846f917be6f533afe8c36cb68561a5f26123db6fcdaf7215",
+                "lowResolutionPreview": true
+              }
+            },
+            {
+              "type": "text",
+              "text": "A részletes, szakmailag jóváhagyott tananyagszöveg és a hozzá tartozó valódi ellenőrző kérdések később kerülnek ide."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "module-bls-aed",
+      "number": 9,
+      "title": "BLS és AED",
+      "lessons": [
+        {
+          "id": "lesson-bls-aed",
+          "title": "BLS és AED",
+          "blocks": [
+            {
+              "type": "callout",
+              "text": "DEMONSTRÁCIÓ – Orvosszakmai ellenőrzésre váró ábra. A képi feliratok és mozdulatok nem tekinthetők jóváhagyott ellátási protokollnak."
+            },
+            {
+              "type": "image",
+              "src": "/education/illustrations/module-09-bls-aed.png",
+              "alt": "Matyi és András – BLS és AED. Felhasználó által átadott, szakmai ellenőrzésre váró demonstrációs ábra.",
+              "width": 282,
+              "height": 372,
+              "illustration": {
+                "world": "matyi-andras",
+                "characters": [
+                  "matyi",
+                  "andras"
+                ],
+                "status": "demonstration",
+                "topic": "BLS és AED",
+                "medical": true,
+                "professionalApproval": "pending",
+                "referenceSha256": "fccc9bd3d855a7fb3e3dd2f1e6a634cb9e6e91b3d72073019d85a1279b426f14",
+                "sourceFile": "09_bls.png",
+                "sourceSha256": "338f9a458750bc4933b50c2150148717b6f03b87b409e40184eba778079cdfae",
+                "lowResolutionPreview": true
+              }
+            },
+            {
+              "type": "text",
+              "text": "A részletes, szakmailag jóváhagyott tananyagszöveg és a hozzá tartozó valódi ellenőrző kérdések később kerülnek ide."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "module-firefighter-bls",
+      "number": 10,
+      "title": "Tűzoltó BLS",
+      "lessons": [
+        {
+          "id": "lesson-firefighter-bls",
+          "title": "Tűzoltó BLS",
+          "blocks": [
+            {
+              "type": "callout",
+              "text": "DEMONSTRÁCIÓ – Orvosszakmai ellenőrzésre váró ábra. A képi feliratok és mozdulatok nem tekinthetők jóváhagyott ellátási protokollnak."
+            },
+            {
+              "type": "image",
+              "src": "/education/illustrations/module-10-firefighter-bls.svg",
+              "alt": "Matyi és András – Tűzoltó BLS. Hiányzó illusztráció helyőrzője.",
+              "width": 960,
+              "height": 480,
+              "illustration": {
+                "world": "matyi-andras",
+                "characters": [
+                  "matyi",
+                  "andras"
+                ],
+                "status": "placeholder",
+                "topic": "Tűzoltó BLS",
+                "medical": true,
+                "professionalApproval": "pending",
+                "referenceSha256": "fccc9bd3d855a7fb3e3dd2f1e6a634cb9e6e91b3d72073019d85a1279b426f14",
+                "sourceFile": null,
+                "sourceSha256": "c6e8b47139f9cac00dd3889a45138b02659b53482a6bde8882b1f97502ec00e0",
+                "lowResolutionPreview": false
+              }
+            },
+            {
+              "type": "text",
+              "text": "A részletes, szakmailag jóváhagyott tananyagszöveg és a hozzá tartozó valódi ellenőrző kérdések később kerülnek ide."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "module-paramedic-bag",
+      "number": 11,
+      "title": "Paramedic táska",
+      "lessons": [
+        {
+          "id": "lesson-paramedic-bag",
+          "title": "Paramedic táska",
+          "blocks": [
+            {
+              "type": "callout",
+              "text": "DEMONSTRÁCIÓ – Orvosszakmai ellenőrzésre váró ábra. A képi feliratok és mozdulatok nem tekinthetők jóváhagyott ellátási protokollnak."
+            },
+            {
+              "type": "image",
+              "src": "/education/illustrations/module-11-paramedic-bag.png",
+              "alt": "Matyi és András – Paramedic táska. Felhasználó által átadott, szakmai ellenőrzésre váró demonstrációs ábra.",
+              "width": 296,
+              "height": 372,
+              "illustration": {
+                "world": "matyi-andras",
+                "characters": [
+                  "matyi",
+                  "andras"
+                ],
+                "status": "demonstration",
+                "topic": "Paramedic táska",
+                "medical": true,
+                "professionalApproval": "pending",
+                "referenceSha256": "fccc9bd3d855a7fb3e3dd2f1e6a634cb9e6e91b3d72073019d85a1279b426f14",
+                "sourceFile": "11_paramedic_taska.png",
+                "sourceSha256": "5f93e4fd8142c0ee0c45fdc18851a21cffc7df77bb19ac683bcbc76b7c05e56e",
+                "lowResolutionPreview": true
+              }
+            },
+            {
+              "type": "text",
+              "text": "A részletes, szakmailag jóváhagyott tananyagszöveg és a hozzá tartozó valódi ellenőrző kérdések később kerülnek ide."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "quiz": {
+    "questionCount": 20,
+    "passPercent": 80,
+    "questions": [
+      {
+        "id": "demo-q-1",
+        "type": "single",
+        "prompt": "Minta 1: melyik jelölés mutatja, hogy ez bemutató feladat?",
+        "answers": [
+          {
+            "id": "a",
+            "text": "Minta / demonstráció",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Hivatalos képesítés",
+            "correct": false
+          }
+        ],
+        "explanation": "Ez kizárólag a felület működését bemutató próba; nem szakmai tudásmérés."
+      },
+      {
+        "id": "demo-q-2",
+        "type": "multiple",
+        "prompt": "Minta 2: melyik jelölés mutatja, hogy ez bemutató feladat?",
+        "answers": [
+          {
+            "id": "a",
+            "text": "Minta / demonstráció",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Hivatalos képesítés",
+            "correct": false
+          },
+          {
+            "id": "c",
+            "text": "Próbaadat",
+            "correct": true
+          }
+        ],
+        "explanation": "Ez kizárólag a felület működését bemutató próba; nem szakmai tudásmérés."
+      },
+      {
+        "id": "demo-q-3",
+        "type": "boolean",
+        "prompt": "Minta 3: melyik jelölés mutatja, hogy ez bemutató feladat?",
+        "answers": [
+          {
+            "id": "a",
+            "text": "Minta / demonstráció",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Hivatalos képesítés",
+            "correct": false
+          }
+        ],
+        "explanation": "Ez kizárólag a felület működését bemutató próba; nem szakmai tudásmérés."
+      },
+      {
+        "id": "demo-q-4",
+        "type": "case",
+        "prompt": "Minta 4: melyik jelölés mutatja, hogy ez bemutató feladat?",
+        "answers": [
+          {
+            "id": "a",
+            "text": "Minta / demonstráció",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Hivatalos képesítés",
+            "correct": false
+          }
+        ],
+        "explanation": "Ez kizárólag a felület működését bemutató próba; nem szakmai tudásmérés."
+      },
+      {
+        "id": "demo-q-5",
+        "type": "single",
+        "prompt": "Minta 5: melyik jelölés mutatja, hogy ez bemutató feladat?",
+        "answers": [
+          {
+            "id": "a",
+            "text": "Minta / demonstráció",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Hivatalos képesítés",
+            "correct": false
+          }
+        ],
+        "explanation": "Ez kizárólag a felület működését bemutató próba; nem szakmai tudásmérés."
+      },
+      {
+        "id": "demo-q-6",
+        "type": "multiple",
+        "prompt": "Minta 6: melyik jelölés mutatja, hogy ez bemutató feladat?",
+        "answers": [
+          {
+            "id": "a",
+            "text": "Minta / demonstráció",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Hivatalos képesítés",
+            "correct": false
+          },
+          {
+            "id": "c",
+            "text": "Próbaadat",
+            "correct": true
+          }
+        ],
+        "explanation": "Ez kizárólag a felület működését bemutató próba; nem szakmai tudásmérés."
+      },
+      {
+        "id": "demo-q-7",
+        "type": "boolean",
+        "prompt": "Minta 7: melyik jelölés mutatja, hogy ez bemutató feladat?",
+        "answers": [
+          {
+            "id": "a",
+            "text": "Minta / demonstráció",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Hivatalos képesítés",
+            "correct": false
+          }
+        ],
+        "explanation": "Ez kizárólag a felület működését bemutató próba; nem szakmai tudásmérés."
+      },
+      {
+        "id": "demo-q-8",
+        "type": "case",
+        "prompt": "Minta 8: melyik jelölés mutatja, hogy ez bemutató feladat?",
+        "answers": [
+          {
+            "id": "a",
+            "text": "Minta / demonstráció",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Hivatalos képesítés",
+            "correct": false
+          }
+        ],
+        "explanation": "Ez kizárólag a felület működését bemutató próba; nem szakmai tudásmérés."
+      },
+      {
+        "id": "demo-q-9",
+        "type": "single",
+        "prompt": "Minta 9: melyik jelölés mutatja, hogy ez bemutató feladat?",
+        "answers": [
+          {
+            "id": "a",
+            "text": "Minta / demonstráció",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Hivatalos képesítés",
+            "correct": false
+          }
+        ],
+        "explanation": "Ez kizárólag a felület működését bemutató próba; nem szakmai tudásmérés."
+      },
+      {
+        "id": "demo-q-10",
+        "type": "multiple",
+        "prompt": "Minta 10: melyik jelölés mutatja, hogy ez bemutató feladat?",
+        "answers": [
+          {
+            "id": "a",
+            "text": "Minta / demonstráció",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Hivatalos képesítés",
+            "correct": false
+          },
+          {
+            "id": "c",
+            "text": "Próbaadat",
+            "correct": true
+          }
+        ],
+        "explanation": "Ez kizárólag a felület működését bemutató próba; nem szakmai tudásmérés."
+      },
+      {
+        "id": "demo-q-11",
+        "type": "boolean",
+        "prompt": "Minta 11: melyik jelölés mutatja, hogy ez bemutató feladat?",
+        "answers": [
+          {
+            "id": "a",
+            "text": "Minta / demonstráció",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Hivatalos képesítés",
+            "correct": false
+          }
+        ],
+        "explanation": "Ez kizárólag a felület működését bemutató próba; nem szakmai tudásmérés."
+      },
+      {
+        "id": "demo-q-12",
+        "type": "case",
+        "prompt": "Minta 12: melyik jelölés mutatja, hogy ez bemutató feladat?",
+        "answers": [
+          {
+            "id": "a",
+            "text": "Minta / demonstráció",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Hivatalos képesítés",
+            "correct": false
+          }
+        ],
+        "explanation": "Ez kizárólag a felület működését bemutató próba; nem szakmai tudásmérés."
+      },
+      {
+        "id": "demo-q-13",
+        "type": "single",
+        "prompt": "Minta 13: melyik jelölés mutatja, hogy ez bemutató feladat?",
+        "answers": [
+          {
+            "id": "a",
+            "text": "Minta / demonstráció",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Hivatalos képesítés",
+            "correct": false
+          }
+        ],
+        "explanation": "Ez kizárólag a felület működését bemutató próba; nem szakmai tudásmérés."
+      },
+      {
+        "id": "demo-q-14",
+        "type": "multiple",
+        "prompt": "Minta 14: melyik jelölés mutatja, hogy ez bemutató feladat?",
+        "answers": [
+          {
+            "id": "a",
+            "text": "Minta / demonstráció",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Hivatalos képesítés",
+            "correct": false
+          },
+          {
+            "id": "c",
+            "text": "Próbaadat",
+            "correct": true
+          }
+        ],
+        "explanation": "Ez kizárólag a felület működését bemutató próba; nem szakmai tudásmérés."
+      },
+      {
+        "id": "demo-q-15",
+        "type": "boolean",
+        "prompt": "Minta 15: melyik jelölés mutatja, hogy ez bemutató feladat?",
+        "answers": [
+          {
+            "id": "a",
+            "text": "Minta / demonstráció",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Hivatalos képesítés",
+            "correct": false
+          }
+        ],
+        "explanation": "Ez kizárólag a felület működését bemutató próba; nem szakmai tudásmérés."
+      },
+      {
+        "id": "demo-q-16",
+        "type": "case",
+        "prompt": "Minta 16: melyik jelölés mutatja, hogy ez bemutató feladat?",
+        "answers": [
+          {
+            "id": "a",
+            "text": "Minta / demonstráció",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Hivatalos képesítés",
+            "correct": false
+          }
+        ],
+        "explanation": "Ez kizárólag a felület működését bemutató próba; nem szakmai tudásmérés."
+      },
+      {
+        "id": "demo-q-17",
+        "type": "single",
+        "prompt": "Minta 17: melyik jelölés mutatja, hogy ez bemutató feladat?",
+        "answers": [
+          {
+            "id": "a",
+            "text": "Minta / demonstráció",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Hivatalos képesítés",
+            "correct": false
+          }
+        ],
+        "explanation": "Ez kizárólag a felület működését bemutató próba; nem szakmai tudásmérés."
+      },
+      {
+        "id": "demo-q-18",
+        "type": "multiple",
+        "prompt": "Minta 18: melyik jelölés mutatja, hogy ez bemutató feladat?",
+        "answers": [
+          {
+            "id": "a",
+            "text": "Minta / demonstráció",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Hivatalos képesítés",
+            "correct": false
+          },
+          {
+            "id": "c",
+            "text": "Próbaadat",
+            "correct": true
+          }
+        ],
+        "explanation": "Ez kizárólag a felület működését bemutató próba; nem szakmai tudásmérés."
+      },
+      {
+        "id": "demo-q-19",
+        "type": "boolean",
+        "prompt": "Minta 19: melyik jelölés mutatja, hogy ez bemutató feladat?",
+        "answers": [
+          {
+            "id": "a",
+            "text": "Minta / demonstráció",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Hivatalos képesítés",
+            "correct": false
+          }
+        ],
+        "explanation": "Ez kizárólag a felület működését bemutató próba; nem szakmai tudásmérés."
+      },
+      {
+        "id": "demo-q-20",
+        "type": "case",
+        "prompt": "Minta 20: melyik jelölés mutatja, hogy ez bemutató feladat?",
+        "answers": [
+          {
+            "id": "a",
+            "text": "Minta / demonstráció",
+            "correct": true
+          },
+          {
+            "id": "b",
+            "text": "Hivatalos képesítés",
+            "correct": false
+          }
+        ],
+        "explanation": "Ez kizárólag a felület működését bemutató próba; nem szakmai tudásmérés."
+      }
+    ]
+  },
+  "characterWorld": "matyi-andras",
+  "sourcePack": "paramedic-v01"
+}

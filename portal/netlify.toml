@@ -1,0 +1,199 @@
+headersOrigin = "config"
+redirectsOrigin = "config"
+plugins = []
+
+[functions]
+
+  [functions."*"]
+
+[build]
+
+  [build.environment]
+
+  [build.processing]
+
+    [build.processing.css]
+
+    [build.processing.html]
+
+    [build.processing.images]
+
+    [build.processing.js]
+
+  [build.services]
+
+[[headers]]
+for = "/index.html"
+
+  [headers.values]
+  Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+for = "/supabase-app.js"
+
+  [headers.values]
+  Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+for = "/auth-loader.js"
+
+  [headers.values]
+  Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+for = "/responsive.css"
+
+  [headers.values]
+  Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+for = "/responsive.js"
+
+  [headers.values]
+  Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+for = "/theme.css"
+
+  [headers.values]
+  Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+for = "/hunor-push-sw.js"
+
+  [headers.values]
+  Cache-Control = "no-store"
+  Service-Worker-Allowed = "/"
+
+[[headers]]
+for = "/manifest.webmanifest"
+
+  [headers.values]
+  Cache-Control = "public, max-age=0, must-revalidate"
+  Content-Type = "application/manifest+json"
+
+[[headers]]
+for = "/rescue-news/*"
+
+  [headers.values]
+  Cache-Control = "public, max-age=0, must-revalidate"
+
+[[redirects]]
+from = "http://moonlit-rolypoly-9ca0a1.netlify.app/*"
+to = "https://hun01usar.hu/:splat"
+status = 301
+force = true
+
+  [redirects.query]
+
+  [redirects.conditions]
+
+  [redirects.headers]
+
+[[redirects]]
+from = "https://moonlit-rolypoly-9ca0a1.netlify.app/*"
+to = "https://hun01usar.hu/:splat"
+status = 301
+force = true
+
+  [redirects.query]
+
+  [redirects.conditions]
+
+  [redirects.headers]
+
+[[redirects]]
+from = "/api/public-quiz/*"
+to = "https://embicteneumubwlqqfik.supabase.co/functions/v1/hunor-public-quiz/:splat"
+status = 200
+force = true
+
+  [redirects.query]
+
+  [redirects.conditions]
+
+  [redirects.headers]
+
+[[redirects]]
+from = "/api/gdacs/EQ"
+to = "/.netlify/functions/gdacs-feed?type=EQ"
+status = 200
+force = true
+
+  [redirects.query]
+
+  [redirects.conditions]
+
+  [redirects.headers]
+
+[[redirects]]
+from = "/api/gdacs/TC"
+to = "/.netlify/functions/gdacs-feed?type=TC"
+status = 200
+force = true
+
+  [redirects.query]
+
+  [redirects.conditions]
+
+  [redirects.headers]
+
+[[redirects]]
+from = "/api/gdacs/FL"
+to = "/.netlify/functions/gdacs-feed?type=FL"
+status = 200
+force = true
+
+  [redirects.query]
+
+  [redirects.conditions]
+
+  [redirects.headers]
+
+[[redirects]]
+from = "/api/gdacs/VO"
+to = "/.netlify/functions/gdacs-feed?type=VO"
+status = 200
+force = true
+
+  [redirects.query]
+
+  [redirects.conditions]
+
+  [redirects.headers]
+
+[[redirects]]
+from = "/api/gdacs/DR"
+to = "/.netlify/functions/gdacs-feed?type=DR"
+status = 200
+force = true
+
+  [redirects.query]
+
+  [redirects.conditions]
+
+  [redirects.headers]
+
+[[redirects]]
+from = "/api/gdacs/WF"
+to = "/.netlify/functions/gdacs-feed?type=WF"
+status = 200
+force = true
+
+  [redirects.query]
+
+  [redirects.conditions]
+
+  [redirects.headers]
+
+[[redirects]]
+from = "/*"
+to = "/index.html"
+status = 200
+force = false
+
+  [redirects.query]
+
+  [redirects.conditions]
+
+  [redirects.headers]

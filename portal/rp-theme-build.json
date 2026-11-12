@@ -1,0 +1,21 @@
+{
+  "baseline_deploy": "6adb399b7a1f6f7172597f77",
+  "scope": [
+    "themes",
+    "approved-three-state-own-availability",
+    "manual-news-entry"
+  ],
+  "theme_count": 14,
+  "real_backgrounds": 14,
+  "optimized_previews": true,
+  "availability_migration": "20261026064819_own_availability_three_state_review_only.sql",
+  "authority_changed": false,
+  "changed": [
+    "index.html",
+    "auth-loader.js",
+    "supabase-app.js",
+    "rescue-news/newsroom.mjs",
+    "portal-theme/"
+  ],
+  "app_sha256": "00458c32d97bbbb41262a77f7d497469c08eb253eac44a43b2a2bed550f06908"
+}

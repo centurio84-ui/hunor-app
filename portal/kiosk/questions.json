@@ -1,0 +1,3478 @@
+[
+  {
+    "id": "PV-001",
+    "question": "Füstöt észlelsz a lakás folyosóján. Mi a legfontosabb?",
+    "choices": [
+      "Biztonságos útvonalon menekülni és a 112-t hívni.",
+      "Előbb összeszedni az értéktárgyakat.",
+      "Kinyitni minden ajtót, hogy kiszellőzzön."
+    ],
+    "correctIndex": 0,
+    "explanation": "Csak biztonságosan járható útvonalon menekülj. Sűrű füsttel telt lépcsőházba ne lépj be. Ha a kijutás veszélyes, csukd be az ajtót, hívd a 112-t, és jelezd, hol vagy; kövesd a tűzoltók utasításait.",
+    "source": "https://pest.katasztrofavedelem.hu/19243/epulettuz-panellakasok-tuzei",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "topic": "basics",
+    "category": "Általános felkészültség"
+  },
+  {
+    "id": "PV-002",
+    "question": "Miért kell füstben lehetőleg alacsonyan haladni?",
+    "choices": [
+      "Mert a padlón mindig friss levegő van.",
+      "A hő és a füst jellemzően felfelé terjed.",
+      "Mert így gyorsabb a futás."
+    ],
+    "correctIndex": 1,
+    "explanation": "Alacsonyabban általában kedvezőbbek a körülmények, de a füst ott is mérgező lehet.",
+    "source": "https://www.katasztrofavedelem.hu/305/katasztrofatipusok-tuz",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "topic": "basics",
+    "category": "Általános felkészültség"
+  },
+  {
+    "id": "PV-003",
+    "question": "Mit teszel, ha egy edényben ég a főzőolaj?",
+    "choices": [
+      "Hideg vizet öntesz rá.",
+      "Az égő edényt kiviszed az erkélyre.",
+      "Ha biztonságos, elzárod a hőt és megfelelő fedővel letakarod; vizet nem öntesz rá."
+    ],
+    "correctIndex": 2,
+    "explanation": "Az égő olajra öntött víz súlyos lángfellobbanást okozhat. Veszély esetén távolodj el és hívd a 112-t.",
+    "source": "https://fejer.katasztrofavedelem.hu/36814/csak-a-gyertya-egjen-ne-az-otthonunk",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "topic": "basics",
+    "category": "Általános felkészültség"
+  },
+  {
+    "id": "PV-004",
+    "question": "Mit ellenőrzöl menekülés előtt egy zárt ajtónál?",
+    "choices": [
+      "Óvatosan ellenőrzöd, nem forró-e az ajtó; forró ajtót nem nyitsz ki.",
+      "Azonnal feltéped, hogy gyorsabban kijuss.",
+      "Vizet öntesz a kilincsre és belépsz."
+    ],
+    "correctIndex": 0,
+    "explanation": "A forró ajtót ne nyisd ki. A nem forró ajtó sem garantál füstmentes útvonalat. Ha nincs biztonságos kijárat, csukott ajtó mögül hívd a 112-t és jelezd a tartózkodási helyedet.",
+    "source": "https://www.katasztrofavedelem.hu/305/katasztrofatipusok-tuz",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "topic": "basics",
+    "category": "Általános felkészültség"
+  },
+  {
+    "id": "PV-005",
+    "question": "Mire jó az otthoni füstérzékelő?",
+    "choices": [
+      "Automatikusan elolt minden tüzet.",
+      "Korán jelezheti a füstöt és időt adhat a menekülésre.",
+      "Kiváltja a menekülési tervet."
+    ],
+    "correctIndex": 1,
+    "explanation": "A korai figyelmeztetés életmentő lehet; az érzékelőt rendszeresen ellenőrizni kell.",
+    "source": "https://www.katasztrofavedelem.hu/305/katasztrofatipusok-tuz",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "topic": "basics",
+    "category": "Általános felkészültség"
+  },
+  {
+    "id": "PV-006",
+    "question": "Mit teszel, ha egy lítiumakkumulátoros eszköz füstöl és sziszeg?",
+    "choices": [
+      "Megfogod és zsebre teszed.",
+      "Közelről beleszagolsz, mi ég.",
+      "Eltávolodsz a füsttől, másokat is biztonságba juttatsz, és 112-t hívsz."
+    ],
+    "correctIndex": 2,
+    "explanation": "A sérült akkumulátor mérgező gázokat bocsáthat ki, és újra meggyulladhat.",
+    "source": "https://www.katasztrofavedelem.hu/37087/mit-tegyunk-ha-keszulekunk-vagy-akkumulatorunk-fustol-illetve-eg",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "topic": "basics",
+    "category": "Általános felkészültség"
+  },
+  {
+    "id": "PV-007",
+    "question": "Mit teszel, ha menekülés közben biztonságosan magad mögött becsukhatod az ajtót?",
+    "choices": [
+      "Becsukod, ezzel lassíthatod a tűz és a füst terjedését.",
+      "Mindig nyitva hagyod a huzat miatt.",
+      "Kiékeled teljesen nyitott helyzetben."
+    ],
+    "correctIndex": 0,
+    "explanation": "A zárt ajtó lassíthatja a tűz és a füst továbbterjedését.",
+    "source": "https://www.katasztrofavedelem.hu/37087/mit-tegyunk-ha-keszulekunk-vagy-akkumulatorunk-fustol-illetve-eg",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "topic": "basics",
+    "category": "Általános felkészültség"
+  },
+  {
+    "id": "PV-008",
+    "question": "Miért fontos a családi menekülési terv?",
+    "choices": [
+      "Csak a biztosító miatt.",
+      "Mindenki előre tudhatja, merre juthat ki és hol találkozzatok.",
+      "Hogy tűz esetén előbb dokumentumokat keressetek."
+    ],
+    "correctIndex": 1,
+    "explanation": "A kijáratok és menekülési útvonalak előzetes ismerete csökkenti a bizonytalanságot.",
+    "source": "https://www.usfa.fema.gov/prevention/home-fires/prepare-for-fire/home-fire-escape-plans/",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "topic": "basics",
+    "category": "Általános felkészültség"
+  },
+  {
+    "id": "PV-009",
+    "question": "Mit jelent az elzárkózás veszélyesanyag-felhő esetén?",
+    "choices": [
+      "Azonnal autóba ülni és a felhő felé indulni.",
+      "Az ablakokat kitárni a szellőzéshez.",
+      "Védett épületben maradni, a nyílászárókat bezárni és követni az utasításokat."
+    ],
+    "correctIndex": 2,
+    "explanation": "Veszélyesanyag-felhőnél a külső levegő bejutását kell csökkenteni a hatósági tájékoztatásnak megfelelően.",
+    "source": "https://www.katasztrofavedelem.hu/301/katasztrofatipusok-vegyi-baleset",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "topic": "basics",
+    "category": "Általános felkészültség"
+  },
+  {
+    "id": "PV-010",
+    "question": "Mit kell tenni elzárkózáskor a külső levegőt beszívó klímával?",
+    "choices": [
+      "Kikapcsolni a külső levegőt bejuttató szellőztetést.",
+      "Maximális fokozatra kapcsolni.",
+      "Ablakot nyitni mellé."
+    ],
+    "correctIndex": 0,
+    "explanation": "A külső levegő bejuttatása szennyező anyagokat hozhat az épületbe.",
+    "source": "https://www.katasztrofavedelem.hu/301/katasztrofatipusok-vegyi-baleset",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "topic": "basics",
+    "category": "Általános felkészültség"
+  },
+  {
+    "id": "PV-011",
+    "question": "Mi a különbség kitelepítés és kimenekítés között?",
+    "choices": [
+      "Nincs különbség, mindkettő ugyanaz.",
+      "A kitelepítés szervezetten tervezhető, a kimenekítés közvetlen veszély miatt sürgős.",
+      "A kitelepítés mindig önkéntes túrázás."
+    ],
+    "correctIndex": 1,
+    "explanation": "A polgári védelem külön kezeli az előre tervezhető és a sürgős lakóhelyelhagyást.",
+    "source": "https://nograd.katasztrofavedelem.hu/25071/lakossagvedelem",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "topic": "basics",
+    "category": "Általános felkészültség"
+  },
+  {
+    "id": "PV-012",
+    "question": "Melyik a legfontosabb összeállítás egy hosszabb kitelepítésre?",
+    "choices": [
+      "Csak televízió és játékkonzol.",
+      "Nehéz, csak kézben vihető berendezések.",
+      "Okmányok, gyógyszerek, víz, tartós étel, megfelelő ruházat és alapvető higiéniai eszközök."
+    ],
+    "correctIndex": 2,
+    "explanation": "A csomag legyen személyre szabott, könnyen hordozható, és igazodjon a hatóság tájékoztatásához.",
+    "source": "https://pest.katasztrofavedelem.hu/19248/magatartasi-szabalyok-kitelepites-eseten",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "topic": "basics",
+    "category": "Általános felkészültség"
+  },
+  {
+    "id": "PV-013",
+    "question": "Miért praktikus hátizsákban vinni a veszélyhelyzeti csomagot?",
+    "choices": [
+      "Szabadon maradnak a kezeid mozgáshoz és segítségnyújtáshoz.",
+      "Mert minden hátizsák vízhatlan.",
+      "Mert így több száz kilót vihetsz."
+    ],
+    "correctIndex": 0,
+    "explanation": "A könnyen hordozható csomag különösen fontos gyalogos mozgásnál.",
+    "source": "https://pest.katasztrofavedelem.hu/19248/magatartasi-szabalyok-kitelepites-eseten",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "topic": "basics",
+    "category": "Általános felkészültség"
+  },
+  {
+    "id": "PV-014",
+    "question": "Mit tegyél, ha hivatalosan elrendelik a kitelepítést?",
+    "choices": [
+      "Várj napokat további magyarázat nélkül.",
+      "Kövesd a kijelölt útvonalat és az illetékesek utasításait.",
+      "Indulj ellenkező irányba ismeretlen úton."
+    ],
+    "correctIndex": 1,
+    "explanation": "A szervezett mozgás és a tájékoztatás követése fontos az életvédelemhez.",
+    "source": "https://pest.katasztrofavedelem.hu/19248/magatartasi-szabalyok-kitelepites-eseten",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "topic": "basics",
+    "category": "Általános felkészültség"
+  },
+  {
+    "id": "PV-015",
+    "question": "Mire kell gondolni különösen a veszélyhelyzeti csomag tervezésekor?",
+    "choices": [
+      "Csak a felnőttek irataira.",
+      "Arra, hogy mindenki ugyanazt a méretű ruhát kapja.",
+      "Gyermekek, idősek és tartós betegek sajátos szükségleteire."
+    ],
+    "correctIndex": 2,
+    "explanation": "A személyes szükségletek, gyógyszerek és segédeszközök nélkülözhetetlenek lehetnek.",
+    "source": "https://pest.katasztrofavedelem.hu/19248/magatartasi-szabalyok-kitelepites-eseten",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "topic": "basics",
+    "category": "Általános felkészültség"
+  },
+  {
+    "id": "PV-016",
+    "question": "Mikor szellőztess egy veszélyesanyag-felhő miatti elzárkózás után?",
+    "choices": [
+      "Ha a hatósági tájékoztatás szerint elmúlt a veszély.",
+      "Az első szirénaszó alatt.",
+      "Amikor a felhő a ház elé ér."
+    ],
+    "correctIndex": 0,
+    "explanation": "A szellőztetés idejét a helyi utasítások és a veszély elmúlása határozza meg.",
+    "source": "https://www.katasztrofavedelem.hu/301/katasztrofatipusok-vegyi-baleset",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "topic": "basics",
+    "category": "Általános felkészültség"
+  },
+  {
+    "id": "PV-017",
+    "question": "Hosszabb áramszünet alatt mit tegyél a hűtőszekrény ajtajával?",
+    "choices": [
+      "Percenként nyitogasd.",
+      "Lehetőleg tartsd csukva.",
+      "Hagyd kitárva, hogy felmelegedjen."
+    ],
+    "correctIndex": 1,
+    "explanation": "A hűtő ajtajának csukva tartása lassítja a felmelegedést. Egy előzőleg megfelelően hűtött, zárva tartott hűtő nagyjából 4 órán át tarthatja biztonságosan hidegen az ételt. Hosszabb kimaradásnál a hőmérséklet és az élelmiszer típusa alapján kell dönteni; kóstolással ne ellenőrizd a biztonságot.",
+    "source": "https://www.foodsafety.gov/food-safety-charts/food-safety-during-power-outage",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "topic": "basics",
+    "category": "Általános felkészültség"
+  },
+  {
+    "id": "PV-018",
+    "question": "Hol szabad működtetni egy benzinmotoros áramfejlesztőt?",
+    "choices": [
+      "Zárt garázsban, nyitott belső ajtó mellett.",
+      "A nappaliban nyitott ablakkal.",
+      "Kizárólag a szabadban, legalább 6 méterre az épülettől, ajtóktól, ablakoktól és szellőzőktől távol, a kipufogót az épülettől elfelé fordítva."
+    ],
+    "correctIndex": 2,
+    "explanation": "Az áramfejlesztő kipufogógáza életveszélyes szén-monoxidot tartalmaz. Garázsban vagy más zárt térben nyitott ajtó mellett sem működtethető. A gyártó ennél nagyobb távolságot is előírhat.",
+    "source": "https://www.canada.ca/en/services/policing/emergencies/preparedness/get-prepared/hazards-emergencies/power-outages/how-prepare.html",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "topic": "basics",
+    "category": "Általános felkészültség"
+  },
+  {
+    "id": "PV-019",
+    "question": "Mivel NEM szabad fűteni áramszünetkor?",
+    "choices": [
+      "Beltérben használt kerti grillsütővel vagy gáztűzhellyel.",
+      "Biztonságosan alkalmazott, erre tervezett fűtőberendezéssel.",
+      "Megfelelő meleg ruházattal és takaróval."
+    ],
+    "correctIndex": 0,
+    "explanation": "Az égéstermékek és a szén-monoxid mérgezést okozhatnak.",
+    "source": "https://www.cdc.gov/carbon-monoxide/about/index.html",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "topic": "basics",
+    "category": "Általános felkészültség"
+  },
+  {
+    "id": "PV-020",
+    "question": "Erős gázszagot észlelsz a lakásban. Mi a biztonságos reakció?",
+    "choices": [
+      "Kapcsold fel sorban a villanyokat.",
+      "Ne kapcsolj elektromos készüléket; ha biztonságos, zárd el a gázt, hagyd el a helyet és kintről kérj segítséget.",
+      "Gyújts gyufát a szivárgás kereséséhez."
+    ],
+    "correctIndex": 1,
+    "explanation": "Ne működtess kapcsolót, ne húzz ki dugót, és ne telefonálj a gázszagú térben. A gázt csak saját veszélyeztetésed nélkül zárd el. Hagyd el a helyet, és biztonságos távolságból hívd a gázszolgáltatót vagy közvetlen veszélyben a 112-t.",
+    "source": "https://www.mvmhalozat.hu/gaz/aktualitasok/56757",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "topic": "basics",
+    "category": "Általános felkészültség"
+  },
+  {
+    "id": "PV-021",
+    "question": "Miért kell áramszünetkor a fontos egészségügyi eszközökre is tervezni?",
+    "choices": [
+      "Mert az eszközök mind örökké akkumulátorról működnek.",
+      "Mert csak internet nélkül használhatók.",
+      "Mert egyes orvosi eszközök és gyógyszerek áramellátást vagy hűtést igényelnek."
+    ],
+    "correctIndex": 2,
+    "explanation": "Életfontosságú eszköz esetén előre kidolgozott tartalék áramellátási és ellátási terv szükséges.",
+    "source": "https://www.fda.gov/medical-devices/emergency-situations-medical-devices/fda-offers-tips-about-medical-devices-and-natural-disasters",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "topic": "basics",
+    "category": "Általános felkészültség"
+  },
+  {
+    "id": "PV-022",
+    "question": "Miért érdemes a nem életfenntartó, érzékeny elektronikus készülékeket kihúzni áramszünetben?",
+    "choices": [
+      "A visszatérő áramellátáskor fellépő túlfeszültség elleni védelem miatt.",
+      "Hogy gyorsabban jöjjön vissza az áram.",
+      "Mert a dugó mindig felrobban áram nélkül."
+    ],
+    "correctIndex": 0,
+    "explanation": "A hálózat visszakapcsolásakor fellépő túlfeszültség károsíthatja az érzékeny berendezéseket. Orvosi, életfenntartó eszközöknél az előre egyeztetett ellátási tervet kövesd.",
+    "source": "https://www.canada.ca/en/services/policing/emergencies/preparedness/get-prepared/hazards-emergencies/power-outages/how-prepare.html",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "topic": "basics",
+    "category": "Általános felkészültség"
+  },
+  {
+    "id": "PV-023",
+    "question": "A szén-monoxid-érzékelő CO-veszélyjelzést ad. Mit teszel?",
+    "choices": [
+      "Biztosan csak lemerült a telefon.",
+      "Potenciális életveszélyt: biztonságosan hagyd el az épületet, és kérj segítséget.",
+      "Azt, hogy ki kell kapcsolni minden riasztót és aludni."
+    ],
+    "correctIndex": 1,
+    "explanation": "A CO színtelen, szagtalan és életveszélyes. Menj biztonságos helyre, kérj segítséget, és ne térj vissza a veszélyes térbe hibát keresni. Az elem- vagy készülékhiba-jelzéseket a gyártói útmutató különíti el a CO-riasztástól.",
+    "source": "https://www.cdc.gov/carbon-monoxide/about/index.html",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "topic": "basics",
+    "category": "Általános felkészültség"
+  },
+  {
+    "id": "PV-024",
+    "question": "Mit érdemes kéznél tartani váratlan áramszünetre?",
+    "choices": [
+      "Csak gyertyát felügyelet nélkül.",
+      "Egy kizárólag hálózatról működő telefont.",
+      "Feltöltött mobiltelefont, powerbankot, elemlámpát és elemes rádiót."
+    ],
+    "correctIndex": 2,
+    "explanation": "Az önálló energiaforrás és a hiteles tájékoztatás elérése alapvető.",
+    "source": "https://www.cdc.gov/prepare-your-health/take-action/power-sources.html",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "topic": "basics",
+    "category": "Általános felkészültség"
+  },
+  {
+    "id": "PV-025",
+    "question": "Nagy hóban elakadsz egy elhagyatott úton. Mi az elsődleges?",
+    "choices": [
+      "Segítséget kérsz és megadod a helyzeted; ha a járműnél nem fenyeget közvetlen veszély, ott maradsz védett helyen.",
+      "Vakon elindulni gyalog a hóviharba.",
+      "Elrejteni az autót a keresők elől."
+    ],
+    "correctIndex": 0,
+    "explanation": "Erős hóviharban a jármű védelmet adhat és könnyebben megtalálható; közvetlen veszély esetén más döntés szükséges.",
+    "source": "https://www.weather.gov/safety/winter-during",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "topic": "basics",
+    "category": "Általános felkészültség"
+  },
+  {
+    "id": "PV-026",
+    "question": "Miért kell a kipufogót szabaddá tenni, mielőtt a havas úton járatod a motort?",
+    "choices": [
+      "Hogy hangosabban szóljon a motor.",
+      "Az utastérbe jutó szén-monoxid-mérgezés elkerüléséhez.",
+      "Hogy gyorsabban fogyjon az üzemanyag."
+    ],
+    "correctIndex": 1,
+    "explanation": "A hó eltömítheti a kipufogót, és a kipufogógáz visszajuthat a járműbe.",
+    "source": "https://www.weather.gov/safety/winter-during",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "topic": "basics",
+    "category": "Általános felkészültség"
+  },
+  {
+    "id": "PV-027",
+    "question": "Melyik felszereléscsomag a leghasznosabb hosszú téli útra?",
+    "choices": [
+      "Csak strandpapucs és naptej.",
+      "Csak egy extra autóillatosító.",
+      "Takaró, meleg ruha, víz, tartós étel, lámpa, hólapát és feltöltött telefon."
+    ],
+    "correctIndex": 2,
+    "explanation": "A magyar rendőrség is hangsúlyozza az úti és téli vészfelszerelés fontosságát.",
+    "source": "https://www.police.hu/hu/hirek-es-informaciok/baleset-megelozes/aktualis/teli-idojaras-fokozott-ovatossagra-intjuk-a",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "topic": "basics",
+    "category": "Általános felkészültség"
+  },
+  {
+    "id": "PV-028",
+    "question": "Melyikre érdemes figyelni téli indulás előtt?",
+    "choices": [
+      "Időjárás, útviszonyok, abroncsok, akkumulátor és világítás.",
+      "Csak az autórádió hangerőre.",
+      "Csak az üléskárpitra."
+    ],
+    "correctIndex": 0,
+    "explanation": "A technikai állapot és a tájékozódás csökkentheti az elakadási és baleseti kockázatot.",
+    "source": "https://www.police.hu/hu/hirek-es-informaciok/baleset-megelozes/aktualis/teli-idojaras-fokozott-ovatossagra-intjuk-a",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "topic": "basics",
+    "category": "Általános felkészültség"
+  },
+  {
+    "id": "PV-029",
+    "question": "Hóviharban elakadt autót látsz. Mit tegyél?",
+    "choices": [
+      "Azonnal megállsz az úttest közepén.",
+      "Biztonságos helyről felméred, kell-e segítség, és szükség esetén 112-t hívsz.",
+      "Figyelmen kívül hagyod minden körülmények között."
+    ],
+    "correctIndex": 1,
+    "explanation": "Saját biztonságod elsődleges; a bajba jutók helyét és állapotát pontosan jelezd a segélyhívón.",
+    "source": "https://www.resus.org.uk/professional-library/2025-resuscitation-guidelines/first-aid-guidelines",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "topic": "basics",
+    "category": "Általános felkészültség"
+  },
+  {
+    "id": "PV-030",
+    "question": "Meghibásodás miatt biztonságosan megálltál az út szélén. Mi segítheti a láthatóságot?",
+    "choices": [
+      "Kikapcsolt világítás minden helyzetben.",
+      "Az autó sárral való lefedése.",
+      "Vészvillogó és jól látható jelzés, a körülményeknek megfelelően."
+    ],
+    "correctIndex": 2,
+    "explanation": "A vészvillogó és a körülményeknek megfelelő elakadásjelzés figyelmeztethet másokat. A jelzés kihelyezése ne sodorjon új veszélybe. Autópályán a járműben várakozás helyett a szalagkorláton kívüli védett hely lehet szükséges; kövesd a helyszíni útmutatást.",
+    "source": "https://kozlekedesbiztonsag.kti.hu/mit-tegyunk-ha-lerobbanunk/",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "topic": "basics",
+    "category": "Általános felkészültség"
+  },
+  {
+    "id": "PV-031",
+    "question": "Elakadás közben hogyan csökkentheted a kihűlés kockázatát?",
+    "choices": [
+      "Száraz, réteges ruházattal, takaróval és szükség esetén szakszerű segítségkéréssel.",
+      "Alkoholfogyasztással a felmelegedéshez.",
+      "Nedves ruhában maradva."
+    ],
+    "correctIndex": 0,
+    "explanation": "A kihűlés megelőzéséhez a száraz ruházat és a hőveszteség csökkentése fontos.",
+    "source": "https://www.nhs.uk/conditions/Hypothermia/",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "topic": "basics",
+    "category": "Általános felkészültség"
+  },
+  {
+    "id": "PV-032",
+    "question": "Hóviharban, biztonságos helyen várakozva mi igaz a fűtés céljából járatott motorra?",
+    "choices": [
+      "Órákon át folyamatosan járhat, zárt ablakok mellett.",
+      "Csak korlátozott ideig járjon, szabad kipufogó és megfelelő szellőzés mellett; ez sem helyettesíti a segítségkérést.",
+      "A CO-érzékelő megléte feleslegessé teszi a kipufogó ellenőrzését."
+    ],
+    "correctIndex": 1,
+    "explanation": "A hóviharban várakozó járműnél az NWS rövid, szakaszos motorjáratást javasol, például óránként körülbelül 10 percet. A kipufogó legyen szabad, és biztosítani kell a szellőzést. Ez nem általános biztonsági garancia: CO-kockázat vagy más közvetlen veszély esetén kérj sürgős segítséget.",
+    "source": "https://www.weather.gov/safety/winter-during",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "topic": "basics",
+    "category": "Általános felkészültség"
+  },
+  {
+    "id": "EV-WEATHER-001",
+    "topic": "weather",
+    "category": "Extrém időjárás",
+    "question": "Mit kell tenni, ha lakott területen hirtelen, rendkívül erős szélvihar (orkán) tör ki az utcán?",
+    "choices": [
+      "Bújjak el egy nagy fa alatt, mert az véd a széltől.",
+      "Maradjak távol a fáktól, vezetékektől és leeső tárgyaktól; biztonságos útvonalon menjek stabil épületbe.",
+      "Feküdjek le laposan az út közepére."
+    ],
+    "correctIndex": 1,
+    "explanation": "Kerüld a leszakadó ágakat és tárgyakat. Ne állj meg sérült épületrész alatt; keress biztonságos menedéket.",
+    "source": "https://www.met.hu/idojaras/veszelyjelzes/hungaromet_veszelyjelzo_rendszere/",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 1
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-WEATHER-002",
+    "topic": "weather",
+    "category": "Extrém időjárás",
+    "question": "Mit jelent a HungaroMet piros figyelmeztetése magas középhőmérséklet miatt?",
+    "choices": [
+      "Csak annyit, hogy érdemes napszemüveget venni.",
+      "Kiemelten veszélyes hőséget jelez; csökkenteni kell a megterhelést, hűvös helyet keresni és követni a hivatalos tájékoztatást.",
+      "Azt, hogy éjszaka fagyveszély várható."
+    ],
+    "correctIndex": 1,
+    "explanation": "A meteorológiai figyelmeztetés és az egészségügyi hőségriasztás külön rendszer. Nem azonos a szociális ellátás vörös kódjával.",
+    "source": "https://www.met.hu/idojaras/veszelyjelzes/hungaromet_veszelyjelzo_rendszere/",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 2
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-WEATHER-003",
+    "topic": "weather",
+    "category": "Extrém időjárás",
+    "question": "Hogyan kell védekezni villámárvizek (hirtelen lezúduló nagy esők miatti áradások) esetén?",
+    "choices": [
+      "Le kell menni a mélygarázsba megnézni az autót.",
+      "Minél gyorsabban el kell jutni a magasabban fekvő, biztonságos területekre, és kerülni kell az aluljárókat, pincéket.",
+      "Be kell úszni az áradó vízbe."
+    ],
+    "correctIndex": 1,
+    "explanation": "Minél gyorsabban el kell jutni a magasabban fekvő, biztonságos területekre, és kerülni kell az aluljárókat, pincéket.",
+    "source": "https://www.weather.gov/safety/flood",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 3
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-WEATHER-004",
+    "topic": "weather",
+    "category": "Extrém időjárás",
+    "question": "Mi a teendő, ha autózás közben hatalmas jégeső lep meg?",
+    "choices": [
+      "Teljes gázzal továbbhajtani, hogy mielőbb átérjünk rajta.",
+      "Lassítani, majd ha lehetséges, a forgalmat nem akadályozó biztonságos helyen megállni, távol fáktól és vezetékektől.",
+      "Kiugrani a kocsiból és kézzel védeni a szélvédőt."
+    ],
+    "correctIndex": 1,
+    "explanation": "Ne állj meg forgalmi sávban vagy híd alatt úgy, hogy másokat veszélyeztetsz. Maradj a járműben, amíg biztonságosan tovább lehet indulni.",
+    "source": "https://www.met.hu/idojaras/veszelyjelzes/hungaromet_veszelyjelzo_rendszere/",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 4
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-WEATHER-005",
+    "topic": "weather",
+    "category": "Extrém időjárás",
+    "question": "Mit jelent a másodfokú (narancs) riasztás zivatar és felhőszakadás esetén?",
+    "choices": [
+      "Semmi különös, ez egy átlagos nyári nap.",
+      "Fokozott veszélyt jelez; figyelni kell a friss előrejelzéseket és felkészülni a heves időjárás hatásaira.",
+      "Országos kijárási tilalom lép életbe."
+    ],
+    "correctIndex": 1,
+    "explanation": "A narancssárga jelzés veszélyes időjárást jelez, de önmagában nem jelent kijárási tilalmat.",
+    "source": "https://www.met.hu/idojaras/veszelyjelzes/hungaromet_veszelyjelzo_rendszere/",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 5
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-WEATHER-006",
+    "topic": "weather",
+    "category": "Extrém időjárás",
+    "question": "Hová menj, ha túrázás közben meghallod a mennydörgést?",
+    "choices": [
+      "Magas fa teteje vagy egy magányos fa töve.",
+      "Mielőbb zárt, stabil épületbe vagy zárt, keménytetős autóba; a fa, sátor és árok nem biztosít villámvédelmet.",
+      "Feküdjünk hanyatt a fűben."
+    ],
+    "correctIndex": 1,
+    "explanation": "Szabadban nincs villámbiztos hely. A guggolás nem teszi biztonságossá a helyzetet.",
+    "source": "https://www.weather.gov/safety/lightning-myths",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 6
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-WEATHER-007",
+    "topic": "weather",
+    "category": "Extrém időjárás",
+    "question": "Mi az elsődleges veszélyforrás egy tartós, heves téli hófúvás (blizzard) során?",
+    "choices": [
+      "A túl sok fagylalt.",
+      "A kihűlés (hipotermia), a magányos utakon elakadás és a fűtés/áramkimaradás.",
+      "A leégett napozókrém."
+    ],
+    "correctIndex": 1,
+    "explanation": "A kihűlés (hipotermia), a magányos utakon elakadás és a fűtés/áramkimaradás.",
+    "source": "https://www.nhs.uk/conditions/hypothermia/",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 7
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-WEATHER-008",
+    "topic": "weather",
+    "category": "Extrém időjárás",
+    "question": "Mit kell tenni, ha lakóhelyeden hirtelen bekövetkező, extrém vihar miatt elmegy az áram és a fűtés?",
+    "choices": [
+      "Nyitva hagyni az összes ablakot, hogy szellőzzön a lakás.",
+      "Meleg ruhát ölteni, lezárni a kihűlő helyiségeket, és bekapcsolni az elemes rádiót a friss információkért.",
+      "Befűteni a nappaliban egy nyitott gázsütővel."
+    ],
+    "correctIndex": 1,
+    "explanation": "Öltözz melegen, tartsd meg a hőt és figyeld a hivatalos híreket. Beltérben ne használj kültéri égésű eszközt vagy áramfejlesztőt.",
+    "source": "https://www.nhs.uk/conditions/hypothermia/",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 8
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-WEATHER-009",
+    "topic": "weather",
+    "category": "Extrém időjárás",
+    "question": "Mit jelez a meteorológiában a 'szupercella' kifejezés?",
+    "choices": [
+      "Egy óriási felhőkarcolót Budapesten.",
+      "Tartósan forgó feláramlással rendelkező zivatart; jégesőt, károkozó szelet és néha tornádót okozhat.",
+      "Egy speciális időjárás-előrejelző műholdat."
+    ],
+    "correctIndex": 1,
+    "explanation": "Nem minden szupercella okoz tornádót. A veszélyjelzéseket kell követni, nem egy felhő látványából dönteni.",
+    "source": "https://www.weather.gov/spotterguide/supercell1",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 9
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-WEATHER-010",
+    "topic": "weather",
+    "category": "Extrém időjárás",
+    "question": "Mi a teendő erdőtűz esetén, ha észreveszed a lángokat a kirándulás során?",
+    "choices": [
+      "Megpróbálni elfújni a tüzet.",
+      "Biztonságos útvonalon távolodni a tűztől és füsttől, 112-t hívni, majd követni a mentők utasításait.",
+      "Fotózni egy szelfit a lángok előtt."
+    ],
+    "correctIndex": 1,
+    "explanation": "A szél és a terep gyorsan változtathatja a tűz terjedését; egyetlen általános irányszabály nem garantál menekülést.",
+    "source": "https://katasztrofavedelem.hu/53/tuzgyujtasi-tilalom",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 10
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-WEATHER-011",
+    "topic": "weather",
+    "category": "Extrém időjárás",
+    "question": "Mely tünetek utalhatnak hőgutára?",
+    "choices": [
+      "Hidegrázás és fogvacogás.",
+      "Nagyon magas testhőmérséklet, zavartság, rossz koordináció, eszméletvesztés; a bőr lehet száraz vagy verejtékes.",
+      "Fokozott energiaszint és öröm."
+    ],
+    "correctIndex": 1,
+    "explanation": "Hőguta gyanújánál azonnali segélyhívás és hűtés szükséges. Ne várj arra, hogy magától rendeződjön.",
+    "source": "https://www.cdc.gov/niosh/heat-stress/about/illnesses.html",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 11
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-WEATHER-012",
+    "topic": "weather",
+    "category": "Extrém időjárás",
+    "question": "Mi a helyes döntés, ha elöntött útszakaszhoz érsz autóval?",
+    "choices": [
+      "Maradj benne üvöltve, amíg el nem apad.",
+      "Ne hajts a vízbe; fordulj vissza és keress más útvonalat. Ha csapdába kerültél, kérj segítséget a 112-n.",
+      "Nyiss ablakot és kezdj el horgászni."
+    ],
+    "correctIndex": 1,
+    "explanation": "Ne alapozd a biztonságot a kerék vagy küszöb magasságára. A víz mélysége, sodrása és az út állapota kívülről nem ítélhető meg.",
+    "source": "https://www.weather.gov/safety/flood",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 12
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-WEATHER-013",
+    "topic": "weather",
+    "category": "Extrém időjárás",
+    "question": "Hogyan védekezzünk az UV-sugárzás ellen nyári napokon szabadtéren?",
+    "choices": [
+      "Ne igyunk vizet napközben.",
+      "Árnyék, megfelelő ruházat, fejfedő, napszemüveg és megfelelő fényvédő; erős UV idején kerülni kell a tűző napot.",
+      "Feküdjünk ki délben a napra kendő nélkül."
+    ],
+    "correctIndex": 1,
+    "explanation": "Árnyék, megfelelő ruházat, fejfedő, napszemüveg és megfelelő fényvédő; erős UV idején kerülni kell a tűző napot.",
+    "source": "https://www.met.hu/idojaras/veszelyjelzes/hungaromet_veszelyjelzo_rendszere/",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 13
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-WEATHER-014",
+    "topic": "weather",
+    "category": "Extrém időjárás",
+    "question": "Mi a teendő szén-monoxid mérgezés gyanúja esetén otthon?",
+    "choices": [
+      "Gyújtsunk gyertyát, hogy lássunk.",
+      "Azonnal kijutni a friss levegőre, másokat is figyelmeztetni és biztonságos helyről 112-t hívni.",
+      "Igyunk egy pohár hideg vizet és aludjunk tovább."
+    ],
+    "correctIndex": 1,
+    "explanation": "Ne késleltesd a kijutást a berendezés keresésével vagy szellőztetéssel, és ne menj vissza a veszélyes térbe.",
+    "source": "https://www.nhs.uk/conditions/carbon-monoxide-poisoning/",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 14
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-WEATHER-015",
+    "topic": "weather",
+    "category": "Extrém időjárás",
+    "question": "Mi a lakosság feladata súlyos időjárási veszélyjelzéskor?",
+    "choices": [
+      "Bezárja az összes boltot és bankot.",
+      "Figyelni a hivatalos tájékoztatást, kerülni a felesleges utazást és követni a hatóságok utasításait.",
+      "Szünetelteti az internetet."
+    ],
+    "correctIndex": 1,
+    "explanation": "A meteorológiai piros jelzés és a szociális vörös kód nem azonos. Az intézkedések az adott eseménytől függnek.",
+    "source": "https://www.met.hu/idojaras/veszelyjelzes/hungaromet_veszelyjelzo_rendszere/",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 15
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-WEATHER-016",
+    "topic": "weather",
+    "category": "Extrém időjárás",
+    "question": "Mikor kell figyelni a heves zivatarok veszélyére Magyarországon?",
+    "choices": [
+      "December és január",
+      "Különösen a meleg évszakban, de mindig az aktuális hivatalos veszélyjelzés alapján.",
+      "Október és november"
+    ],
+    "correctIndex": 1,
+    "explanation": "A naptári hónap önmagában nem zárja ki a heves zivatar lehetőségét.",
+    "source": "https://www.met.hu/idojaras/veszelyjelzes/hungaromet_veszelyjelzo_rendszere/",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 16
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-WEATHER-017",
+    "topic": "weather",
+    "category": "Extrém időjárás",
+    "question": "Melyik tünet utalhat kezdődő kihűlésre?",
+    "choices": [
+      "Izzadás és fáradtság.",
+      "Remegés, hideg bőr és romló kézügyesség; súlyosbodáskor zavartság és beszédzavar is jelentkezhet.",
+      "Magas vérnyomás."
+    ],
+    "correctIndex": 1,
+    "explanation": "A hipotermia kihűlést jelent, nem eleve halált. Súlyos gyanú esetén 112 és kíméletes védelem a további hővesztéstől.",
+    "source": "https://www.nhs.uk/conditions/hypothermia/",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 17
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-WEATHER-018",
+    "topic": "weather",
+    "category": "Extrém időjárás",
+    "question": "Mi a helyes eljárás, ha fagyos időben beszakad valaki alatt a jég a tavon?",
+    "choices": [
+      "Rohanva odafutni a lék szélére.",
+      "Hívni a 112-t; a partról nyújtott biztonságos segítséget keresni, a bizonytalan jégre nem kimenni.",
+      "Kiabálni vele, hogy ússzon ki."
+    ],
+    "correctIndex": 1,
+    "explanation": "A hason csúszás sem garantálja a jég teherbírását. Ne válj második áldozattá.",
+    "source": "https://www.met.hu/idojaras/veszelyjelzes/hungaromet_veszelyjelzo_rendszere/",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 18
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-WEATHER-019",
+    "topic": "weather",
+    "category": "Extrém időjárás",
+    "question": "Mi az a 'száraz villám'?",
+    "choices": [
+      "Olyan villámcsapás, ami vízből indul ki.",
+      "Olyan villámlással járó zivatarjelenség, amikor kevés vagy semennyi eső nem jut a felszínre; tüzet is okozhat.",
+      "Egy internetes mém."
+    ],
+    "correctIndex": 1,
+    "explanation": "Az eső hiánya nem zárja ki a villámcsapást. Az erdőtüzek okai területenként eltérnek; nem állítjuk, hogy mindenütt ez a fő ok.",
+    "source": "https://www.weather.gov/safety/lightning-myths",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 19
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-WEATHER-020",
+    "topic": "weather",
+    "category": "Extrém időjárás",
+    "question": "Mit kell tenni erős földrengés alatt zárt térben?",
+    "choices": [
+      "Rohanni az erkélyre és leugrani.",
+      "Leguggolni, fedezékbe húzódni és kapaszkodni; védeni a fejet, kerülni az ablakokat és a liftet.",
+      "Liftbe szállni és gyorsan lemenni."
+    ],
+    "correctIndex": 1,
+    "explanation": "Stabil asztal alatt védd a fejed, és kapaszkodj. Ne rohanj a rázkódás közben a kijárathoz.",
+    "source": "https://www.ready.gov/earthquakes",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 20
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-SURVIVAL-001",
+    "topic": "survival",
+    "category": "Túlélési alapismeretek",
+    "question": "Mit tartalmazzon egy jól összeállított 72 órás vészhelyzeti hátizsák (Bug-out bag)?",
+    "choices": [
+      "Csak divatos ruhákat és egy tabletet.",
+      "Ivóvizet, tartós élelmiszert, elsősegélycsomagot, zseblámpát, elemes rádiót, iratmásolatot és gyógyszereket.",
+      "Játékokat és konzolokat."
+    ],
+    "correctIndex": 1,
+    "explanation": "Ivóvizet, tartós élelmiszert, elsősegélycsomagot, zseblámpát, elemes rádiót, iratmásolatot és gyógyszereket.",
+    "source": "https://www.ready.gov/kit",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 1
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-SURVIVAL-002",
+    "topic": "survival",
+    "category": "Túlélési alapismeretek",
+    "question": "Hogyan kell vízhez jutni a vadonban, ha kifogytál az ivóvízből?",
+    "choices": [
+      "Bármilyen álló pocsolyából nyugodtan inni.",
+      "Lehetőleg ismert biztonságos ivóvizet keresni; a természetes vizet megfelelő módszerrel kezelni, nem a tisztaságára hagyatkozni.",
+      "Tengervizet inni a szomjúság ellen."
+    ],
+    "correctIndex": 1,
+    "explanation": "A forralás a kórokozók ellen segíthet, de a vegyi szennyeződést nem távolítja el. Nem minden szűrő távolít el minden kórokozót.",
+    "source": "https://www.cdc.gov/water-emergency/about/index.html",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 2
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-SURVIVAL-003",
+    "topic": "survival",
+    "category": "Túlélési alapismeretek",
+    "question": "Mit tegyél jelentős külső vérzés esetén, ha a helyszín biztonságos?",
+    "choices": [
+      "Leülni és sírni.",
+      "Erős, közvetlen nyomást gyakorolni a sebre tiszta kötszerrel, segítséget hívni és követni a 112 utasításait.",
+      "Lefotózni a sebet Instagramra."
+    ],
+    "correctIndex": 1,
+    "explanation": "Az elsődleges cél a vérveszteség csökkentése. Beékelődött tárgyat nem húzunk ki; körülötte alkalmazunk nyomást.",
+    "source": "https://www.sja.org.uk/first-aid-advice/severe-bleeding/",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 3
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-SURVIVAL-004",
+    "topic": "survival",
+    "category": "Túlélési alapismeretek",
+    "question": "Hogyan jelölheted meg a tartózkodási helyedet, ha segítséget vársz a mentőktől az erdőben?",
+    "choices": [
+      "Elégetni az összes fát.",
+      "Síppal, zseblámpával vagy jól látható ruhával jelezni, és a helyzetedet megadni a segélyhívásban.",
+      "Csendben megbújni a bokrok között."
+    ],
+    "correctIndex": 1,
+    "explanation": "Jelzés céljából se gyújts tüzet, ha az veszélyes vagy tiltott; a fény és hang biztonságosabb jelzőeszköz lehet.",
+    "source": "https://www.nps.gov/anch/planyourvisit/outdoor-gear-checklist.htm",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 4
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-SURVIVAL-005",
+    "topic": "survival",
+    "category": "Túlélési alapismeretek",
+    "question": "Mi a helyes öltözködési elv túrázáskor vagy hűvös időben (a hagyma-elv)?",
+    "choices": [
+      "Egyetlen vastag bundakabát viselése póló nélkül.",
+      "Réteges öltözködés: nedvességelvezető alsó réteg, hőtartó középső réteg és szél-/vízálló külső héj.",
+      "Minél kevesebb ruha, hogy eddzük a testet."
+    ],
+    "correctIndex": 1,
+    "explanation": "Réteges öltözködés: nedvességelvezető alsó réteg, hőtartó középső réteg és szél-/vízálló külső héj.",
+    "source": "https://www.nps.gov/anch/planyourvisit/outdoor-gear-checklist.htm",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 5
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-SURVIVAL-006",
+    "topic": "survival",
+    "category": "Túlélési alapismeretek",
+    "question": "Melyik eszköz a leghasznosabb tájékozódáshoz, ha lemerült a telefonod GPS-e?",
+    "choices": [
+      "Egy kockás füzet.",
+      "Analóg tájoló (kompassz) és papíralapú térkép.",
+      "Egy darab faág."
+    ],
+    "correctIndex": 1,
+    "explanation": "Analóg tájoló (kompassz) és papíralapú térkép.",
+    "source": "https://www.nps.gov/anch/planyourvisit/outdoor-gear-checklist.htm",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 6
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-SURVIVAL-007",
+    "topic": "survival",
+    "category": "Túlélési alapismeretek",
+    "question": "Mi a teendő, ha éjszakára a szabadban kell maradnod váratlanul?",
+    "choices": [
+      "Lefeküdni közvetlenül a fagyos földre meztelenül.",
+      "Biztonságos, időjárástól védett helyet keresni, szárazon maradni, és szigetelni a testet a hideg talajtól.",
+      "Felmászni a legmagasabb fára aludni."
+    ],
+    "correctIndex": 1,
+    "explanation": "Kerüld a veszélyes fákat, áradásveszélyes mélyedéseket és sziklafalakat. Ha eltévedtél, kérj segítséget és add meg a helyzetedet.",
+    "source": "https://www.nps.gov/anch/planyourvisit/outdoor-gear-checklist.htm",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 7
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-SURVIVAL-008",
+    "topic": "survival",
+    "category": "Túlélési alapismeretek",
+    "question": "Milyen típusú élelmiszert érdemes tartani a vészhelyzeti készletben?",
+    "choices": [
+      "Gyorsan megromló tejtermékeket és nyers húst.",
+      "Magas kalóriatartalmú, hosszú szavatosságú, könnyen nyitható konzerveket, energiaszeleteket, olajos magvakat.",
+      "Csak cukorkát."
+    ],
+    "correctIndex": 1,
+    "explanation": "Magas kalóriatartalmú, hosszú szavatosságú, könnyen nyitható konzerveket, energiaszeleteket, olajos magvakat.",
+    "source": "https://www.nps.gov/anch/planyourvisit/outdoor-gear-checklist.htm",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 8
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-SURVIVAL-009",
+    "topic": "survival",
+    "category": "Túlélési alapismeretek",
+    "question": "Hogyan jelez a nemzetközi S.O.S. vészjelzés fény- vagy hangjelzéssel?",
+    "choices": [
+      "Folyamatos üvöltéssel.",
+      "3 rövid, 3 hosszú, 3 rövid jelzés (pl. síppal vagy lámpával).",
+      "5 hosszú jelzéssel."
+    ],
+    "correctIndex": 1,
+    "explanation": "3 rövid, 3 hosszú, 3 rövid jelzés (pl. síppal vagy lámpával).",
+    "source": "https://www.nps.gov/anch/planyourvisit/outdoor-gear-checklist.htm",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 9
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-SURVIVAL-010",
+    "topic": "survival",
+    "category": "Túlélési alapismeretek",
+    "question": "Mi a helyes viselkedés, ha medvét látsz túrázás közben?",
+    "choices": [
+      "Hangosan sikoltozni és futni kezdeni.",
+      "Ne közelíts, ne etesd, ne fuss; nyugodtan távolodj, hagyj menekülési lehetőséget és kövesd a helyi útmutatást.",
+      "Megsimogatni a fülét."
+    ],
+    "correctIndex": 1,
+    "explanation": "A teendők a fajtól és a helyzettől is függnek; ne fordíts hátat futva és ne közelíts a bocsokhoz.",
+    "source": "https://www.nps.gov/subjects/bears/safety.htm",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 10
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-SURVIVAL-011",
+    "topic": "survival",
+    "category": "Túlélési alapismeretek",
+    "question": "Miben segíthet a mentőfólia egy vészhelyzeti csomagban?",
+    "choices": [
+      "Mert csillog és jó vele takarózni a strandon.",
+      "Csökkentheti a hőveszteséget; más szigeteléssel és a szárazon tartással együtt használható.",
+      "Mert íróalátétként is használható."
+    ],
+    "correctIndex": 1,
+    "explanation": "A fólia nem melegít magától, és nem garantál védelmet a kihűlés vagy hőguta ellen.",
+    "source": "https://www.nhs.uk/conditions/hypothermia/",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 11
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-SURVIVAL-012",
+    "topic": "survival",
+    "category": "Túlélési alapismeretek",
+    "question": "Mit kell tenni, ha égési sérülést szenvedsz a tábortűznél?",
+    "choices": [
+      "Rákenni fogkrémet vagy vajat.",
+      "Hűvös folyó vízzel hűteni 20 percig, majd megfelelően lefedni; nem használni jeget, vajat vagy fogkrémet.",
+      "Befedni ragasztószalaggal."
+    ],
+    "correctIndex": 1,
+    "explanation": "Nagy vagy súlyos égésnél kérj sürgős segítséget. A test többi részét tartsd melegen.",
+    "source": "https://www.nhs.uk/conditions/burns-and-scalds/",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 12
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-SURVIVAL-013",
+    "topic": "survival",
+    "category": "Túlélési alapismeretek",
+    "question": "Hogyan tároljuk az ivóvizet a vészhelyzeti csomagban?",
+    "choices": [
+      "Zárt, tiszta műanyag palackokban, hűvös, sötét helyen, időnként cserélve.",
+      "Nyitott vödörben a sarokban.",
+      "Papírzacskóban."
+    ],
+    "correctIndex": 0,
+    "explanation": "Zárt, tiszta műanyag palackokban, hűvös, sötét helyen, időnként cserélve.",
+    "source": "https://www.nps.gov/anch/planyourvisit/outdoor-gear-checklist.htm",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 13
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-SURVIVAL-014",
+    "topic": "survival",
+    "category": "Túlélési alapismeretek",
+    "question": "Mi a legfontosabb szabály tűzgyújtáskor a természetben?",
+    "choices": [
+      "Csak ott gyújtsunk tüzet, ahol tiltják.",
+      "Ellenőrizni, hogy szabad-e tüzet gyújtani; engedélyezett helyen felügyelni, majd teljesen eloltani.",
+      "Hagyni kell magától leégni a fát."
+    ],
+    "correctIndex": 1,
+    "explanation": "Tűzgyújtási tilalom idején a kijelölt tűzrakóhely sem ad felmentést.",
+    "source": "https://katasztrofavedelem.hu/53/tuzgyujtasi-tilalom",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 14
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-SURVIVAL-015",
+    "topic": "survival",
+    "category": "Túlélési alapismeretek",
+    "question": "Mit tegyél, ha egy felnőtt félrenyelt, és nem tud hatékonyan köhögni?",
+    "choices": [
+      "Itatni kell vele gyorsan egy liter vizet.",
+      "Segítséget hívni; legfeljebb 5 hátbaütést, majd szükség esetén legfeljebb 5 hasi lökést alkalmazni.",
+      "Meg kell rázni a lábánál fogva."
+    ],
+    "correctIndex": 1,
+    "explanation": "Hatékony köhögésnél köhögésre biztatunk. Csecsemőre, várandósra eltérő eljárás vonatkozik; eszméletvesztéskor 112 és újraélesztési útmutatás szükséges.",
+    "source": "https://www.sja.org.uk/first-aid-advice/choking/",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 15
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-SURVIVAL-016",
+    "topic": "survival",
+    "category": "Túlélési alapismeretek",
+    "question": "Hogyan ismerhető fel a biztonságos, iható forrásvíz a hegyekben?",
+    "choices": [
+      "Ha habzik és furcsa szaga van.",
+      "Pusztán a külleme alapján nem állapítható meg; megfelelő vízkezelésre és biztonságos forrásra van szükség.",
+      "Ha a medrében színes kövek vannak."
+    ],
+    "correctIndex": 1,
+    "explanation": "Az átlátszó víz is lehet fertőzött. A kezelésnek a várható szennyeződéshez kell igazodnia.",
+    "source": "https://www.cdc.gov/water-emergency/about/index.html",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 16
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-SURVIVAL-017",
+    "topic": "survival",
+    "category": "Túlélési alapismeretek",
+    "question": "Mit jelent a GPS-koordináták megadása segélyhíváskor?",
+    "choices": [
+      "A cipőméretedet.",
+      "A földrajzi helyzeted pontos számadatait (szélesség, hosszúság), amivel a mentők pontosan megtalálnak.",
+      "A lakcímedet vidéken."
+    ],
+    "correctIndex": 1,
+    "explanation": "A földrajzi helyzeted pontos számadatait (szélesség, hosszúság), amivel a mentők pontosan megtalálnak.",
+    "source": "https://www.nps.gov/anch/planyourvisit/outdoor-gear-checklist.htm",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 17
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-SURVIVAL-018",
+    "topic": "survival",
+    "category": "Túlélési alapismeretek",
+    "question": "Milyen lábbeliben érdemes elindulni egy ismeretlen túraútvonalra?",
+    "choices": [
+      "Magas sarkú cipőben vagy papucsban.",
+      "Az útvonalhoz és időjáráshoz illő, kényelmes, jól tapadó, már bejáratott túracipőben vagy bakancsban.",
+      "Meztelen lábbal a természetesség jegyében."
+    ],
+    "correctIndex": 1,
+    "explanation": "Nem minden útvonalon ugyanaz a lábbeli megfelelő; a stabilitás és a jó illeszkedés fontos.",
+    "source": "https://www.nps.gov/anch/planyourvisit/outdoor-gear-checklist.htm",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 18
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-SURVIVAL-019",
+    "topic": "survival",
+    "category": "Túlélési alapismeretek",
+    "question": "Mi a teendő, ha kullancsot találsz a bőrödben egy túra után?",
+    "choices": [
+      "Rá kell kenni benzint vagy olajat, hogy megfulladjon.",
+      "Finom csipesszel a bőrhöz közel megfogni, egyenletesen kihúzni, majd megtisztítani a bőrt és a kezet.",
+      "Elégetni egy öngyújtóval a bőrön."
+    ],
+    "correctIndex": 1,
+    "explanation": "Ne rántsd, ne csavard, ne kend be olajjal és ne égesd. Későbbi kiütés vagy láz esetén fordulj orvoshoz.",
+    "source": "https://www.cdc.gov/ticks/after-a-tick-bite/index.html",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 19
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-SURVIVAL-020",
+    "topic": "survival",
+    "category": "Túlélési alapismeretek",
+    "question": "Mi a legfontosabb szabály a vadonban való eltévedés megelőzésére?",
+    "choices": [
+      "Soha ne indulj el feltérképezetlen helyre térkép/telefon, feltöltött akkumulátor és útiterv nélkül, és mindig szólj valakinek, hova mész!",
+      "Fuss vakon amíg el nem érsz egy várost.",
+      "Csak éjszaka közlekedj."
+    ],
+    "correctIndex": 0,
+    "explanation": "Soha ne indulj el feltérképezetlen helyre térkép/telefon, feltöltött akkumulátor és útiterv nélkül, és mindig szólj valakinek, hova mész!",
+    "source": "https://www.nps.gov/anch/planyourvisit/outdoor-gear-checklist.htm",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 20
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-MYTHS-001",
+    "topic": "myths",
+    "category": "Katasztrófavédelmi mítoszok",
+    "question": "Igaz vagy Hamis? Földrengés idején a legbiztonságosabb azonnal a liftbe rohanni és lemenni az utcára.",
+    "choices": [
+      "Igaz",
+      "Hamis"
+    ],
+    "correctIndex": 1,
+    "explanation": "A lift elakadhat, áramtalanítódhat, halálos csapdává válhat.",
+    "source": "https://www.sja.org.uk/first-aid-advice/",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 1
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-MYTHS-002",
+    "topic": "myths",
+    "category": "Katasztrófavédelmi mítoszok",
+    "question": "Igaz vagy Hamis? Ha kigyullad az olaj a serpenyőben, a leggyorsabb és legjobb módszer ráönteni egy pohár vizet.",
+    "choices": [
+      "Igaz",
+      "Hamis"
+    ],
+    "correctIndex": 1,
+    "explanation": "Égő olajra ne önts vizet. Ha biztonságos, zárd el a hőforrást és megfelelő fedővel fedd le; ne mozgasd az edényt. Veszélynél menekülés és 112.",
+    "source": "https://www.london-fire.gov.uk/safety/the-home/cooking/pan-fires/",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 2
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-MYTHS-003",
+    "topic": "myths",
+    "category": "Katasztrófavédelmi mítoszok",
+    "question": "Igaz vagy hamis? Az autó gumiabroncsai és a gumitalpú cipő védenek meg a villámcsapástól.",
+    "choices": [
+      "Igaz",
+      "Hamis"
+    ],
+    "correctIndex": 1,
+    "explanation": "A cipő nem villámvédelem. Egy zárt, keménytetős autó fém karosszériája adhat védelmet; nyitott jármű nem megfelelő.",
+    "source": "https://www.weather.gov/safety/lightning-myths",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 3
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-MYTHS-004",
+    "topic": "myths",
+    "category": "Katasztrófavédelmi mítoszok",
+    "question": "Igaz vagy Hamis? Kígyómarás esetén ki kell szívni a mérget a sebből a szájjal.",
+    "choices": [
+      "Igaz",
+      "Hamis"
+    ],
+    "correctIndex": 1,
+    "explanation": "Tilos szívni vagy vágni a sebet; a végtagot nyugalomba kell helyezni és azonnal orvoshoz fordulni.",
+    "source": "https://www.nhs.uk/conditions/snake-bites/",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 4
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-MYTHS-005",
+    "topic": "myths",
+    "category": "Katasztrófavédelmi mítoszok",
+    "question": "Igaz vagy Hamis? A szén-monoxid (CO) egy szagtalan, színtelen gáz, ezért nem érzékelhető emberi érzékszervekkel.",
+    "choices": [
+      "Igaz",
+      "Hamis"
+    ],
+    "correctIndex": 0,
+    "explanation": "Tényleg szagtalan és láthatatlan, ezért elengedhetetlen a CO-érzékelő",
+    "source": "https://www.nhs.uk/conditions/carbon-monoxide-poisoning/",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 5
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-MYTHS-006",
+    "topic": "myths",
+    "category": "Katasztrófavédelmi mítoszok",
+    "question": "Igaz vagy Hamis? Ha valaki elájul, az első dolgunk legyen, hogy egy pohár erős pálinkát öntünk a torkába.",
+    "choices": [
+      "Igaz",
+      "Hamis"
+    ],
+    "correctIndex": 1,
+    "explanation": "Tilos eszméletlen embernek italt adni, mert félrenyelheti és megfulladhat.",
+    "source": "https://www.sja.org.uk/first-aid-advice/",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 6
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-MYTHS-007",
+    "topic": "myths",
+    "category": "Katasztrófavédelmi mítoszok",
+    "question": "Igaz vagy hamis? Egy nedves kendő teljes védelmet nyújt mérgező gázfelhő ellen.",
+    "choices": [
+      "Igaz",
+      "Hamis"
+    ],
+    "correctIndex": 1,
+    "explanation": "A kendő nem megfelelő gázszűrő. Kövesd a hatóság elzárkózási vagy kitelepítési utasítását.",
+    "source": "https://www.sja.org.uk/first-aid-advice/",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 7
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-MYTHS-008",
+    "topic": "myths",
+    "category": "Katasztrófavédelmi mítoszok",
+    "question": "Igaz vagy Hamis? A mobiltelefonok akkumulátora felrobbanhat, ha tűző napon hagyjuk az autóban.",
+    "choices": [
+      "Igaz",
+      "Hamis"
+    ],
+    "correctIndex": 0,
+    "explanation": "A túlmelegedő lítium-ion akkumulátor kigyulladhat vagy felrobbanhat",
+    "source": "https://www.sja.org.uk/first-aid-advice/",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 8
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-MYTHS-009",
+    "topic": "myths",
+    "category": "Katasztrófavédelmi mítoszok",
+    "question": "Igaz vagy Hamis? Ha valakit áramütés ér, azonnal meg kell fogni a kezét, hogy elhúzzuk a dróttól.",
+    "choices": [
+      "Igaz",
+      "Hamis"
+    ],
+    "correctIndex": 1,
+    "explanation": "Először áramtalanítani kell a rendszert, különben minket is áramütés ér.",
+    "source": "https://www.sja.org.uk/first-aid-advice/",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 9
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-MYTHS-010",
+    "topic": "myths",
+    "category": "Katasztrófavédelmi mítoszok",
+    "question": "Igaz vagy Hamis? Az úszógumi vagy a gumimatrac biztonságos a nyílt vizeken és a folyókon is.",
+    "choices": [
+      "Igaz",
+      "Hamis"
+    ],
+    "correctIndex": 1,
+    "explanation": "A sodrás vagy egy hirtelen szél könnyen behúzhatja a mély vízbe, nem számít mentőeszköznek.",
+    "source": "https://www.sja.org.uk/first-aid-advice/",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 10
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-MYTHS-011",
+    "topic": "myths",
+    "category": "Katasztrófavédelmi mítoszok",
+    "question": "Igaz vagy Hamis? Ha valakinek elered az orra a vér, hátra kell hajtania a fejét, hogy elálljon.",
+    "choices": [
+      "Igaz",
+      "Hamis"
+    ],
+    "correctIndex": 1,
+    "explanation": "Ülj le, hajolj előre, és az orr puha részét, az orrnyílások fölött szorítsd 10–15 percig. Erős vagy elhúzódó vérzésnél kérj ellátást.",
+    "source": "https://www.nhs.uk/conditions/nosebleed/",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 11
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-MYTHS-012",
+    "topic": "myths",
+    "category": "Katasztrófavédelmi mítoszok",
+    "question": "Igaz vagy Hamis? A hűtőszekrénybe rejtőzés biztonságos óvóhely lehet lakástűz vagy robbanás esetén.",
+    "choices": [
+      "Igaz",
+      "Hamis"
+    ],
+    "correctIndex": 1,
+    "explanation": "A hűtő bezáródik, nincs benne oxigén, halálos csapda.",
+    "source": "https://www.sja.org.uk/first-aid-advice/",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 12
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-MYTHS-013",
+    "topic": "myths",
+    "category": "Katasztrófavédelmi mítoszok",
+    "question": "Igaz vagy hamis? A füsttel telt helyiségben a padló közelében biztosan tiszta és biztonságos levegő van.",
+    "choices": [
+      "Igaz",
+      "Hamis"
+    ],
+    "correctIndex": 1,
+    "explanation": "Alacsonyabban lehet kevesebb a füst, de a levegő ott is mérgező lehet. Füstös útvonalra ne menj be.",
+    "source": "https://www.london-fire.gov.uk/safety/the-home/escape-plan/escape-plan-blocks-of-flats/",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 13
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-MYTHS-014",
+    "topic": "myths",
+    "category": "Katasztrófavédelmi mítoszok",
+    "question": "Igaz vagy Hamis? Ha megharap egy veszettnek tűnő róka, elég lemosni a sebet szappannal.",
+    "choices": [
+      "Igaz",
+      "Hamis"
+    ],
+    "correctIndex": 1,
+    "explanation": "A veszettség halálos vírus, azonnali orvosi ellátást, sebtisztítást és oltássorozatot igényel.",
+    "source": "https://www.nhs.uk/conditions/rabies/",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 14
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-MYTHS-015",
+    "topic": "myths",
+    "category": "Katasztrófavédelmi mítoszok",
+    "question": "Igaz vagy hamis? Lakástűznél a füst belélegzése súlyos életveszélyt okozhat.",
+    "choices": [
+      "Igaz",
+      "Hamis"
+    ],
+    "correctIndex": 0,
+    "explanation": "A füst mérgező anyagokat tartalmazhat, és gyorsan ronthatja a látást, légzést és menekülési képességet.",
+    "source": "https://www.london-fire.gov.uk/safety/the-home/escape-plan/escape-plan-blocks-of-flats/",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 15
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-MYTHS-016",
+    "topic": "myths",
+    "category": "Katasztrófavédelmi mítoszok",
+    "question": "Igaz vagy Hamis? Ha gázszag terjeng a lakásban, nyugodtan felkapcsolhatjuk a villanyt, hogy lássuk, honnan jön.",
+    "choices": [
+      "Igaz",
+      "Hamis"
+    ],
+    "correctIndex": 1,
+    "explanation": "A villanykapcsoló apró szikrát vethet, ami berobbanthatja a gázzal teli helyiséget",
+    "source": "https://www.sja.org.uk/first-aid-advice/",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 16
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-MYTHS-017",
+    "topic": "myths",
+    "category": "Katasztrófavédelmi mítoszok",
+    "question": "Igaz vagy Hamis? A viharban dörgő égbolt mellett a mobiltelefon használata vonzza a villámot.",
+    "choices": [
+      "Igaz",
+      "Hamis"
+    ],
+    "correctIndex": 1,
+    "explanation": "A mobiltelefon rádióhullámai nem vonzzák a villámot. A veszély a zivatarban, különösen nyílt terepen való tartózkodás.",
+    "source": "https://www.weather.gov/safety/lightning-myths",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 17
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-MYTHS-018",
+    "topic": "myths",
+    "category": "Katasztrófavédelmi mítoszok",
+    "question": "Igaz vagy Hamis? A téli fagyban a kihűlt embernek a legjobbat teszünk, ha hirtelen forró fürdőbe ültetjük és alkoholt adunk neki.",
+    "choices": [
+      "Igaz",
+      "Hamis"
+    ],
+    "correctIndex": 1,
+    "explanation": "Kíméletesen védd a további hővesztéstől, és súlyos kihűlésnél hívj segítséget. Ne alkalmazz forró fürdőt és ne adj alkoholt.",
+    "source": "https://www.nhs.uk/conditions/hypothermia/",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 18
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-MYTHS-019",
+    "topic": "myths",
+    "category": "Katasztrófavédelmi mítoszok",
+    "question": "Igaz vagy Hamis? Ha eltévedtél a sivatagban vagy nagyon meleg helyen, jobb, ha visszatartod a szomjad és nem iszol a vizedből.",
+    "choices": [
+      "Igaz",
+      "Hamis"
+    ],
+    "correctIndex": 1,
+    "explanation": "A kiszáradás ronthatja a gondolkodást és az állapotot. Keress árnyékot, csökkentsd a terhelést és igyál rendszeresen biztonságos ivóvizet.",
+    "source": "https://www.nhs.uk/conditions/heat-exhaustion-heatstroke/",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 19
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-MYTHS-020",
+    "topic": "myths",
+    "category": "Katasztrófavédelmi mítoszok",
+    "question": "Igaz vagy Hamis? Az égő elektromos berendezést (pl. televíziót) szabad vízzel oltani.",
+    "choices": [
+      "Igaz",
+      "Hamis"
+    ],
+    "correctIndex": 1,
+    "explanation": "Feszültség alatt álló berendezéshez ne nyúlj és ne használj vizet. Biztonságos áramtalanítás hiányában távolodj el és hívj segítséget.",
+    "source": "https://katasztrofavedelem.hu/53/tuzgyujtasi-tilalom",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 20
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-HUNOR-001",
+    "topic": "hunor",
+    "category": "HUNOR és USAR",
+    "question": "Mit jelent a HUNOR név angol feloldása?",
+    "choices": [
+      "Hungária Országos RTV – tévéműsor-készítés",
+      "Hungarian National Organisation for Rescue Services – hivatásos mentőszervezet kutató-mentő feladatokkal.",
+      "Hivatásos Katasztrófavédelmi Helyszíni Osztály – autószerelés"
+    ],
+    "correctIndex": 1,
+    "explanation": "A magyar megnevezés nem az angol mozaikszó betű szerinti feloldása.",
+    "source": "https://www.katasztrofavedelem.hu/189/hunor",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 1
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-HUNOR-002",
+    "topic": "hunor",
+    "category": "HUNOR és USAR",
+    "question": "Mit jelent a nemzetközi USAR mozaikszó a mentőszervezetek világában?",
+    "choices": [
+      "Urban Search and Rescue (Városi Kutató-Mentő)",
+      "United States Animal Rescue",
+      "Underground Security and Radar"
+    ],
+    "correctIndex": 0,
+    "explanation": "Urban Search and Rescue (Városi Kutató-Mentő)",
+    "source": "https://insarag.org/methodology/insarag-guidelines/",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 2
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-HUNOR-003",
+    "topic": "hunor",
+    "category": "HUNOR és USAR",
+    "question": "Milyen speciális technikai eszközöket használnak a HUNOR kutató-mentői a romok alatt rekedt túlélők felkutatására?",
+    "choices": [
+      "Csak ásókat és lapátokat.",
+      "Kiképzett mentőkutyákat, akusztikus érzékelőket és keresőkamerákat a helyzethez igazítva.",
+      "Óriási megafonokat."
+    ],
+    "correctIndex": 1,
+    "explanation": "A keresés több, egymást kiegészítő módszerre épül; az eszköz önmagában nem garantál találatot.",
+    "source": "https://insarag.org/methodology/insarag-guidelines/",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 3
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-HUNOR-004",
+    "topic": "hunor",
+    "category": "HUNOR és USAR",
+    "question": "Milyen minősítéssel rendelkezik a HUNOR mentőszervezet nemzetközi szinten?",
+    "choices": [
+      "Semmilyen hivatalos vizsgája sincs.",
+      "Nehéz, azaz Heavy USAR kategóriájú nemzetközi minősítéssel.",
+      "Csak helyi szintű amatőr csoport."
+    ],
+    "correctIndex": 1,
+    "explanation": "Az INSARAG a városi kutató-mentő csapatok kategóriáit és külső minősítését kezeli.",
+    "source": "https://www.katasztrofavedelem.hu/189/hunor",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 4
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-HUNOR-005",
+    "topic": "hunor",
+    "category": "HUNOR és USAR",
+    "question": "Mi a feladata egy nehéz (Heavy) USAR csapatnak egy földrengés sújtotta külföldi országban?",
+    "choices": [
+      "Idegenforgalmi tájékoztatás.",
+      "Romok alatti kutatás és mentés, épületstabilitás-vizsgálat, sérültek ellátása, nehéz technikai mentés önállóan.",
+      "Kizárólag sátras táborok építése turistáknak."
+    ],
+    "correctIndex": 1,
+    "explanation": "Romok alatti kutatás és mentés, épületstabilitás-vizsgálat, sérültek ellátása, nehéz technikai mentés önállóan.",
+    "source": "https://insarag.org/methodology/insarag-guidelines/",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 5
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-HUNOR-006",
+    "topic": "hunor",
+    "category": "HUNOR és USAR",
+    "question": "Milyen védőfelszerelést viselnek kötelezően a HUNOR tagjai a romkutatási műveletek során?",
+    "choices": [
+      "Rövidnadrágot és szandált.",
+      "A kockázatokhoz előírt sisakot, szem-, kéz-, láb- és légzésvédelmet, megfelelő védőruházattal.",
+      "Elegáns öltönyt nyakkendővel."
+    ],
+    "correctIndex": 1,
+    "explanation": "A megfelelő védőeszközt a feladat és a veszélyértékelés alapján választják ki; a kesztyű nem minden vágás ellen véd.",
+    "source": "https://insarag.org/methodology/insarag-guidelines/",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 6
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-HUNOR-007",
+    "topic": "hunor",
+    "category": "HUNOR és USAR",
+    "question": "Mi a teendő, ha a mentőcsapat rádiókapcsolata egy munkaterületen nem megbízható?",
+    "choices": [
+      "Kiabálnak a telefonjukba.",
+      "A műveleti tervben meghatározott tartalék összeköttetést, átjátszást vagy vezetékes megoldást alkalmazni.",
+      "Papírrepülőket dobnak be."
+    ],
+    "correctIndex": 1,
+    "explanation": "A kommunikációt és a vészjelzéseket előre egyeztetik; nem helyettesíti ezt egy keresőkamera.",
+    "source": "https://insarag.org/methodology/insarag-guidelines/",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 7
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-HUNOR-008",
+    "topic": "hunor",
+    "category": "HUNOR és USAR",
+    "question": "Miért kritikus a kutyás kutató-mentők (mentőkutyák) szerepe a romok között?",
+    "choices": [
+      "Mert aranyosak és oldják a stresszt.",
+      "Mert a szaglásukkal képesek gyorsan kiszagolni az élő emberi illatanyagokat mélyen a törmelék alatt.",
+      "Mert ők őrzik a tábort."
+    ],
+    "correctIndex": 1,
+    "explanation": "Mert a szaglásukkal képesek gyorsan kiszagolni az élő emberi illatanyagokat mélyen a törmelék alatt.",
+    "source": "https://insarag.org/methodology/insarag-guidelines/",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 8
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-HUNOR-009",
+    "topic": "hunor",
+    "category": "HUNOR és USAR",
+    "question": "Milyen szerepet játszanak a hidraulikus feszítő-vágó berendezések a mentésben?",
+    "choices": [
+      "Fát vágnak velük a tábortűzhöz.",
+      "Megfelelő alkalmazásban fémrészek vágásával és feszítésével hozzáférést teremtenek a beszorult sérülthöz.",
+      "Ruhát szabnak velük."
+    ],
+    "correctIndex": 1,
+    "explanation": "A vasbeton bontása más szerszámot és módszert is igényelhet. A műveletet képzett személy végzi.",
+    "source": "https://insarag.org/methodology/insarag-guidelines/",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 9
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-HUNOR-010",
+    "topic": "hunor",
+    "category": "HUNOR és USAR",
+    "question": "Mi az INSARAG szervezet legfontosabb feladata a nemzetközi mentésekben?",
+    "choices": [
+      "Az ENSZ keretein belül koordinálja a nemzetközi városi kutató-mentő csapatok munkáját és minősítési rendszerét.",
+      "Időjárás-jelentéseket készít hajósoknak.",
+      "Katonai fegyvereket gyárt."
+    ],
+    "correctIndex": 0,
+    "explanation": "Az ENSZ keretein belül koordinálja a nemzetközi városi kutató-mentő csapatok munkáját és minősítési rendszerét.",
+    "source": "https://insarag.org/methodology/insarag-guidelines/",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 10
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-HUNOR-011",
+    "topic": "hunor",
+    "category": "HUNOR és USAR",
+    "question": "Mire szolgál az INSARAG munkaterületi jelölési és információs rendszere?",
+    "choices": [
+      "Beletűznek egy piros zászlót.",
+      "Az elvégzett kutatás, a veszélyek és a mentési állapot egységes közlésére a csapatok között.",
+      "Lebontják az egész házat."
+    ],
+    "correctIndex": 1,
+    "explanation": "Nem azonos az egyszerű X-jellel; a pontos formát az aktuális INSARAG útmutató határozza meg.",
+    "source": "https://insarag.org/methodology/insarag-guidelines/",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 11
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-HUNOR-012",
+    "topic": "hunor",
+    "category": "HUNOR és USAR",
+    "question": "Miért kell önellátónak lennie egy nemzetközi Heavy USAR csapatnak?",
+    "choices": [
+      "Helyben kell kérniük mindennap ebédet a lakosságtól.",
+      "Hogy tartós műveleteket végezzen anélkül, hogy a katasztrófa sújtotta terület szűkös erőforrásait terhelné.",
+      "Csak egy hátizsák váltruhával utaznak."
+    ],
+    "correctIndex": 1,
+    "explanation": "Az önellátás az ellátásra, táborra, energiára és működésre is kiterjed; a követelmények kategóriafüggők.",
+    "source": "https://insarag.org/methodology/insarag-guidelines/",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 12
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-HUNOR-013",
+    "topic": "hunor",
+    "category": "HUNOR és USAR",
+    "question": "Milyen feladatot lát el egy USAR mérnök (Structural Engineer) a mentőcsapatban?",
+    "choices": [
+      "Kávét főz a csapatnak.",
+      "Felméri a szerkezeti veszélyeket, és támogatja a biztonságos mentési, illetve alátámasztási megoldások tervezését.",
+      "Új épületeket tervez a túlélőknek."
+    ],
+    "correctIndex": 1,
+    "explanation": "A sérült szerkezet viselkedése bizonytalan lehet; a veszélyértékelést folyamatosan frissítik.",
+    "source": "https://insarag.org/methodology/insarag-guidelines/",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 13
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-HUNOR-014",
+    "topic": "hunor",
+    "category": "HUNOR és USAR",
+    "question": "Mi a teendő, ha a romkutatás közben hirtelen utórengés (újabb földrengés) rázza meg a területet?",
+    "choices": [
+      "Mindenki rohanjon befelé a romok alá.",
+      "Azonnali riasztójelre a mentőknek el kell hagyniuk a veszélyes zónát, biztonságos gyülekezőhelyre vonulni és létszámellenőrzést tartani.",
+      "Folytatni kell a munkát hangosabb zenével."
+    ],
+    "correctIndex": 1,
+    "explanation": "Azonnali riasztójelre a mentőknek el kell hagyniuk a veszélyes zónát, biztonságos gyülekezőhelyre vonulni és létszámellenőrzést tartani.",
+    "source": "https://insarag.org/methodology/insarag-guidelines/",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 14
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-HUNOR-015",
+    "topic": "hunor",
+    "category": "HUNOR és USAR",
+    "question": "Hogyan történik a nehéz betonlemezek átvágása, ha az útját állja a mentőknek?",
+    "choices": [
+      "Kézi fűrésszel vagy késsel.",
+      "A feladathoz megfelelő betonvágó, gyémántkorongos vagy gyémántláncos berendezéssel, terv szerint.",
+      "Füstöléssel."
+    ],
+    "correctIndex": 1,
+    "explanation": "A plazmavágó fémvágásra szolgál, nem általános betonvágó eszköz. Stabilitás és sérültvédelem nélkül nem kezdhető bontás.",
+    "source": "https://insarag.org/methodology/insarag-guidelines/",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 15
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-HUNOR-016",
+    "topic": "hunor",
+    "category": "HUNOR és USAR",
+    "question": "Miért fontos a mentőcsapatok számára a logisztikai bázis (Base of Operations - BoO) gyors felállítása?",
+    "choices": [
+      "Mert ott tartják a bulikat este.",
+      "Ott központosítják a parancsnokságot, az egészségügyi ellátást, a kommunikációt, a pihenést és a technikai eszközök karbantartását.",
+      "Csak díszként szolgál."
+    ],
+    "correctIndex": 1,
+    "explanation": "Ott központosítják a parancsnokságot, az egészségügyi ellátást, a kommunikációt, a pihenést és a technikai eszközök karbantartását.",
+    "source": "https://insarag.org/methodology/insarag-guidelines/",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 16
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-HUNOR-017",
+    "topic": "hunor",
+    "category": "HUNOR és USAR",
+    "question": "Miért kiemelten fontos a gyors kutatás-mentés a földrengés utáni első napokban?",
+    "choices": [
+      "Mert az idő múlása súlyosbíthatja a sérültek állapotát, ezért a gyors, biztonságos mentés életet menthet.",
+      "A pihenőidő hossza a bevetés után.",
+      "Az útlevelek érvényességi ideje."
+    ],
+    "correctIndex": 0,
+    "explanation": "Nincs általános 72 órás határ, amely után lehetetlen a túlélés. A kutatási döntések helyzetfüggők.",
+    "source": "https://insarag.org/methodology/insarag-guidelines/",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 17
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-HUNOR-018",
+    "topic": "hunor",
+    "category": "HUNOR és USAR",
+    "question": "Milyen egészségügyi személyzet kíséri a HUNOR egységeit a missziókra?",
+    "choices": [
+      "Csak egy doboz sebtapasz van náluk.",
+      "Megfelelően képzett orvosok és mentőtisztek, a csapat és a sérültek ellátásához igazítva.",
+      "Háziorvosok."
+    ],
+    "correctIndex": 1,
+    "explanation": "Az egészségügyi komponens a mentőcsapat működésének része, nem pusztán felszerelés.",
+    "source": "https://www.katasztrofavedelem.hu/189/hunor",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 18
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-HUNOR-019",
+    "topic": "hunor",
+    "category": "HUNOR és USAR",
+    "question": "Mi a célja a rendszeres hazai és nemzetközi komplex gyakorlatoknak a HUNOR életében?",
+    "choices": [
+      "Csak a fényképek készítése a közösségi médiára.",
+      "A műveleti képességek fenntartása, a nemzetközi együttműködés csiszolása, a hibák kiszűrése és a gyors reagálási idő tesztelése vészhelyzetben.",
+      "Új egyenruhák tesztelése."
+    ],
+    "correctIndex": 1,
+    "explanation": "A műveleti képességek fenntartása, a nemzetközi együttműködés csiszolása, a hibák kiszűrése és a gyors reagálási idő tesztelése vészhelyzetben.",
+    "source": "https://insarag.org/methodology/insarag-guidelines/",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 19
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-HUNOR-020",
+    "topic": "hunor",
+    "category": "HUNOR és USAR",
+    "question": "Mi a teendője egy kutató-mentőnek, ha a romok alatt lévő túlélővel kerül hangkapcsolatba?",
+    "choices": [
+      "Megkérdezni a nevét, a tartózkodási helyét, az állapotát, nyugtatni őt, miközben a technikai mentők megkezdik a kiszabadítását.",
+      "Megkérni, hogy jöjjön ki egyedül.",
+      "Elköszönni és továbbállni a következő romhoz."
+    ],
+    "correctIndex": 0,
+    "explanation": "Megkérdezni a nevét, a tartózkodási helyét, az állapotát, nyugtatni őt, miközben a technikai mentők megkezdik a kiszabadítását.",
+    "source": "https://insarag.org/methodology/insarag-guidelines/",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "6edbb8573ec35936a9db59f0aa0370312bff2efaf1903d846249987152e6d30d",
+      "position": 20
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-FESTIVAL-001",
+    "topic": "festival",
+    "category": "Fesztivál- és tömegrendezvény-biztonság",
+    "question": "Mit kell tenni, ha egy nyári szabadtéri fesztiválon (pl. koncert alatt) hirtelen sötét viharfelhők gyülekeznek és fújni kezd a szél?",
+    "choices": [
+      "Azonnal a legközelebbi nagy fához menni védekezni.",
+      "Követni a rendezők utasításait, távolodni az ideiglenes szerkezetektől, és kijelölt biztonságos menedéket keresni.",
+      "Tovább táncolni az esőben, a vihar úgyis elmúlik."
+    ],
+    "correctIndex": 1,
+    "explanation": "Villámláskor sátor nem megfelelő menedék: zárt stabil épület vagy zárt keménytetős jármű lehet alkalmas.",
+    "source": "https://www.weather.gov/safety/lightning-tips",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "a887b14136320f9992fff73951473055b14f4e52be7a308a1ac6eda550cf17e1",
+      "position": 1
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-FESTIVAL-002",
+    "topic": "festival",
+    "category": "Fesztivál- és tömegrendezvény-biztonság",
+    "question": "Mit kell tenni, ha villámlással kísért zivatar csap le a fesztivál területén, és nyílt mezőn vagy sátorban rekedtél?",
+    "choices": [
+      "Mielőbb kijelölt zárt épületbe vagy zárt keménytetős járműbe menni; a sátor és az árok nem villámbiztos.",
+      "Feküdj el keresztben a sárban.",
+      "Fogj meg egy magas vasrudat, hogy levezesd a feszültséget."
+    ],
+    "correctIndex": 0,
+    "explanation": "Ne feküdj a földre, és ne hagyatkozz guggolásra. A menedékkeresést ne késleltesd a fémtárgyak elrakásával.",
+    "source": "https://www.weather.gov/safety/lightning-myths",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "a887b14136320f9992fff73951473055b14f4e52be7a308a1ac6eda550cf17e1",
+      "position": 2
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-FESTIVAL-003",
+    "topic": "festival",
+    "category": "Fesztivál- és tömegrendezvény-biztonság",
+    "question": "Hogyan viselkedj, ha egy zsúfolt koncerten vagy rendezvényen hirtelen pánik tör ki, és a tömeg elkezdi lökdösni egymást?",
+    "choices": [
+      "Próbálj meg ellentartani a tömegnek és teljes erőből ordítani.",
+      "Próbálj talpon maradni, védd a mellkasod előtted tartott karral, ne hajolj le, és ha lehet, haladj kisebb sűrűségű terület felé.",
+      "Ülj le a földre, hogy megvárd, amíg elvonulnak."
+    ],
+    "correctIndex": 1,
+    "explanation": "Ne nyomakodj a tömeggel szemben. Erős torlódásnál jelezz a rendezőknek; nem minden helyzetből van szabad kijutási út.",
+    "source": "https://www.hse.gov.uk/event-safety/crowd-management-controls.htm",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "a887b14136320f9992fff73951473055b14f4e52be7a308a1ac6eda550cf17e1",
+      "position": 3
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-FESTIVAL-004",
+    "topic": "festival",
+    "category": "Fesztivál- és tömegrendezvény-biztonság",
+    "question": "Mit jelentenek a fesztiválokon kihelyezett vészhelyzeti / biztonsági jelzések és menekülési útvonalak?",
+    "choices": [
+      "Csak dekorációk a hangulat kedvéért.",
+      "A kijelölt menekülési irányokat, vészkijáratokat és biztonsági pontokat jelölik.",
+      "A VIP mosdók helyét jelölik."
+    ],
+    "correctIndex": 1,
+    "explanation": "Nem vészbejáratot vagy garantáltan legrövidebb utat jelentenek; a rendezők irányítását is követni kell.",
+    "source": "https://www.hse.gov.uk/event-safety/crowd-management-controls.htm",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "a887b14136320f9992fff73951473055b14f4e52be7a308a1ac6eda550cf17e1",
+      "position": 4
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-FESTIVAL-005",
+    "topic": "festival",
+    "category": "Fesztivál- és tömegrendezvény-biztonság",
+    "question": "Mi a teendő, ha tűz üt ki egy fesztiváli nagysátorban vagy zárt vendéglátó egységben?",
+    "choices": [
+      "Biztonságosan járható, jelölt kijáraton távozni, figyelmeztetni a többieket és a rendezőket, szükség esetén 112-t hívni.",
+      "Megvárni a sor végét, amíg kiszolgálnak.",
+      "Elkezdeni videózni a tűzoltókat."
+    ],
+    "correctIndex": 0,
+    "explanation": "Sűrű füstbe ne menj be, ne torlódj a kijáratnál és ne térj vissza tárgyakért.",
+    "source": "https://www.hse.gov.uk/event-safety/incidents-and-emergencies.htm",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "a887b14136320f9992fff73951473055b14f4e52be7a308a1ac6eda550cf17e1",
+      "position": 5
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-FESTIVAL-006",
+    "topic": "festival",
+    "category": "Fesztivál- és tömegrendezvény-biztonság",
+    "question": "Hol érdemes találkozási pontot (B-terv) megbeszélni a barátokkal, ha elszakadtok egymástól egy óriási fesztiválon?",
+    "choices": [
+      "Bárhol a hömpölygő tömeg közepén.",
+      "Egy jól beazonosítható, fix és állandó ponton (pl. egy meghatározott információs pult, kapu vagy jellegzetes szobor mellett), ahol nincs nagy torlódás.",
+      "A legközelebbi mozgó árusnál."
+    ],
+    "correctIndex": 1,
+    "explanation": "Egy jól beazonosítható, fix és állandó ponton (pl. egy meghatározott információs pult, kapu vagy jellegzetes szobor mellett), ahol nincs nagy torlódás.",
+    "source": "https://www.hse.gov.uk/event-safety/incidents-and-emergencies.htm",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "a887b14136320f9992fff73951473055b14f4e52be7a308a1ac6eda550cf17e1",
+      "position": 6
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-FESTIVAL-007",
+    "topic": "festival",
+    "category": "Fesztivál- és tömegrendezvény-biztonság",
+    "question": "Mit kell tenni, ha eltéved egy kisgyermek egy zsúfolt városi rendezvényen vagy fesztiválon?",
+    "choices": [
+      "Keresztül-kasul rohanni a tömegben a nevét kiabálva.",
+      "Azonnal értesíteni a biztonsági őröket, a rendezőket vagy a rendőrséget, megadva a gyermek pontos leírását és utolsó ismert helyét.",
+      "Hazamenni és várni, hogy megérkezzen."
+    ],
+    "correctIndex": 1,
+    "explanation": "Azonnal értesíteni a biztonsági őröket, a rendezőket vagy a rendőrséget, megadva a gyermek pontos leírását és utolsó ismert helyét.",
+    "source": "https://www.hse.gov.uk/event-safety/incidents-and-emergencies.htm",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "a887b14136320f9992fff73951473055b14f4e52be7a308a1ac6eda550cf17e1",
+      "position": 7
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-FESTIVAL-008",
+    "topic": "festival",
+    "category": "Fesztivál- és tömegrendezvény-biztonság",
+    "question": "Mi a teendő, ha valaki rosszul lesz a hőségben vagy a dehidratációtól egy nyári fesztiválon?",
+    "choices": [
+      "Itatni kell tömény alkohollal, hogy felélénküljön.",
+      "Árnyékba vagy hűvös helyre segíteni, hűteni és a helyszíni egészségügyi szolgálatot értesíteni.",
+      "Hagyni a napon, amíg megszokja a meleget."
+    ],
+    "correctIndex": 1,
+    "explanation": "Vizet csak teljesen éber, biztonságosan nyelő embernek adj. Zavartság, ájulás vagy hőguta gyanújánál azonnal sürgős segítség kell.",
+    "source": "https://www.nhs.uk/conditions/heat-exhaustion-heatstroke/",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "a887b14136320f9992fff73951473055b14f4e52be7a308a1ac6eda550cf17e1",
+      "position": 8
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-FESTIVAL-009",
+    "topic": "festival",
+    "category": "Fesztivál- és tömegrendezvény-biztonság",
+    "question": "Mit kell tenni, ha egy szabadtéri rendezvényen hirtelen jégeső vagy orkánerejű szél csap le, és a lelátók vagy ideiglenes építmények megrengenek?",
+    "choices": [
+      "Azonnal el kell hagyni a könnyűszerkezetes sátrak, lelátók, reklámtornyok és ideiglenes színpadok környékét.",
+      "Felmászni a tetőre rögzíteni a ponyvát.",
+      "Bemászni egy üdítős sátor pultja alá."
+    ],
+    "correctIndex": 0,
+    "explanation": "A rendező által kijelölt biztonságos hely felé haladj; instabil szerkezet közelében ne keress menedéket.",
+    "source": "https://www.hse.gov.uk/event-safety/crowd-management-assess.htm",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "a887b14136320f9992fff73951473055b14f4e52be7a308a1ac6eda550cf17e1",
+      "position": 9
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-FESTIVAL-010",
+    "topic": "festival",
+    "category": "Fesztivál- és tömegrendezvény-biztonság",
+    "question": "Mit jelent a fesztiválokon a biztonsági szolgálat (security) utasítása vészhelyzet esetén?",
+    "choices": [
+      "Csak ajánlás, amit figyelmen kívül lehet hagyni.",
+      "A kijelölt biztonságos útvonalon, fegyelmezetten követni kell az érvényes kiürítési utasítást.",
+      "Csak a VIP vendégekre vonatkozik."
+    ],
+    "correctIndex": 1,
+    "explanation": "Ne kezdj vitába és ne állítsd meg a kiáramló tömeget. Akadály esetén jelezz a rendezőknek.",
+    "source": "https://www.hse.gov.uk/event-safety/incidents-and-emergencies.htm",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "a887b14136320f9992fff73951473055b14f4e52be7a308a1ac6eda550cf17e1",
+      "position": 10
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-FESTIVAL-011",
+    "topic": "festival",
+    "category": "Fesztivál- és tömegrendezvény-biztonság",
+    "question": "Mi a teendő, ha egy gyanús, elhagyott csomagot (hátizsákot, dobozt) találsz egy tömegrendezvény közepén?",
+    "choices": [
+      "Belsejébe nézni, hogy kié lehet.",
+      "Nem szabad megérinteni vagy elmozdítani; azonnal szólni kell a legközelebbi rendőrnek vagy biztonsági őrnek.",
+      "Elvinni a talált tárgyak osztályára."
+    ],
+    "correctIndex": 1,
+    "explanation": "Ne érintsd és ne mozdítsd el. Távolabbról értesítsd a rendezőket vagy a rendőrséget, és kövesd az utasításaikat.",
+    "source": "https://www.protectuk.police.uk/advice-and-guidance/risk/unattended-and-suspicious-items",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "a887b14136320f9992fff73951473055b14f4e52be7a308a1ac6eda550cf17e1",
+      "position": 11
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-FESTIVAL-012",
+    "topic": "festival",
+    "category": "Fesztivál- és tömegrendezvény-biztonság",
+    "question": "Miért veszélyesek a fesztiválok területén lévő ideiglenes kábeltálcák és vezetékcsatornák?",
+    "choices": [
+      "Botlás- és csúszásveszélyt jelenthetnek, ezért figyelmesen kell átlépni rajtuk.",
+      "Mert hangosan zakatolnak.",
+      "Mert melegítik a cipőtalpat."
+    ],
+    "correctIndex": 0,
+    "explanation": "Sérült vagy vizes vezetéket ne érints; jelezd a hibát a rendezőknek. Elesésből nem szükségszerűen lesz tömegpánik.",
+    "source": "https://www.hse.gov.uk/event-safety/crowd-management-assess.htm",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "a887b14136320f9992fff73951473055b14f4e52be7a308a1ac6eda550cf17e1",
+      "position": 12
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-FESTIVAL-013",
+    "topic": "festival",
+    "category": "Fesztivál- és tömegrendezvény-biztonság",
+    "question": "Hogyan védekezzünk a napszúrás és a súlyos dehidratáció ellen egész napos szabadtéri zenei rendezvényen?",
+    "choices": [
+      "Folytonos napozással fejfedő nélkül.",
+      "Rendszeres vízfogyasztással (alkoholmentesen), sapka/kalap viselésével és időnkénti árnyékba vonulással.",
+      "Csak energiaital ivásával."
+    ],
+    "correctIndex": 1,
+    "explanation": "Igyál rendszeresen vizet, védd a fejed, pihenj árnyékban és kerüld a túlzott alkoholfogyasztást.",
+    "source": "https://www.nhs.uk/conditions/heat-exhaustion-heatstroke/",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "a887b14136320f9992fff73951473055b14f4e52be7a308a1ac6eda550cf17e1",
+      "position": 13
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-FESTIVAL-014",
+    "topic": "festival",
+    "category": "Fesztivál- és tömegrendezvény-biztonság",
+    "question": "Mit kell tenni, ha a mobilhálózat teljesen összeomlik a túl nagy tömeg miatt a fesztiválon, és nem tudsz telefonálni vészhelyzetben?",
+    "choices": [
+      "Elkezdeni hangosan sírni.",
+      "Keresni a kijelölt segélyhelyet, rendezőt vagy biztonsági szolgálatot, és személyesen segítséget kérni.",
+      "Elindulni gyalog a legközelebbi városba."
+    ],
+    "correctIndex": 1,
+    "explanation": "Nem minden infóponton van külön telefonvonal; a helyszíni segítők tudják megszervezni a kapcsolatot.",
+    "source": "https://www.hse.gov.uk/event-safety/incidents-and-emergencies.htm",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "a887b14136320f9992fff73951473055b14f4e52be7a308a1ac6eda550cf17e1",
+      "position": 14
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-FESTIVAL-015",
+    "topic": "festival",
+    "category": "Fesztivál- és tömegrendezvény-biztonság",
+    "question": "Mi a teendő, ha egy szabadtéri színpadnál hirtelen áramkimaradás vagy zárlat (szikrázás) történik a berendezésekben?",
+    "choices": [
+      "Odafutni megigazítani a drótot.",
+      "Eltávolodni a veszélyes berendezéstől, figyelmeztetni másokat biztonságos távolságból és szólni a rendezőknek.",
+      "Megnyalni a csatlakozót."
+    ],
+    "correctIndex": 1,
+    "explanation": "Ne érints vezetéket, berendezést vagy áram alá kerülhető kordont, és ne próbálj szerelni.",
+    "source": "https://www.hse.gov.uk/event-safety/crowd-management-assess.htm",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "a887b14136320f9992fff73951473055b14f4e52be7a308a1ac6eda550cf17e1",
+      "position": 15
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-FESTIVAL-016",
+    "topic": "festival",
+    "category": "Fesztivál- és tömegrendezvény-biztonság",
+    "question": "Hogyan érdemes öltözködni egy többnapos szabadtéri fesztiválra, ha bizonytalan az időjárás?",
+    "choices": [
+      "Csak divatos fürdőruhában és papucsban.",
+      "Rétegesen, vízálló dzsekivel, kényelmes zárt cipőben (bakancsban a sár/tömeg ellen), és esőkabáttal a táskában.",
+      "Nehéz vaskabátban."
+    ],
+    "correctIndex": 1,
+    "explanation": "Rétegesen, vízálló dzsekivel, kényelmes zárt cipőben (bakancsban a sár/tömeg ellen), és esőkabáttal a táskában.",
+    "source": "https://www.hse.gov.uk/event-safety/incidents-and-emergencies.htm",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "a887b14136320f9992fff73951473055b14f4e52be7a308a1ac6eda550cf17e1",
+      "position": 16
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-FESTIVAL-017",
+    "topic": "festival",
+    "category": "Fesztivál- és tömegrendezvény-biztonság",
+    "question": "Mit tegyél, ha a fesztivál területén hirtelen tömeges rosszullét vagy fertőzés gyanúja merül fel (pl. elromlott étel miatt)?",
+    "choices": [
+      "Azonnal jelezni a rendezőknek/egészségügynek, kerülni a fertőzésforrást, és követni a hatósági iránymutatásokat.",
+      "Még egy adagot enni belőle a biztonság kedvéért.",
+      "Elrejteni a maradékot a táskában."
+    ],
+    "correctIndex": 0,
+    "explanation": "Azonnal jelezni a rendezőknek/egészségügynek, kerülni a fertőzésforrást, és követni a hatósági iránymutatásokat.",
+    "source": "https://www.hse.gov.uk/event-safety/incidents-and-emergencies.htm",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "a887b14136320f9992fff73951473055b14f4e52be7a308a1ac6eda550cf17e1",
+      "position": 17
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-FESTIVAL-018",
+    "topic": "festival",
+    "category": "Fesztivál- és tömegrendezvény-biztonság",
+    "question": "Mi a teendő, ha a fesztivál éjszakáján a sötétben botlasz bele egy magatehetetlen, földön fekvő emberbe?",
+    "choices": [
+      "Átlépni rajta és továbbmenni a buliba.",
+      "Biztonságos helyszínen ellenőrizni a reakcióját és a normális légzését, majd sürgős segítséget hívni.",
+      "Kirabolni az értékeit."
+    ],
+    "correctIndex": 1,
+    "explanation": "Nem normális légzésnél 112 és újraélesztés a diszpécser útmutatásával. Normális légzésnél légútbiztosítás, szükség szerint oldalfekvés és megfigyelés.",
+    "source": "https://www.sja.org.uk/first-aid-advice/cpr/",
+    "modes": [
+      "public",
+      "pro"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "a887b14136320f9992fff73951473055b14f4e52be7a308a1ac6eda550cf17e1",
+      "position": 18
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-FESTIVAL-019",
+    "topic": "festival",
+    "category": "Fesztivál- és tömegrendezvény-biztonság",
+    "question": "Miért fontos ismerni a fesztivál helyszínrajzát (térképét) már az érkezéskor?",
+    "choices": [
+      "Csak a büfék gyorsabb megtalálása miatt.",
+      "Hogy vészhelyzet, tűz vagy vihar esetén azonnal tudd, merre van a legközelebbi biztonságos kiút és orvosi sátor.",
+      "Hogy megtervezd a szelfik helyszínét."
+    ],
+    "correctIndex": 1,
+    "explanation": "Ismerd meg a kijáratokat, segélyhelyeket és a rendezők által megjelölt menedékeket. Egy sátor villámláskor nem biztonságos menedék.",
+    "source": "https://www.hse.gov.uk/event-safety/incidents-and-emergencies.htm",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "a887b14136320f9992fff73951473055b14f4e52be7a308a1ac6eda550cf17e1",
+      "position": 19
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "EV-FESTIVAL-020",
+    "topic": "festival",
+    "category": "Fesztivál- és tömegrendezvény-biztonság",
+    "question": "Mi a legfőbb aranyszabály egy nagyszabású szabadtéri rendezvényen vagy fesztiválon a biztonság terén?",
+    "choices": [
+      "Mindig figyeld a környezeted, tartsd be a biztonsági előírásokat, és tudd, hol keresd a segítőket (mentők, őrök, infópont).",
+      "Ne menj soha koncert közelébe.",
+      "Mindig csukd be a szemed a tömegben."
+    ],
+    "correctIndex": 0,
+    "explanation": "Mindig figyeld a környezeted, tartsd be a biztonsági előírásokat, és tudd, hol keresd a segítőket (mentők, őrök, infópont).",
+    "source": "https://www.hse.gov.uk/event-safety/incidents-and-emergencies.htm",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "reviewStatus": "approved-by-owner",
+    "provenance": {
+      "inputSha256": "a887b14136320f9992fff73951473055b14f4e52be7a308a1ac6eda550cf17e1",
+      "position": 20
+    },
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "CYBER-001",
+    "question": "Kapsz egy SMS-t a „Postától”, hogy a csomagod nem kézbesíthető, és kattints egy linkre a cím egyeztetéséhez. Mit teszel?",
+    "choices": [
+      "Nem kattintok; a szolgáltató ismert hivatalos felületén ellenőrzöm a csomagot.",
+      "Azonnal rákattintasz és megadod a kért adatokat.",
+      "Válaszolsz az SMS-re egy mérges üzenettel.",
+      "Átküldöd az összes ismerősödnek figyelmeztetésként."
+    ],
+    "correctIndex": 0,
+    "explanation": "A sürgető üzenet linkje helyett külön nyisd meg a hivatalos felületet.",
+    "source": "https://www.ncsc.gov.uk/guidance/phishing",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "topic": "cyber",
+    "category": "Digitális biztonság és adathalászat",
+    "reviewStatus": "approved-by-owner",
+    "checkedOn": "2026-10-16",
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "CYBER-002",
+    "question": "Milyen a biztonságos jelszó a modern kiberbiztonsági ajánlások szerint?",
+    "choices": [
+      "Hosszú, egyedi és nehezen kitalálható; jelszókezelővel is létrehozható.",
+      "A háziállatod neve és a születési éved.",
+      "Az, hogy „Jelszo123”.",
+      "Ugyanaz a jól bevált jelszó minden online felületeden."
+    ],
+    "correctIndex": 0,
+    "explanation": "Minden fiókhoz külön jelszót használj. A hossz és az egyediség fontos; néhány jelcsere önmagában nem elég.",
+    "source": "https://www.ncsc.gov.uk/collection/top-tips-for-staying-secure-online/three-random-words",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "topic": "cyber",
+    "category": "Digitális biztonság és adathalászat",
+    "reviewStatus": "approved-by-owner",
+    "checkedOn": "2026-10-16",
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "CYBER-003",
+    "question": "Mit jelent a kétfaktoros hitelesítés (2FA) és miért érdemes bekapcsolni?",
+    "choices": [
+      "Két eltérő típusú bizonyíték kell a belépéshez, például jelszó és hitelesítő alkalmazás.",
+      "Azt, hogy két különböző jelszót kell megjegyezned egymás után.",
+      "Egy funkciót, ami pontosan kétszer gyorsabbá teszi az internetet.",
+      "Azt, hogy két ember együttes jelenléte kell a regisztrációhoz."
+    ],
+    "correctIndex": 0,
+    "explanation": "A második faktor csökkenti az ellopott jelszó kockázatát, de nem teszi feltörhetetlenné a fiókot.",
+    "source": "https://www.ncsc.gov.uk/collection/using-online-services-safely/securing-your-users-accounts",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "topic": "cyber",
+    "category": "Digitális biztonság és adathalászat",
+    "reviewStatus": "approved-by-owner",
+    "checkedOn": "2026-10-16",
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "CYBER-004",
+    "question": "Egy ismerősöd Messengeren hirtelen pénzt kér tőled vagy egy gyanús linket küld azzal, hogy „Te vagy ezen a videón?”. Mit teszel?",
+    "choices": [
+      "Másik, ismert csatornán megkérdezem az ismerőst, mielőtt kattintanék vagy utalnék.",
+      "Azonnal rákattintasz, mert kíváncsi vagy.",
+      "Elutalod a kért pénzt azonnal kérdés nélkül.",
+      "Letiltod az ismerősödet örökre."
+    ],
+    "correctIndex": 0,
+    "explanation": "Az ismerős fiókját is megszerezhetik csalók.",
+    "source": "https://www.ncsc.gov.uk/guidance/phishing",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "topic": "cyber",
+    "category": "Digitális biztonság és adathalászat",
+    "reviewStatus": "approved-by-owner",
+    "checkedOn": "2026-10-16",
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "CYBER-005",
+    "question": "Mi az óvatos eljárás bankoláskor egy ismeretlen nyilvános Wi-Fi közelében?",
+    "choices": [
+      "Bizonytalan hálózat helyett mobilnetet használok; a hivatalos banki appot és a titkosított kapcsolatot ellenőrzöm.",
+      "Bármely banki link biztonságos, ha lakat látszik mellette.",
+      "A VPN minden internetes csalást kivéd.",
+      "A Wi-Fi neve önmagában bizonyítja a hálózat megbízhatóságát."
+    ],
+    "correctIndex": 0,
+    "explanation": "A HTTPS titkosítja az adatátvitelt, de nem igazolja egy oldal megbízhatóságát. A VPN sem véd meg az adathalász oldaltól.",
+    "source": "https://consumer.ftc.gov/articles/are-public-wi-fi-networks-safe-what-you-need-know",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "topic": "cyber",
+    "category": "Digitális biztonság és adathalászat",
+    "reviewStatus": "approved-by-owner",
+    "checkedOn": "2026-10-16",
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "CYBER-006",
+    "question": "Mi a legbiztonságosabb módja a rengeteg különböző, bonyolult jelszó tárolásának?",
+    "choices": [
+      "Megbízható jelszókezelőt használok, erős védelemmel.",
+      "Egy füzetbe leírva a számítógép melletti íróasztalon.",
+      "Egy „jelszavak.txt” nevű egyszerű szöveges fájlban a számítógép asztalán.",
+      "A telefonod gyári, titkosítatlan jegyzettömb alkalmazásában."
+    ],
+    "correctIndex": 0,
+    "explanation": "A jelszókezelő segít különböző jelszavakat használni a fiókokhoz.",
+    "source": "https://www.ncsc.gov.uk/collection/using-online-services-safely/securing-your-users-accounts",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "topic": "cyber",
+    "category": "Digitális biztonság és adathalászat",
+    "reviewStatus": "approved-by-owner",
+    "checkedOn": "2026-10-16",
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "CYBER-007",
+    "question": "Mi a helyes eljárás egy gyanús e-mail ellenőrzésekor?",
+    "choices": [
+      "Ellenőrzöm a feladót és a kérést, kétség esetén külön hivatalos csatornán érdeklődöm.",
+      "Ha nincs helyesírási hiba, biztosan valódi.",
+      "A logó önmagában hitelesíti a levelet.",
+      "Rákattintok a linkre és ott adom meg a jelszavam."
+    ],
+    "correctIndex": 0,
+    "explanation": "Hibátlan nyelvezetű levél is lehet csalás. Ne adj meg adatot csak a sürgető üzenet hatására.",
+    "source": "https://www.ncsc.gov.uk/guidance/phishing",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "topic": "cyber",
+    "category": "Digitális biztonság és adathalászat",
+    "reviewStatus": "approved-by-owner",
+    "checkedOn": "2026-10-16",
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "CYBER-008",
+    "question": "Mit jelent a „sharenting” kifejezés és miért kockázatos a fiatalokra nézve?",
+    "choices": [
+      "Amikor szülők a gyermekükről osztanak meg képet vagy információt az interneten.",
+      "Egy új típusú, csoportos online videójáték-műfaj.",
+      "A fájlok és nagy méretű dokumentumok megosztását a felhőben.",
+      "Amikor a barátok közösen néznek egy filmet az interneten keresztül."
+    ],
+    "correctIndex": 0,
+    "explanation": "A megosztásnál számít a gyermek véleménye, a közönség és a közzétett adatok köre.",
+    "source": "https://www.unicef.org/parenting/child-care/sharenting",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "topic": "cyber",
+    "category": "Digitális biztonság és adathalászat",
+    "reviewStatus": "approved-by-owner",
+    "checkedOn": "2026-10-16",
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "CYBER-009",
+    "question": "Mit teszel, ha letöltesz egy egyszerű számológép alkalmazást a telefonodra, és az engedélyt kér a névjegyzékedhez és a kamerádhoz?",
+    "choices": [
+      "Nem adok indokolatlan engedélyt; ellenőrzöm, mely funkció igényli, és szükség esetén törlöm az appot.",
+      "Minden engedélyt automatikusan megadok.",
+      "Az engedélykérés biztosan bizonyítja, hogy vírusos.",
+      "A kért hozzáféréseknek nincs jelentőségük."
+    ],
+    "correctIndex": 0,
+    "explanation": "A névjegyekhez való hozzáférés számológépnél rendszerint indokolatlan. Kamera például képletbeolvasáshoz kellhet; az engedélykérés önmagában nem bizonyít kémprogramot.",
+    "source": "https://support.google.com/googleplay/answer/9431959",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "topic": "cyber",
+    "category": "Digitális biztonság és adathalászat",
+    "reviewStatus": "approved-by-owner",
+    "checkedOn": "2026-10-16",
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "TRAFFIC-001",
+    "question": "Mi az első és legfontosabb teendő, miután megálltál egy gépjárműbaleset után egy forgalmas úton?",
+    "choices": [
+      "Saját biztonságomról gondoskodom, jelzem a veszélyt, és csak biztonságosan nyújtok segítséget.",
+      "Előbb fotózom a sérüléseket.",
+      "A forgalmi sáv közepén várom a segítséget.",
+      "Először számonkérem a többi sofőrt."
+    ],
+    "correctIndex": 0,
+    "explanation": "Ne lépj a forgalmi sávba. Autópályán lehetőség szerint a szalagkorláton kívül várj; a háromszög kihelyezéséért se veszélyeztesd magad.",
+    "source": "https://www.police.hu/sites/default/files/Aut%C3%B3p%C3%A1lya_Kisokos_2018_ny%C3%A1r_0.pdf",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "topic": "traffic",
+    "category": "Gépjárműbaleset",
+    "reviewStatus": "approved-by-owner",
+    "checkedOn": "2026-10-16",
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "TRAFFIC-002",
+    "question": "Mikor szabad egy sérültet kiemelni a karambolos gépjárműből?",
+    "choices": [
+      "Közvetlen veszély vagy szükséges életmentő ellátás miatt, saját biztonságomat is mérlegelve.",
+      "Bármikor, amikor a sérült erős fájdalomra panaszkodik.",
+      "Kizárólag akkor, ha a rendőrség megérkezik és engedélyt ad rá.",
+      "Soha, semmilyen körülmények között."
+    ],
+    "correctIndex": 0,
+    "explanation": "Feleslegesen ne mozgasd a sérültet. Hívd a 112-t és kövesd az irányító utasításait.",
+    "source": "https://www.sja.org.uk/first-aid-advice/traffic-collision/",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "topic": "traffic",
+    "category": "Gépjárműbaleset",
+    "reviewStatus": "approved-by-owner",
+    "checkedOn": "2026-10-16",
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "TRAFFIC-003",
+    "question": "Melyik a legfontosabb segélyhívó szám Európában, amelyet baleset esetén azonnal tárcsázhatsz?",
+    "choices": [
+      "112",
+      "118",
+      "123",
+      "100"
+    ],
+    "correctIndex": 0,
+    "explanation": "Az EU-ban a 112 ingyenes segélyhívó. A helyszínt és a történteket pontosan mondd el.",
+    "source": "https://europa.eu/youreurope/citizens/travel/security-and-emergencies/emergency/index_en.htm",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "topic": "traffic",
+    "category": "Gépjárműbaleset",
+    "reviewStatus": "approved-by-owner",
+    "checkedOn": "2026-10-16",
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "TRAFFIC-004",
+    "question": "Melyik esetben ír elő a KRESZ haladéktalan rendőrségi értesítést?",
+    "choices": [
+      "Ha a baleset halált vagy személyi sérülést okozott.",
+      "Minden karcolásnál kötelező.",
+      "Csak akkor, ha valamelyik autó külföldi.",
+      "Csak ha nem tudják kitölteni a bejelentőt."
+    ],
+    "correctIndex": 0,
+    "explanation": "A KRESZ 58. § szerint ilyenkor haladéktalanul értesíteni kell a rendőrséget. Más körülmények között is indokolt lehet rendőri segítséget kérni.",
+    "source": "https://njt.hu/jogszabaly/1975-1-20-24.36",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "topic": "traffic",
+    "category": "Gépjárműbaleset",
+    "reviewStatus": "approved-by-owner",
+    "checkedOn": "2026-10-16",
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "TRAFFIC-005",
+    "question": "Hogyan nevezik a közismert kék-sárga baleseti nyomtatványt?",
+    "choices": [
+      "Európai baleseti bejelentő, közismert nevén kék-sárga bejelentő.",
+      "Zöldkártya",
+      "Forgalmi engedély",
+      "Vezetői engedély"
+    ],
+    "correctIndex": 0,
+    "explanation": "A papíralapú bejelentő mellett elektronikus kárbejelentés is lehetséges.",
+    "source": "https://mabisz.hu/gyakran-ismetelt-kerdesek-biztositasi-informaciok/",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "topic": "traffic",
+    "category": "Gépjárműbaleset",
+    "reviewStatus": "approved-by-owner",
+    "checkedOn": "2026-10-16",
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "TRAFFIC-006",
+    "question": "Milyen adatokat kell feltétlenül elkérned a másik sofőrtől, ha nincs rendőri intézkedés?",
+    "choices": [
+      "A vezető, az üzembentartó, a jármű és a biztosítás bejelentőhöz szükséges adatait egyeztetem.",
+      "Kizárólag a születési helyét és idejét.",
+      "A telefonszámát és a kedvenc autómárkáját.",
+      "A gépjármű színét és a műszaki vizsga lejárati idejét."
+    ],
+    "correctIndex": 0,
+    "explanation": "A kitöltési adatok és a baleset körülményei a kárrendezést segítik; ellenőrizzétek együtt a bejelentőt.",
+    "source": "https://mabisz.hu/gyakran-ismetelt-kerdesek-biztositasi-informaciok/",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "topic": "traffic",
+    "category": "Gépjárműbaleset",
+    "reviewStatus": "approved-by-owner",
+    "checkedOn": "2026-10-16",
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "TRAFFIC-007",
+    "question": "Miért fontos fotókat vagy videókat készíteni a baleset helyszínéről az autók elmozdítása előtt?",
+    "choices": [
+      "A körülmények rögzítésére, de csak biztonságosan, a segítségnyújtás késleltetése nélkül.",
+      "Hogy feltölthesd a közösségi médiára figyelmeztetésként.",
+      "Mert ez egy jogszabályi kötelezettség, különben megbüntet a rendőr.",
+      "Hogy megmutasd az autószerelődnek, mielőtt árajánlatot ad."
+    ],
+    "correctIndex": 0,
+    "explanation": "A képek segíthetik a kárrendezést. A fotózásért ne maradj veszélyes helyen.",
+    "source": "https://mabisz.hu/gyakran-ismetelt-kerdesek-biztositasi-informaciok/",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "topic": "traffic",
+    "category": "Gépjárműbaleset",
+    "reviewStatus": "approved-by-owner",
+    "checkedOn": "2026-10-16",
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "TRAFFIC-008",
+    "question": "Mit kell tenni, ha a gépjárművek akadályozzák a forgalmat, de nincs személyi sérülés és a felelősség sem vitás?",
+    "choices": [
+      "A szükséges adategyeztetés és biztonságos dokumentálás után lehetőleg megszüntetem az akadályt.",
+      "Tilos elmozdítani az autókat, meg kell várni a rendőrséget pontosan ott, ahol megálltak.",
+      "Azonnal el kell vontatni mindkét autót a legközelebbi bontóba.",
+      "Ott kell hagyni a kocsikat kulccsal együtt, és taxival hazamenni."
+    ],
+    "correctIndex": 0,
+    "explanation": "Sérülés nélkül is meg kell állni és adatot cserélni. Ha rendőri intézkedést kérnek, annak szabályait követni kell.",
+    "source": "https://njt.hu/jogszabaly/1975-1-20-24.36",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "topic": "traffic",
+    "category": "Gépjárműbaleset",
+    "reviewStatus": "approved-by-owner",
+    "checkedOn": "2026-10-16",
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "TRAFFIC-009",
+    "question": "Hogyan kell eljárni egy sokkos állapotban lévő baleseti sérülttel szemben, amíg a mentők megérkeznek?",
+    "choices": [
+      "Hívom a 112-t, figyelem a légzését, óvom a lehűléstől és nyugodtan beszélek hozzá.",
+      "Itass vele egy kevés tömény alkoholt, hogy megnyugodjon.",
+      "Kérd meg, hogy fusson vagy ugráljon kicsit, hogy felpezsdüljön a vére.",
+      "Ordíts vele hangosan, hogy térjen magához."
+    ],
+    "correctIndex": 0,
+    "explanation": "Sokk gyanúja sürgős segítséget igényel. Ne adj enni vagy inni; a megnyugtatás nem helyettesíti az ellátást.",
+    "source": "https://www.sja.org.uk/first-aid-advice/shock/",
+    "modes": [
+      "public",
+      "pro",
+      "children"
+    ],
+    "topic": "traffic",
+    "category": "Gépjárműbaleset",
+    "reviewStatus": "approved-by-owner",
+    "checkedOn": "2026-10-16",
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "CYBER-010",
+    "question": "Mi segít helyreállítani az adataidat, ha zsarolóvírus titkosítja a gépedet?",
+    "choices": [
+      "Rendszeres, elkülönített és visszaállítható biztonsági mentés.",
+      "Ha csak ugyanazon a meghajtón másolom át a fájlokat.",
+      "Ha előre letiltom az összes frissítést.",
+      "Ha a jelszót a fájl nevébe írom."
+    ],
+    "correctIndex": 0,
+    "explanation": "Az elkülönített mentés csökkenti annak kockázatát, hogy a támadás a mentést is elérje. A visszaállítást is érdemes ellenőrizni.",
+    "source": "https://nki.gov.hu/it-biztonsag/kiadvanyok/segedletek/zsarolovirusok-javasolt-intezkedesek/",
+    "modes": [
+      "children",
+      "public",
+      "pro"
+    ],
+    "topic": "cyber",
+    "category": "Digitális biztonság és adathalászat",
+    "reviewStatus": "approved-by-owner",
+    "checkedOn": "2026-10-16",
+    "origin": "completed-from-official-source",
+    "approvedOn": "2026-10-16"
+  },
+  {
+    "id": "TRAFFIC-010",
+    "question": "Mit teszel, ha ütközés után füstöt vagy lángot látsz a motorháztető alól?",
+    "choices": [
+      "Ha biztonságos, leállítom a motort; eltávolodunk a járműtől és hívom a 112-t.",
+      "Teljesen felnyitom a motorháztetőt és közelről vizsgálom.",
+      "Visszamegyek a csomagokért az égő autóba.",
+      "Az autó mellett maradok, amíg magától elalszik."
+    ],
+    "correctIndex": 0,
+    "explanation": "Gyanított motortéri tűznél ne nyisd fel a motorháztetőt. A járműtől és a forgalomtól távol várj; ne vállalj kockázatos oltást.",
+    "source": "https://www.usfa.fema.gov/prevention/vehicle-fires/",
+    "modes": [
+      "children",
+      "public",
+      "pro"
+    ],
+    "topic": "traffic",
+    "category": "Gépjárműbaleset",
+    "reviewStatus": "approved-by-owner",
+    "checkedOn": "2026-10-16",
+    "origin": "completed-from-official-source",
+    "approvedOn": "2026-10-16"
+  }
+]
