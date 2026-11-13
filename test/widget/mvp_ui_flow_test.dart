@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:hunor_app/api/mock_rescue_platform_api.dart';
-import 'package:hunor_app/main.dart';
 import 'package:hunor_app/services/app_store.dart';
 import 'package:hunor_app/views/alerts_page.dart';
 import 'package:hunor_app/views/calendar_page.dart';

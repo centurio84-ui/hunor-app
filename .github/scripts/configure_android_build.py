@@ -84,13 +84,15 @@ storeFile=release.keystore
     gradle_kts = Path("android/app/build.gradle.kts")
     if gradle_kts.exists():
         s = gradle_kts.read_text()
+        if "import java.util.Properties" not in s:
+            s = "import java.util.Properties\nimport java.io.FileInputStream\n" + s
         if 'signingConfigs.create("release")' not in s and 'create("release")' not in s:
             signing_code = '''signingConfigs {
         create("release") {
-            val keyProps = java.util.Properties()
+            val keyProps = Properties()
             val keyPropsFile = rootProject.file("key.properties")
             if (keyPropsFile.exists()) {
-                keyProps.load(java.io.FileInputStream(keyPropsFile))
+                keyProps.load(FileInputStream(keyPropsFile))
                 storeFile = file(keyProps.getProperty("storeFile"))
                 storePassword = keyProps.getProperty("storePassword")
                 keyAlias = keyProps.getProperty("keyAlias")
