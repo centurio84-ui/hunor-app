@@ -77,6 +77,62 @@ class AppStore extends ChangeNotifier {
     }
   }
 
+  bool isGuest = false;
+
+  Future<void> enterAsGuest() async {
+    isLoading = true;
+    errorMessage = null;
+    notifyListeners();
+
+    try {
+      isGuest = true;
+      isAuthenticated = true;
+      currentUserProfile = UserProfile(
+        user: const User(id: 'guest', email: 'vendeg@hun01usar.hu', displayName: 'HUNOR Vendég'),
+        version: 1,
+      );
+      currentUser = const Member(
+        id: 'guest',
+        name: 'HUNOR Vendég',
+        role: MemberRole.member,
+        positions: ['Vendég / Érdeklődő'],
+        skills: [],
+        active: true,
+      );
+      currentOrganization = const Organization(
+        id: 'org-hunor',
+        name: 'HUNOR Nehéz Kutató-Mentő',
+        code: 'HUNOR',
+        description: 'Országos Katasztrófavédelmi Főigazgatóság',
+        active: true,
+      );
+      currentMembership = const Membership(
+        id: 'membership-guest',
+        organizationId: 'org-hunor',
+        userId: 'guest',
+        displayName: 'HUNOR Vendég',
+        membershipStatus: MembershipStatus.approved,
+        permissions: [],
+        positions: ['Vendég'],
+        skills: [],
+        alertable: false,
+      );
+
+      if (api is SupabaseRescuePlatformApi) {
+        try { events = await api.getEvents(); } catch (_) {}
+        try { news = await api.getNews(); } catch (_) {}
+        try { alerts = await api.getAlerts(); } catch (_) {}
+      } else {
+        await loadData();
+      }
+    } catch (e) {
+      errorMessage = e.toString();
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> signIn(String email, String password) async {
     isLoading = true;
     errorMessage = null;
@@ -108,7 +164,8 @@ class AppStore extends ChangeNotifier {
   Future<void> signOut() async {
     _revision++;
     _clearLocalData();
-    isAuthenticated=false;
+    isAuthenticated = false;
+    isGuest = false;
     isLoading = true;
     notifyListeners();
 

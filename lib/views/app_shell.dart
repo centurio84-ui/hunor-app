@@ -269,36 +269,47 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: HunorColors.redDark,
+                    color: HunorColors.gold,
                     borderRadius: BorderRadius.circular(6),
                   ),
-                  child: Text(
-                    currentOrg?.code ?? 'RESCUE',
-                    style: const TextStyle(
+                  child: const Text(
+                    'HUNOR',
+                    style: TextStyle(
                       fontWeight: FontWeight.w900,
-                      fontSize: 13,
-                      letterSpacing: 1.1,
-                      color: Colors.white,
+                      fontSize: 12,
+                      letterSpacing: 0.8,
+                      color: HunorColors.navy,
                     ),
                   ),
                 ),
                 const SizedBox(width: 8),
                 Flexible(
                   child: Text(
-                    currentOrg?.name ?? 'Rescue Platform',
+                    currentOrg?.name ?? 'HUNOR USAR',
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
                   ),
                 ),
-                const Icon(Icons.arrow_drop_down, color: HunorColors.muted),
+                const Icon(Icons.arrow_drop_down, color: HunorColors.gold),
               ],
             ),
           ),
         ),
         actions: [
-          if (store.showRescueCoins && coin != null)
+          if (store.isGuest)
+            Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: ActionChip(
+                avatar: const Icon(Icons.login_rounded, size: 14, color: HunorColors.gold),
+                label: const Text('Belépés', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: HunorColors.gold)),
+                backgroundColor: HunorColors.navyCard,
+                side: BorderSide(color: HunorColors.gold.withOpacity(0.5)),
+                onPressed: () => store.signOut(),
+              ),
+            )
+          else if (store.showRescueCoins && coin != null)
             Padding(
               padding: const EdgeInsets.only(right: 12),
               child: Chip(
@@ -315,6 +326,22 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
         ],
       ),
       body: Column(children:[
+        if (store.isGuest)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+            color: HunorColors.gold.withOpacity(0.12),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.visibility_outlined, size: 14, color: HunorColors.gold),
+                SizedBox(width: 6),
+                Text(
+                  'Vendég előnézet · Teljes hozzáféréshez jelentkezz be',
+                  style: TextStyle(color: HunorColors.gold, fontSize: 11, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+          ),
         if(store.isStaging) const MaterialBanner(content:Text('STAGING TESZT · fiktív adatok · nincs valódi riasztásküldés'),actions:[SizedBox.shrink()]),
         if(store.errorMessage!=null) Padding(padding:const EdgeInsets.all(8),child:Text(store.errorMessage!,style:const TextStyle(color:HunorColors.warning))),
         if(store.isStaging) Row(mainAxisAlignment:MainAxisAlignment.center,children:[Text('Várakozó válaszok: ${store.pendingResponses.length}'),TextButton(onPressed:store.syncPendingResponses,child:const Text('Szinkronizálás'))]),

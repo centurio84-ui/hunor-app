@@ -38,65 +38,87 @@ class HomePage extends StatelessWidget {
           const SizedBox(height: 16),
 
           // Aktív Szervezet kártya
-          Card(
-            color: HunorColors.redDark,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(16),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => OrganizationSwitcherView(
-                      api: s.api,
-                      onOrganizationChanged: () => s.loadData(),
+          Container(
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [HunorColors.navyCard, Color(0xFF162544)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: HunorColors.gold.withOpacity(0.35)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.25),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(18),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => OrganizationSwitcherView(
+                        api: s.api,
+                        onOrganizationChanged: () => s.loadData(),
+                      ),
                     ),
+                  );
+                },
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 52,
+                        height: 52,
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.25),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: HunorColors.gold.withOpacity(0.3)),
+                        ),
+                        child: Image.asset(
+                          'assets/images/hunor_logo.png',
+                          fit: BoxFit.contain,
+                          errorBuilder: (_, __, ___) => const Icon(Icons.shield_outlined, size: 30, color: HunorColors.gold),
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    org?.name ?? 'HUNOR Nehéz Kutató-Mentő',
+                                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              membership != null
+                                  ? 'Tagság: ${membership.membershipStatus.label} • ${membership.positions.join(", ")}'
+                                  : 'Hivatalos katasztrófavédelmi szervezet',
+                              style: const TextStyle(color: HunorColors.muted, fontSize: 12),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(Icons.swap_horiz_rounded, color: HunorColors.gold),
+                    ],
                   ),
-                );
-              },
-              child: Padding(
-                padding: const EdgeInsets.all(18),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 52,
-                      height: 52,
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withAlpha(30),
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Image.asset(
-                        'assets/images/hunor_logo.png',
-                        fit: BoxFit.contain,
-                        errorBuilder: (_, __, ___) => const Icon(Icons.shield_outlined, size: 30, color: Colors.white),
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Text(
-                                org?.name ?? 'Szervezet betöltése...',
-                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.white),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 3),
-                          Text(
-                            membership != null
-                                ? 'Tagság: ${membership.membershipStatus.label} • ${membership.positions.join(", ")}'
-                                : 'Tagsági adatok betöltése...',
-                            style: const TextStyle(color: Colors.white70, fontSize: 13),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const Icon(Icons.swap_horiz_rounded, color: Colors.white),
-                  ],
                 ),
               ),
             ),
@@ -292,24 +314,39 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Card(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: HunorColors.line),
+        ),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
           child: Row(
             children: [
-              Icon(icon, color: accent, size: 26),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    value,
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: accent),
-                  ),
-                  Text(
-                    label,
-                    style: const TextStyle(color: HunorColors.muted, fontSize: 12),
-                  ),
-                ],
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: accent.withOpacity(0.14),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: accent, size: 24),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      value,
+                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: accent),
+                    ),
+                    Text(
+                      label,
+                      style: const TextStyle(color: HunorColors.muted, fontSize: 11),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
