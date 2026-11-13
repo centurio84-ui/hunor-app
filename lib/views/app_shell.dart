@@ -37,6 +37,40 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   @override void didChangeAppLifecycleState(AppLifecycleState state){if(state==AppLifecycleState.resumed)context.read<AppStore>().syncPendingResponses();}
   int index = 0;
 
+  int _bottomNavIndex(int pageIndex) {
+    switch (pageIndex) {
+      case 0:
+        return 0; // Főoldal
+      case 1:
+        return 1; // Riasztások
+      case 2:
+        return 2; // Naptár
+      case 3:
+        return 3; // Hírek
+      case 7:
+        return 4; // Profil
+      default:
+        return 0;
+    }
+  }
+
+  int _pageIndexFromNav(int navIndex) {
+    switch (navIndex) {
+      case 0:
+        return 0; // Főoldal
+      case 1:
+        return 1; // Riasztások
+      case 2:
+        return 2; // Naptár
+      case 3:
+        return 3; // Hírek
+      case 4:
+        return 7; // Profil
+      default:
+        return 0;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final store = context.watch<AppStore>();
@@ -56,30 +90,6 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
         api: store.api,
         onOrganizationChanged: () => store.loadData(),
       ),
-    ];
-
-    final labels = [
-      'Főoldal',
-      'Riasztások',
-      'Naptár',
-      'Hírek',
-      'EXCON',
-      'Műszerfal',
-      'Önértékelés',
-      'Profil',
-      'Szervezetek',
-    ];
-
-    final icons = [
-      Icons.home_rounded,
-      Icons.warning_amber_rounded,
-      Icons.calendar_month_rounded,
-      Icons.newspaper_rounded,
-      Icons.fact_check_outlined,
-      Icons.insert_chart_outlined_rounded,
-      Icons.psychology_outlined,
-      Icons.person_rounded,
-      Icons.business_rounded,
     ];
 
     return Scaffold(
@@ -312,15 +322,34 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
         Expanded(child:IndexedStack(index:index,children:pages)),
       ]),
       bottomNavigationBar: NavigationBar(
-        selectedIndex: index,
-        onDestinationSelected: (i) => setState(() => index = i),
-        destinations: [
-          for (var i = 0; i < labels.length; i++)
-            NavigationDestination(
-              icon: Icon(icons[i]),
-              selectedIcon: Icon(icons[i]),
-              label: labels[i],
-            ),
+        selectedIndex: _bottomNavIndex(index),
+        onDestinationSelected: (i) => setState(() => index = _pageIndexFromNav(i)),
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home_rounded),
+            label: 'Főoldal',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.warning_amber_outlined),
+            selectedIcon: Icon(Icons.warning_amber_rounded),
+            label: 'Riasztások',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.calendar_month_outlined),
+            selectedIcon: Icon(Icons.calendar_month_rounded),
+            label: 'Naptár',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.newspaper_outlined),
+            selectedIcon: Icon(Icons.newspaper_rounded),
+            label: 'Hírek',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.person_outline_rounded),
+            selectedIcon: Icon(Icons.person_rounded),
+            label: 'Profil',
+          ),
         ],
       ),
     );
