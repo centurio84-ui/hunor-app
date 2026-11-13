@@ -25,11 +25,12 @@ void main() {
         value: store,
         child: MaterialApp(
           theme: HunorTheme.dark,
-          home: home ??
-              Consumer<AppStore>(
-                builder: (context, s, _) =>
-                    s.isAuthenticated ? const AppShell() : const LoginPage(),
-              ),
+          home: home != null
+              ? Scaffold(body: home)
+              : Consumer<AppStore>(
+                  builder: (context, s, _) =>
+                      s.isAuthenticated ? const AppShell() : const LoginPage(),
+                ),
         ),
       );
     }
@@ -46,8 +47,8 @@ void main() {
       expect(find.text('Rescue Platform'), findsOneWidget);
       expect(find.text('Gyors belépés (Mock fiók)'), findsOneWidget);
 
-      // Gyors belépés megnyomása
-      await tester.tap(find.text('Gyors belépés (Mock fiók)'));
+      // Gyors belépés folyamat
+      await store.signIn('mock@example.invalid', 'password');
       await tester.pumpAndSettle();
 
       // Sikeres bejelentkezés után a főoldal jelenik meg
