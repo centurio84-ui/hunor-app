@@ -10,3 +10,4 @@ android/.gradle/
 .netlify-token
 *.jks
 *.keystore
+build_output/

@@ -55,34 +55,7 @@ jobs:
           dart --version
 
       - name: Generate clean Android shell
-        run: |
-          flutter create --org hu.hunor --project-name hunor_app --platforms android .
-          python3 - <<'PY'
-          from pathlib import Path
-          
-          # AndroidManifest konfiguráció (biztonságos internet és mentési beállítások)
-          manifest = Path('android/app/src/main/AndroidManifest.xml')
-          if manifest.exists():
-              text = manifest.read_text()
-              if 'android.permission.INTERNET' not in text:
-                  text = text.replace('<application', '<uses-permission android:name="android.permission.INTERNET" />\n    <application android:allowBackup="false" android:usesCleartextTraffic="false"', 1)
-                  manifest.write_text(text)
-
-          # Target SDK és Min SDK frissítés (Google Play 2026. augusztus követelmény: targetSdk 36, minSdk 23)
-          gradle_kts = Path('android/app/build.gradle.kts')
-          if gradle_kts.exists():
-              gt = gradle_kts.read_text()
-              gt = gt.replace('minSdk = flutter.minSdkVersion', 'minSdk = 23')
-              gt = gt.replace('targetSdk = flutter.targetSdkVersion', 'targetSdk = 36')
-              gradle_kts.write_text(gt)
-          
-          gradle_groovy = Path('android/app/build.gradle')
-          if gradle_groovy.exists():
-              gt = gradle_groovy.read_text()
-              gt = gt.replace('minSdkVersion flutter.minSdkVersion', 'minSdkVersion 23')
-              gt = gt.replace('targetSdkVersion flutter.targetSdkVersion', 'targetSdkVersion 36')
-              gradle_groovy.write_text(gt)
-          PY
+        run: flutter create --org hu.hunor --project-name hunor_app --platforms android .
 
       - name: Install dependencies
         run: flutter pub get
@@ -93,83 +66,13 @@ jobs:
       - name: Run unit & widget tests
         run: flutter test --reporter expanded
 
-      - name: Configure Signing Keystore
-        id: signing
-        shell: bash
-        run: |
-          if [ -z "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ] || [ -z "${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" ] || [ -z "${{ secrets.ANDROID_KEY_ALIAS }}" ] || [ -z "${{ secrets.ANDROID_KEY_PASSWORD }}" ]; then
-            echo "::error::HIÁNYZÓ KIADÁSI TITKOK: Az ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS vagy ANDROID_KEY_PASSWORD secret nincs beállítva!"
-            echo "A Google Play Production AAB fordítás nem folytatható hiteles aláírás nélkül."
-            exit 1
-          fi
-
-          echo "Kiadási aláírókulcs elérhető (GitHub Secret). Aláírt kiadási AAB készül."
-          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/app/release.keystore
-          cat <<EOF > android/key.properties
-          storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
-          keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
-          storeFile=release.keystore
-          EOF
-
-          # Gradle signingConfigs tényleges bekötése a build.gradle / build.gradle.kts fájlban
-          # Biztonságos felülírás: nem bántjuk a debug signingConfig-ot, kizárólag a release signingConfig-ot hozzuk létre és kötjük a release buildType-hoz.
-          python3 - <<'PY'
-          from pathlib import Path
-
-          p_kts = Path('android/app/build.gradle.kts')
-          if p_kts.exists():
-              s = p_kts.read_text()
-              if 'signingConfigs.create("release")' not in s and 'create("release")' not in s:
-                  marker = 'buildTypes {'
-                  signing_code = '''
-    signingConfigs {
-        create("release") {
-            val keyProps = java.util.Properties()
-            val keyPropsFile = rootProject.file("key.properties")
-            if (keyPropsFile.exists()) {
-                keyProps.load(java.io.FileInputStream(keyPropsFile))
-                storeFile = file(keyProps.getProperty("storeFile"))
-                storePassword = keyProps.getProperty("storePassword")
-                keyAlias = keyProps.getProperty("keyAlias")
-                keyPassword = keyProps.getProperty("keyPassword")
-            }
-        }
-    }
-'''
-                  if marker in s:
-                      s = s.replace(marker, signing_code + '\n    ' + marker)
-                      # Csak a getByName("release") signingConfigját irányítjuk át, a debug érintetlen marad
-                      if 'signingConfig = signingConfigs.getByName("release")' not in s:
-                          s = s.replace('getByName("release") {', 'getByName("release") {\n            signingConfig = signingConfigs.getByName("release")')
-                      p_kts.write_text(s)
-
-          p_groovy = Path('android/app/build.gradle')
-          if p_groovy.exists():
-              s = p_groovy.read_text()
-              if 'release {' not in s or 'signingConfigs {' not in s:
-                  marker = 'buildTypes {'
-                  signing_code = '''
-    signingConfigs {
-        release {
-            def keyProps = new Properties()
-            def keyPropsFile = rootProject.file("key.properties")
-            if (keyPropsFile.exists()) {
-                keyProps.load(new FileInputStream(keyPropsFile))
-                storeFile file(keyProps['storeFile'])
-                storePassword keyProps['storePassword']
-                keyAlias keyProps['keyAlias']
-                keyPassword keyProps['keyPassword']
-            }
-        }
-    }
-'''
-                  if marker in s:
-                      s = s.replace(marker, signing_code + '\n    ' + marker)
-                      if 'signingConfig signingConfigs.release' not in s:
-                          s = s.replace('release {', 'release {\n            signingConfig signingConfigs.release')
-                      p_groovy.write_text(s)
-          PY
+      - name: Configure Android Build & Signing
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: python3 .github/scripts/configure_android_build.py
 
       - name: Build Android App Bundle (Release AAB)
         shell: bash

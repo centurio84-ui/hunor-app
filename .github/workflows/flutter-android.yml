@@ -13,97 +13,38 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Java JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
+          cache: true
 
       - name: Generate platform folders
         run: flutter create --platforms=android .
 
-      - name: Configure Google Services plugin
-        shell: bash
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-
-          p = Path("android/app/build.gradle")
-          if p.exists():
-              s = p.read_text()
-              if "com.google.gms.google-services" not in s:
-                  s = s.replace(
-                      "plugins {",
-                      "plugins {\n    id 'com.google.gms.google-services'",
-                      1,
-                  )
-                  p.write_text(s)
-
-          p = Path("android/settings.gradle")
-          if p.exists():
-              s = p.read_text()
-              if "com.google.gms.google-services" not in s:
-                  marker = "plugins {"
-                  idx = s.find(marker)
-                  if idx >= 0:
-                      end = s.find("\n}", idx)
-                      if end >= 0:
-                          s = s[:end] + "\n    id 'com.google.gms.google-services' version '4.4.4' apply false" + s[end:]
-                          p.write_text(s)
-          PY
-
       - name: Get packages
         run: flutter pub get
 
-      - name: Configure Signing Keystore
-        id: signing
-        shell: bash
+      - name: Configure Android Build & Signing
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: python3 .github/scripts/configure_android_build.py
+
+      - name: Build APK (Debug)
         run: |
-          if [ -n "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ]; then
-            echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/app/release.keystore
-            cat <<EOF > android/key.properties
-          storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
-          keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
-          storeFile=release.keystore
-          EOF
-
-            python3 - <<'PY'
-            from pathlib import Path
-            p_kts = Path('android/app/build.gradle.kts')
-            if p_kts.exists():
-                s = p_kts.read_text()
-                if 'signingConfigs.create("release")' not in s and 'create("release")' not in s:
-                    s = s.replace('buildTypes {', 'signingConfigs {\n        create("release") {\n            val keyProps = java.util.Properties()\n            val keyFile = rootProject.file("key.properties")\n            if (keyFile.exists()) {\n                keyProps.load(java.io.FileInputStream(keyFile))\n                storeFile = file(keyProps.getProperty("storeFile"))\n                storePassword = keyProps.getProperty("storePassword")\n                keyAlias = keyProps.getProperty("keyAlias")\n                keyPassword = keyProps.getProperty("keyPassword")\n            }\n        }\n    }\n    buildTypes {')
-                    s = s.replace('getByName("release") {', 'getByName("release") {\n            signingConfig = signingConfigs.getByName("release")')
-                    p_kts.write_text(s)
-
-            p_groovy = Path('android/app/build.gradle')
-            if p_groovy.exists():
-                s = p_groovy.read_text()
-                if 'signingConfigs {' not in s:
-                    signing_code = '''
-    signingConfigs {
-        release {
-            def keyProps = new Properties()
-            def keyPropsFile = rootProject.file("key.properties")
-            if (keyPropsFile.exists()) {
-                keyProps.load(new FileInputStream(keyPropsFile))
-                storeFile file(keyProps['storeFile'])
-                storePassword keyProps['storePassword']
-                keyAlias keyProps['keyAlias']
-                keyPassword keyProps['keyPassword']
-            }
-        }
-    }
-'''
-                    s = s.replace('buildTypes {', signing_code + '\n    buildTypes {')
-                    s = s.replace('release {', 'release {\n            signingConfig signingConfigs.release')
-                    p_groovy.write_text(s)
-            PY
-          fi
-
-      - name: Build APK
-        run: flutter build apk --debug --dart-define=SUPABASE_URL=https://embicteneumubwlqqfik.supabase.co --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_Vt7KtNGznwvPrDRr5VEn0Q_r-Z6sas1
+          flutter build apk --debug \
+            --dart-define=RESCUE_API_MODE=supabase \
+            --dart-define=SUPABASE_URL=https://embicteneumubwlqqfik.supabase.co \
+            --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_Vt7KtNGznwvPrDRr5VEn0Q_r-Z6sas1
 
       - name: Upload Android APK
         uses: actions/upload-artifact@v4

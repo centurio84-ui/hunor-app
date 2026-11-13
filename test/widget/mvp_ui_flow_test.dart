@@ -8,6 +8,8 @@ import 'package:hunor_app/views/alerts_page.dart';
 import 'package:hunor_app/views/calendar_page.dart';
 import 'package:hunor_app/views/login_page.dart';
 import 'package:hunor_app/views/profile_page.dart';
+import 'package:hunor_app/views/app_shell.dart';
+import 'package:hunor_app/theme/hunor_theme.dart';
 
 void main() {
   group('Rescue Platform Flutter MVP – Felhasználói Folyamatok és Adatelkülönítés', () {
@@ -20,17 +22,16 @@ void main() {
     });
 
     Widget createTestApp({Widget? home}) {
-      if (home != null) {
-        return ChangeNotifierProvider<AppStore>.value(
-          value: store,
-          child: MaterialApp(
-            home: Scaffold(body: home),
-          ),
-        );
-      }
       return ChangeNotifierProvider<AppStore>.value(
         value: store,
-        child: const HunorApp(),
+        child: MaterialApp(
+          theme: HunorTheme.dark,
+          home: home ??
+              Consumer<AppStore>(
+                builder: (context, s, _) =>
+                    s.isAuthenticated ? const AppShell() : const LoginPage(),
+              ),
+        ),
       );
     }
 
@@ -54,10 +55,6 @@ void main() {
       expect(store.isAuthenticated, isTrue);
       expect(find.text('HUNOR Mentőszervezet'), findsWidgets);
       expect(find.text('120 RC'), findsNothing);
-
-      // Widget fa leszerelése és hátralévő időzítők lecsengése
-      await tester.pumpWidget(const SizedBox.shrink());
-      await tester.pump(const Duration(seconds: 100));
     });
 
     testWidgets('2. Cross-tenant adatelkülönítés a felületen (HUNOR vs BMSZ)', (tester) async {
