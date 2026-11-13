@@ -73,34 +73,19 @@ def configure_signing():
     keystore_path.parent.mkdir(parents=True, exist_ok=True)
     keystore_path.write_bytes(base64.b64decode(keystore_b64))
 
-    props_content = f"""storePassword={store_password}
-keyPassword={key_password}
-keyAlias={key_alias}
-storeFile=release.keystore
-"""
-    Path("android/key.properties").write_text(props_content)
-    print("Wrote android/key.properties and android/app/release.keystore.")
-
     gradle_kts = Path("android/app/build.gradle.kts")
     if gradle_kts.exists():
         s = gradle_kts.read_text()
-        if "import java.util.Properties" not in s:
-            s = "import java.util.Properties\nimport java.io.FileInputStream\n" + s
         if 'signingConfigs.create("release")' not in s and 'create("release")' not in s:
-            signing_code = '''signingConfigs {
-        create("release") {
-            val keyProps = Properties()
-            val keyPropsFile = rootProject.file("key.properties")
-            if (keyPropsFile.exists()) {
-                keyProps.load(FileInputStream(keyPropsFile))
-                storeFile = file(keyProps.getProperty("storeFile"))
-                storePassword = keyProps.getProperty("storePassword")
-                keyAlias = keyProps.getProperty("keyAlias")
-                keyPassword = keyProps.getProperty("keyPassword")
-            }
-        }
-    }
-    buildTypes {'''
+            signing_code = f'''signingConfigs {{
+        create("release") {{
+            storeFile = file("release.keystore")
+            storePassword = "{store_password}"
+            keyAlias = "{key_alias}"
+            keyPassword = "{key_password}"
+        }}
+    }}
+    buildTypes {{'''
             s = s.replace("buildTypes {", signing_code)
             s = s.replace(
                 'getByName("release") {',
@@ -113,20 +98,15 @@ storeFile=release.keystore
     if gradle_groovy.exists():
         s = gradle_groovy.read_text()
         if "signingConfigs {" not in s:
-            signing_code = """
-    signingConfigs {
-        release {
-            def keyProps = new Properties()
-            def keyPropsFile = rootProject.file("key.properties")
-            if (keyPropsFile.exists()) {
-                keyProps.load(new FileInputStream(keyPropsFile))
-                storeFile file(keyProps['storeFile'])
-                storePassword keyProps['storePassword']
-                keyAlias keyProps['keyAlias']
-                keyPassword keyProps['keyPassword']
-            }
-        }
-    }
+            signing_code = f"""
+    signingConfigs {{
+        release {{
+            storeFile file('release.keystore')
+            storePassword '{store_password}'
+            keyAlias '{key_alias}'
+            keyPassword '{key_password}'
+        }}
+    }}
 """
             s = s.replace("buildTypes {", signing_code + "\n    buildTypes {")
             s = s.replace("release {", "release {\n            signingConfig signingConfigs.release")
