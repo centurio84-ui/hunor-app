@@ -39,8 +39,10 @@ def configure_manifest():
                 '<uses-permission android:name="android.permission.INTERNET" />\n    <application android:allowBackup="false" android:usesCleartextTraffic="false"',
                 1,
             )
-            manifest.write_text(text)
-            print("Configured AndroidManifest.xml permissions.")
+        import re
+        text = re.sub(r'android:label="[^"]*"', 'android:label="MAD Tech Rescue Platform"', text)
+        manifest.write_text(text)
+        print("Configured AndroidManifest.xml permissions and label to MAD Tech Rescue Platform.")
 
 def configure_sdk_versions():
     gradle_kts = Path("android/app/build.gradle.kts")
@@ -96,7 +98,7 @@ def configure_signing():
             "-validity", "10000",
             "-storepass", store_password,
             "-keypass", key_password,
-            "-dname", "CN=HUNOR, OU=USAR, O=HUNOR, L=Budapest, C=HU"
+            "-dname", "CN=MAD Tech Rescue Platform, OU=Rescue, O=MAD Tech, L=Budapest, C=HU"
         ]
         subprocess.run(cmd, check=True)
         print("Generated self-signed release.keystore.")

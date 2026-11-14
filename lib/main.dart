@@ -151,7 +151,7 @@ class HunorApp extends StatelessWidget {
     final theme = themeController?.currentTheme ?? HunorTheme.dark;
 
     return MaterialApp(
-      title: 'HUNOR USAR - Rescue Platform',
+      title: 'MAD Tech Rescue Platform',
       debugShowCheckedModeBanner: false,
       theme: theme,
       routes: {
