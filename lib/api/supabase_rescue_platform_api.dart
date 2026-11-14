@@ -170,7 +170,7 @@ class SupabaseRescuePlatformApi implements RescuePlatformApi {
             .eq('member_id', user.id)
             .eq('participation_role', 'excon')
             .limit(1);
-        if (ep is List && ep.isNotEmpty) {
+        if (ep.isNotEmpty) {
           canAccessExcon = true;
         }
       } catch (_) {}
