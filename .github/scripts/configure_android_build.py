@@ -46,18 +46,18 @@ def configure_sdk_versions():
     gradle_kts = Path("android/app/build.gradle.kts")
     if gradle_kts.exists():
         gt = gradle_kts.read_text()
-        gt = gt.replace("minSdk = flutter.minSdkVersion", "minSdk = 23")
-        gt = gt.replace("targetSdk = flutter.targetSdkVersion", "targetSdk = 36")
+        gt = gt.replace("minSdk = flutter.minSdkVersion", "minSdk = 21")
+        gt = gt.replace("targetSdk = flutter.targetSdkVersion", "targetSdk = 34")
         gradle_kts.write_text(gt)
-        print("Configured build.gradle.kts SDK versions.")
+        print("Configured build.gradle.kts SDK versions (minSdk=21, targetSdk=34).")
 
     gradle_groovy = Path("android/app/build.gradle")
     if gradle_groovy.exists():
         gt = gradle_groovy.read_text()
-        gt = gt.replace("minSdkVersion flutter.minSdkVersion", "minSdkVersion 23")
-        gt = gt.replace("targetSdkVersion flutter.targetSdkVersion", "targetSdkVersion 36")
+        gt = gt.replace("minSdkVersion flutter.minSdkVersion", "minSdkVersion 21")
+        gt = gt.replace("targetSdkVersion flutter.targetSdkVersion", "targetSdkVersion 34")
         gradle_groovy.write_text(gt)
-        print("Configured build.gradle SDK versions.")
+        print("Configured build.gradle SDK versions (minSdk=21, targetSdk=34).")
 
 def configure_signing():
     keystore_b64 = os.environ.get("KEYSTORE_BASE64", "").strip()
@@ -65,13 +65,31 @@ def configure_signing():
     key_alias = os.environ.get("KEY_ALIAS", "").strip()
     key_password = os.environ.get("KEY_PASSWORD", "").strip()
 
-    if not keystore_b64:
-        print("Notice: No KEYSTORE_BASE64 provided. Release signing not configured.")
-        return
-
     keystore_path = Path("android/app/release.keystore")
     keystore_path.parent.mkdir(parents=True, exist_ok=True)
-    keystore_path.write_bytes(base64.b64decode(keystore_b64))
+
+    if keystore_b64:
+        keystore_path.write_bytes(base64.b64decode(keystore_b64))
+        print("Extracted release.keystore from environment secrets.")
+    else:
+        print("Generating standalone release keystore with keytool...")
+        store_password = "hunor_release_pass"
+        key_alias = "hunor"
+        key_password = "hunor_release_pass"
+        import subprocess
+        cmd = [
+            "keytool", "-genkeypair", "-v",
+            "-keystore", str(keystore_path),
+            "-alias", key_alias,
+            "-keyalg", "RSA",
+            "-keysize", "2048",
+            "-validity", "10000",
+            "-storepass", store_password,
+            "-keypass", key_password,
+            "-dname", "CN=HUNOR, OU=USAR, O=HUNOR, L=Budapest, C=HU"
+        ]
+        subprocess.run(cmd, check=True)
+        print("Generated self-signed release.keystore.")
 
     gradle_kts = Path("android/app/build.gradle.kts")
     if gradle_kts.exists():
