@@ -284,6 +284,7 @@ class AppStore extends ChangeNotifier {
       events=nextEvents;alerts=nextAlerts;news=nextNews;eventParticipations=nextParticipations;eventRegistrations=nextRegistrations;coinBalance=null;alertResponses=responses;
       if (api is SupabaseRescuePlatformApi) {
         members = await (api as SupabaseRescuePlatformApi).getMembers();
+        unawaited((api as SupabaseRescuePlatformApi).recordAppHeartbeat());
       } else if (api is MockRescuePlatformApi) {
         _loadMembersForCurrentOrganization(orgId ?? '');
       } else {

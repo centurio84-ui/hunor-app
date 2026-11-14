@@ -84,7 +84,7 @@ class HomePage extends StatelessWidget {
                           border: Border.all(color: HunorColors.gold.withOpacity(0.3)),
                         ),
                         child: Image.asset(
-                          'assets/images/hunor_logo_dark.png',
+                          'assets/images/hunor_badge.png',
                           fit: BoxFit.contain,
                           errorBuilder: (_, __, ___) => const Icon(Icons.shield_outlined, size: 30, color: HunorColors.gold),
                         ),

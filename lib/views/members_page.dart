@@ -24,6 +24,40 @@ class _MembersPageState extends State<MembersPage> {
 
     return Column(
       children: [
+        if (s.isAdmin)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: HunorColors.surface2,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: HunorColors.gold.withOpacity(0.35)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.admin_panel_settings, color: HunorColors.gold, size: 24),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'ADMIN FELÜGYELET • APP HASZNÁLAT',
+                          style: TextStyle(color: HunorColors.gold, fontWeight: FontWeight.w800, fontSize: 11, letterSpacing: 0.5),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Regisztrált állomány: ${s.members.length} fő | Online: ${s.members.where((m) => m.isOnline).length} fő',
+                          style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         Padding(
           padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
           child: TextField(
@@ -50,13 +84,42 @@ class _MembersPageState extends State<MembersPage> {
                           child: Text(m.name.isEmpty ? '?' : m.name.substring(0, 1).toUpperCase()),
                         ),
                         title: Text(m.name, style: const TextStyle(fontWeight: FontWeight.w800)),
-                        subtitle: Text(
-                          '${m.rank} • ${m.position}\n${m.status.label}',
-                          style: const TextStyle(color: HunorColors.muted),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${m.rank} • ${m.position}\n${m.status.label}',
+                              style: const TextStyle(color: HunorColors.muted),
+                            ),
+                            if (s.isAdmin) ...[
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  Container(
+                                    width: 8,
+                                    height: 8,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: m.isOnline ? HunorColors.success : Colors.white24,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    m.lastActiveFormatted,
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: m.isOnline ? HunorColors.success : HunorColors.muted,
+                                      fontWeight: m.isOnline ? FontWeight.bold : FontWeight.normal,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ],
                         ),
                         isThreeLine: true,
                         trailing: Icon(Icons.chevron_right, color: _statusColor(m.status)),
-                        onTap: () => _openMember(context, m),
+                        onTap: () => _openMember(context, m, s.isAdmin),
                       ),
                     );
                   },
@@ -74,7 +137,7 @@ class _MembersPageState extends State<MembersPage> {
     AvailabilityStatus.unavailable => HunorColors.muted,
   };
 
-  void _openMember(BuildContext context, Member member) {
+  void _openMember(BuildContext context, Member member, bool isAdmin) {
     showModalBottomSheet(
       context: context,
       showDragHandle: true,
@@ -114,6 +177,7 @@ class _MembersPageState extends State<MembersPage> {
               _InfoRow(Icons.work_outline, 'Beosztás', member.position),
               _InfoRow(Icons.business_outlined, 'Szervezet', member.workplace),
               if (member.phone.isNotEmpty) _InfoRow(Icons.phone_outlined, 'Telefon', member.phone),
+              if (isAdmin) _InfoRow(Icons.smartphone_outlined, 'App aktivitás', member.lastActiveFormatted),
               const SizedBox(height: 16),
               const Text('KÉPESSÉGEK', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1, color: HunorColors.muted)),
               const SizedBox(height: 8),

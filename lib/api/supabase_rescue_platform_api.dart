@@ -509,13 +509,23 @@ class SupabaseRescuePlatformApi implements RescuePlatformApi {
     // Nyugtázás naplózása
   }
 
-  // --- Tagok listája (Members) ---
+  // --- Tagok listája (Members) & Aktivitás ---
+
+  Future<void> recordAppHeartbeat() async {
+    final user = client.auth.currentUser;
+    if (user == null) return;
+    try {
+      await client.from('profiles').update({
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      }).eq('id', user.id);
+    } catch (_) {}
+  }
 
   Future<List<Member>> getMembers() async {
     try {
       final List<dynamic> rows = await client
           .from('profiles')
-          .select('id, name, rank, workplace, position, phone, skills(name), availability(status)')
+          .select('id, name, rank, workplace, position, phone, updated_at, skills(name), availability(status)')
           .order('name');
 
       return rows.map((p) {
@@ -532,6 +542,13 @@ class SupabaseRescuePlatformApi implements RescuePlatformApi {
           status = AvailabilityStatus.fromDatabase(first['status']?.toString());
         }
 
+        DateTime? lastActive;
+        if (p['updated_at'] != null) {
+          try {
+            lastActive = DateTime.parse(p['updated_at'].toString()).toLocal();
+          } catch (_) {}
+        }
+
         return Member(
           id: p['id']?.toString() ?? '',
           name: p['name']?.toString() ?? '',
@@ -541,6 +558,7 @@ class SupabaseRescuePlatformApi implements RescuePlatformApi {
           phone: p['phone']?.toString() ?? '',
           skills: skillsList,
           status: status,
+          lastActive: lastActive,
         );
       }).toList();
     } catch (_) {

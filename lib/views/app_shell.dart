@@ -121,7 +121,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Image.asset(
-                          'assets/images/hunor_logo.png',
+                          'assets/images/hunor_badge.png',
                           width: 38,
                           height: 38,
                           fit: BoxFit.contain,

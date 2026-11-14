@@ -43,7 +43,7 @@ class _LoginPageState extends State<LoginPage> {
                       constraints: const BoxConstraints(maxWidth: 240, maxHeight: 110),
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       child: Image.asset(
-                        'assets/images/hunor_logo_dark.png',
+                        'assets/images/hunor_badge.png',
                         fit: BoxFit.contain,
                         errorBuilder: (_, __, ___) => const Icon(
                           Icons.shield_outlined,
