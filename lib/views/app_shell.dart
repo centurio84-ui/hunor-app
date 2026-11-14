@@ -76,15 +76,20 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
     final store = context.watch<AppStore>();
     final currentOrg = store.currentOrganization;
     final coin = store.coinBalance;
+    final canExcon = store.canAccessExcon;
+
+    if (!canExcon && (index == 4 || index == 5 || index == 6)) {
+      index = 0;
+    }
 
     final pages = <Widget>[
       const HomePage(),
       const AlertsPage(),
       const CalendarPage(),
       const NewsFeedPage(),
-      const ExconScreen(),
-      const ExconDashboardScreen(),
-      const ParticipantEvaluationHubScreen(),
+      if (canExcon) const ExconScreen() else const SizedBox.shrink(),
+      if (canExcon) const ExconDashboardScreen() else const SizedBox.shrink(),
+      if (canExcon) const ParticipantEvaluationHubScreen() else const SizedBox.shrink(),
       const ProfilePage(),
       OrganizationSwitcherView(
         api: store.api,
@@ -182,60 +187,62 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
                 setState(() => index = 3);
               },
             ),
-            const Divider(color: HunorColors.border),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-              child: Text(
-                'ÉRTÉKELÉS & ELEMZÉS',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: HunorColors.muted,
-                  letterSpacing: 1.1,
+            if (store.canAccessExcon) ...[
+              const Divider(color: HunorColors.border),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                child: Text(
+                  'ÉRTÉKELÉS & ELEMZÉS',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: HunorColors.muted,
+                    letterSpacing: 1.1,
+                  ),
                 ),
               ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.fact_check_outlined, color: HunorColors.red),
-              title: const Text('EXCON Értékelő'),
-              selected: index == 4,
-              onTap: () {
-                Navigator.pop(context);
-                setState(() => index = 4);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.insert_chart_rounded, color: HunorColors.blue),
-              title: const Text(
-                'Értékelő Műszerfal',
-                style: TextStyle(fontWeight: FontWeight.w700),
+              ListTile(
+                leading: const Icon(Icons.fact_check_outlined, color: HunorColors.red),
+                title: const Text('EXCON Értékelő'),
+                selected: index == 4,
+                onTap: () {
+                  Navigator.pop(context);
+                  setState(() => index = 4);
+                },
               ),
-              subtitle: const Text(
-                'Élő KPI-k és grafikonok (/dashboard)',
-                style: TextStyle(fontSize: 11, color: HunorColors.muted),
+              ListTile(
+                leading: const Icon(Icons.insert_chart_rounded, color: HunorColors.blue),
+                title: const Text(
+                  'Értékelő Műszerfal',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+                subtitle: const Text(
+                  'Élő KPI-k és grafikonok (/dashboard)',
+                  style: TextStyle(fontSize: 11, color: HunorColors.muted),
+                ),
+                selected: index == 5,
+                onTap: () {
+                  Navigator.pop(context);
+                  setState(() => index = 5);
+                },
               ),
-              selected: index == 5,
-              onTap: () {
-                Navigator.pop(context);
-                setState(() => index = 5);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.assignment_rounded, color: HunorColors.success),
-              title: const Text(
-                'T0 / T1 Űrlapok',
-                style: TextStyle(fontWeight: FontWeight.w700),
+              ListTile(
+                leading: const Icon(Icons.assignment_rounded, color: HunorColors.success),
+                title: const Text(
+                  'T0 / T1 Űrlapok',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+                subtitle: const Text(
+                  'Beavatkozói önértékelés (/t0, /t1)',
+                  style: TextStyle(fontSize: 11, color: HunorColors.muted),
+                ),
+                selected: index == 6,
+                onTap: () {
+                  Navigator.pop(context);
+                  setState(() => index = 6);
+                },
               ),
-              subtitle: const Text(
-                'Beavatkozói önértékelés (/t0, /t1)',
-                style: TextStyle(fontSize: 11, color: HunorColors.muted),
-              ),
-              selected: index == 6,
-              onTap: () {
-                Navigator.pop(context);
-                setState(() => index = 6);
-              },
-            ),
+            ],
             const Divider(color: HunorColors.border),
             ListTile(
               leading: const Icon(Icons.person_rounded, color: HunorColors.muted),

@@ -128,8 +128,8 @@ class ProfilePage extends StatelessWidget {
           ),
         if (s.showRescueCoins && coin != null) const SizedBox(height: 10),
 
-        // Témaszinkronizáció kártya (RP-THEME-002)
-        if (themeCtrl != null) ...[
+        // Témaszinkronizáció kártya (csak adminoknak)
+        if (themeCtrl != null && s.isAdmin) ...[
           _buildThemeCard(context, themeCtrl, s),
           const SizedBox(height: 10),
         ],
@@ -428,14 +428,22 @@ class ProfilePage extends StatelessWidget {
     await showDialog(
       context: context,
       builder: (c) => AlertDialog(
-        title: const Text('Képességek'),
-        content: TextField(
-          controller: controller,
-          maxLines: 5,
-          decoration: const InputDecoration(
-            labelText: 'Képességek',
-            hintText: 'pl. USAR, Shoring, Medic, Alpine',
-            helperText: 'Vesszővel válaszd el a képességeket.',
+        title: const Text('Képességek szerkesztése'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextField(
+                controller: controller,
+                maxLines: 4,
+                decoration: const InputDecoration(
+                  labelText: 'Képességek',
+                  hintText: 'pl. USAR, Shoring, Medic, Alpin',
+                  helperText: 'Vesszővel válaszd el az egyes képességeket.',
+                ),
+              ),
+            ],
           ),
         ),
         actions: [
@@ -445,9 +453,32 @@ class ProfilePage extends StatelessWidget {
           ),
           FilledButton(
             onPressed: () async {
-              final values = controller.text.split(',').map((x) => x.trim()).where((x) => x.isNotEmpty).toList();
-              await s.replaceOwnSkills(values);
-              if (c.mounted) Navigator.pop(c);
+              try {
+                final values = controller.text
+                    .split(',')
+                    .map((x) => x.trim())
+                    .where((x) => x.isNotEmpty)
+                    .toList();
+                await s.replaceOwnSkills(values);
+                if (c.mounted) Navigator.pop(c);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Képességek sikeresen elmentve!'),
+                      backgroundColor: HunorColors.success,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Hiba a mentéskor: $e'),
+                      backgroundColor: HunorColors.red,
+                    ),
+                  );
+                }
+              }
             },
             child: const Text('Mentés'),
           ),

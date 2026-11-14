@@ -144,16 +144,37 @@ class SupabaseRescuePlatformApi implements RescuePlatformApi {
     }
 
     String role = 'member';
+    bool canAccessExcon = false;
     try {
       final roleRow = await client
           .from('member_roles')
-          .select('role')
+          .select('role, can_access_excon')
           .eq('member_id', user.id)
           .maybeSingle();
-      if (roleRow != null && roleRow['role'] != null) {
-        role = roleRow['role'].toString();
+      if (roleRow != null) {
+        if (roleRow['role'] != null) {
+          role = roleRow['role'].toString();
+        }
+        if (roleRow['can_access_excon'] == true) {
+          canAccessExcon = true;
+        }
       }
     } catch (_) {}
+
+    // Ellenőrizzük, hogy van-e jóváhagyott / kijelölt EXCON szerepe bármely eseményen
+    if (!canAccessExcon && role != 'admin') {
+      try {
+        final ep = await client
+            .from('event_participants')
+            .select('event_id')
+            .eq('member_id', user.id)
+            .eq('participation_role', 'excon')
+            .limit(1);
+        if (ep is List && ep.isNotEmpty) {
+          canAccessExcon = true;
+        }
+      } catch (_) {}
+    }
 
     return Membership(
       id: 'membership-${user.id}',
@@ -161,7 +182,10 @@ class SupabaseRescuePlatformApi implements RescuePlatformApi {
       userId: user.id,
       displayName: user.email?.split('@').first ?? 'HUNOR Tag',
       membershipStatus: MembershipStatus.approved,
-      permissions: [if (role == 'admin') 'members.manage_permissions'],
+      permissions: [
+        if (role == 'admin') 'members.manage_permissions',
+        if (role == 'admin' || canAccessExcon) 'excon.access',
+      ],
       positions: const ['Tag'],
       skills: const [],
       alertable: true,

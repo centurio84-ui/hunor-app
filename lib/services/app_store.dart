@@ -52,6 +52,8 @@ class AppStore extends ChangeNotifier {
   Map<String, Map<String, String>> alertResponseByMember = {};
   Map<String, MemberRole> memberRoles = {};
   MemberRole currentUserRole = MemberRole.member;
+  bool get isAdmin => currentUserRole == MemberRole.admin;
+  bool get canAccessExcon => !isGuest && (isAdmin || (currentMembership?.permissions.contains('excon.access') ?? false));
 
   bool isAuthenticated = false;
   bool isLoading = false;
@@ -289,7 +291,18 @@ class AppStore extends ChangeNotifier {
         memberRoles.clear();
         alertResponseByMember.clear();
       }
-      currentUser=Member(id:profile.user.id,name:profile.user.displayName,rank:membership?.positions.firstOrNull??'Tag',workplace:currentOrganization?.name??'',position:membership?.positions.join(', ')??'',phone:profile.contactPhone??'',skills:membership?.skills??const [],status:(membership?.alertable??false)?AvailabilityStatus.available:AvailabilityStatus.unavailable);
+      final myMember = members.where((m) => m.id == profile.user.id).firstOrNull;
+      final effectiveSkills = myMember?.skills ?? membership?.skills ?? const <String>[];
+      currentUser = Member(
+        id: profile.user.id,
+        name: profile.user.displayName,
+        rank: myMember?.rank ?? membership?.positions.firstOrNull ?? 'Tag',
+        workplace: myMember?.workplace ?? currentOrganization?.name ?? '',
+        position: myMember?.position ?? membership?.positions.join(', ') ?? '',
+        phone: profile.contactPhone ?? myMember?.phone ?? '',
+        skills: effectiveSkills,
+        status: myMember?.status ?? ((membership?.alertable ?? false) ? AvailabilityStatus.available : AvailabilityStatus.unavailable),
+      );
       isAuthenticated=true;
       if (themeController != null && orgId != null) {
         await themeController!.onUserSignedIn(
@@ -597,7 +610,7 @@ class AppStore extends ChangeNotifier {
   }
 
   Future<void> replaceOwnSkills(List<String> skillNames) async {
-    if(isStaging) throw unsupportedStaging;
+    if (isStaging) throw unsupportedStaging;
     if (currentUser != null) {
       currentUser = Member(
         id: currentUser!.id,
@@ -609,6 +622,39 @@ class AppStore extends ChangeNotifier {
         skills: skillNames,
         status: currentUser!.status,
       );
+
+      final memberIdx = members.indexWhere((m) => m.id == currentUser!.id);
+      if (memberIdx != -1) {
+        final old = members[memberIdx];
+        members[memberIdx] = Member(
+          id: old.id,
+          name: old.name,
+          rank: old.rank,
+          workplace: old.workplace,
+          position: old.position,
+          phone: old.phone,
+          skills: skillNames,
+          status: old.status,
+        );
+      }
+
+      if (api is SupabaseRescuePlatformApi && !isGuest) {
+        try {
+          final client = (api as SupabaseRescuePlatformApi).client;
+          final uid = client.auth.currentUser?.id;
+          if (uid != null) {
+            await client.from('skills').delete().eq('member_id', uid);
+            if (skillNames.isNotEmpty) {
+              await client.from('skills').insert([
+                for (final name in skillNames)
+                  {'member_id': uid, 'name': name}
+              ]);
+            }
+          }
+        } catch (e) {
+          debugPrint('Hiba a képességek Supabase-mentésekor: $e');
+        }
+      }
       notifyListeners();
     }
   }

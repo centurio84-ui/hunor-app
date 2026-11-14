@@ -42,12 +42,12 @@ class HunorTheme {
   /// Téma előállítása témadefiníció alapján.
   static ThemeData themeForDefinition(RescueThemeDefinition def) {
     final scheme = ColorScheme.fromSeed(
-      seedColor: HunorColors.gold,
+      seedColor: def.primaryColor,
       brightness: Brightness.dark,
     ).copyWith(
-      primary: HunorColors.gold,
-      onPrimary: HunorColors.navy,
-      secondary: HunorColors.gold,
+      primary: def.primaryColor,
+      onPrimary: Colors.white,
+      secondary: def.accentColor,
       surface: HunorColors.navyCard,
       onSurface: Colors.white,
     );

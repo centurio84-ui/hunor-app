@@ -84,7 +84,7 @@ class HomePage extends StatelessWidget {
                           border: Border.all(color: HunorColors.gold.withOpacity(0.3)),
                         ),
                         child: Image.asset(
-                          'assets/images/hunor_logo.png',
+                          'assets/images/hunor_logo_dark.png',
                           fit: BoxFit.contain,
                           errorBuilder: (_, __, ___) => const Icon(Icons.shield_outlined, size: 30, color: HunorColors.gold),
                         ),
@@ -110,7 +110,7 @@ class HomePage extends StatelessWidget {
                             Text(
                               membership != null
                                   ? 'Tagság: ${membership.membershipStatus.label} • ${membership.positions.join(", ")}'
-                                  : 'Hivatalos katasztrófavédelmi szervezet',
+                                  : 'Központi Műveleti Rendszer',
                               style: const TextStyle(color: HunorColors.muted, fontSize: 12),
                             ),
                           ],

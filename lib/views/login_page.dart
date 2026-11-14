@@ -37,77 +37,49 @@ class _LoginPageState extends State<LoginPage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // HUNOR Címer & Márkafejléc
+                  // Weblap hivatalos logója (hun01usar.hu)
                   Center(
                     child: Container(
-                      width: 96,
-                      height: 96,
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: HunorColors.navyCard,
-                        borderRadius: BorderRadius.circular(24),
-                        border: Border.all(color: HunorColors.gold.withOpacity(0.35), width: 1.5),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.35),
-                            blurRadius: 16,
-                            offset: const Offset(0, 8),
-                          ),
-                        ],
-                      ),
+                      constraints: const BoxConstraints(maxWidth: 240, maxHeight: 110),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       child: Image.asset(
-                        'assets/images/hunor_logo.png',
+                        'assets/images/hunor_logo_dark.png',
                         fit: BoxFit.contain,
                         errorBuilder: (_, __, ___) => const Icon(
                           Icons.shield_outlined,
-                          size: 60,
-                          color: HunorColors.red,
+                          size: 70,
+                          color: HunorColors.gold,
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 12),
                   const Text(
                     'HUNOR USAR',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 26,
+                      fontSize: 24,
                       fontWeight: FontWeight.w900,
                       letterSpacing: 0.5,
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'Katasztrófavédelmi Mentőszervezet',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Center(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  const SizedBox(height: 16),
+                  if (store.isStaging)
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: HunorColors.gold.withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: HunorColors.gold.withOpacity(0.4)),
+                        color: HunorColors.warning.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: HunorColors.warning),
                       ),
                       child: const Text(
-                        'KÖZPONTI MŰVELETI CSAPATPORTÁL',
-                        style: TextStyle(
-                          color: HunorColors.gold,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0.8,
-                        ),
+                        'STAGING · kizárólag fiktív tesztfiókok',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: HunorColors.warning, fontSize: 12, fontWeight: FontWeight.bold),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 28),
 
                   // Bejelentkező Űrlapkártya
                   Container(
