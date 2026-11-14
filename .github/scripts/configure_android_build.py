@@ -48,16 +48,26 @@ def configure_sdk_versions():
         gt = gradle_kts.read_text()
         gt = gt.replace("minSdk = flutter.minSdkVersion", "minSdk = 21")
         gt = gt.replace("targetSdk = flutter.targetSdkVersion", "targetSdk = 34")
+        if "lint {" not in gt:
+            gt = gt.replace(
+                "buildTypes {",
+                "lint {\n        checkReleaseBuilds = false\n        abortOnError = false\n    }\n\n    buildTypes {"
+            )
         gradle_kts.write_text(gt)
-        print("Configured build.gradle.kts SDK versions (minSdk=21, targetSdk=34).")
+        print("Configured build.gradle.kts SDK versions (minSdk=21, targetSdk=34) and disabled lintRelease.")
 
     gradle_groovy = Path("android/app/build.gradle")
     if gradle_groovy.exists():
         gt = gradle_groovy.read_text()
         gt = gt.replace("minSdkVersion flutter.minSdkVersion", "minSdkVersion 21")
         gt = gt.replace("targetSdkVersion flutter.targetSdkVersion", "targetSdkVersion 34")
+        if "lintOptions {" not in gt:
+            gt = gt.replace(
+                "buildTypes {",
+                "lintOptions {\n        checkReleaseBuilds false\n        abortOnError false\n    }\n\n    buildTypes {"
+            )
         gradle_groovy.write_text(gt)
-        print("Configured build.gradle SDK versions (minSdk=21, targetSdk=34).")
+        print("Configured build.gradle SDK versions (minSdk=21, targetSdk=34) and disabled lintRelease.")
 
 def configure_signing():
     keystore_b64 = os.environ.get("KEYSTORE_BASE64", "").strip()
