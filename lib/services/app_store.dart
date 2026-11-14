@@ -94,10 +94,12 @@ class AppStore extends ChangeNotifier {
       currentUser = const Member(
         id: 'guest',
         name: 'HUNOR Vendég',
-        role: MemberRole.member,
-        positions: ['Vendég / Érdeklődő'],
+        rank: 'Érdeklődő',
+        workplace: 'Központi Portál',
+        position: 'Vendég / Érdeklődő',
+        phone: '-',
         skills: [],
-        active: true,
+        status: AvailabilityStatus.available,
       );
       currentOrganization = const Organization(
         id: 'org-hunor',
