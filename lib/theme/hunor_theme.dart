@@ -4,6 +4,7 @@ import '../models/theme_config.dart';
 class HunorColors {
   // Webportál hivatalos HUNOR Navy & Gold paletta (portal/theme.css)
   static const navy = Color(0xFF0B132B);       // --bg: #0B132B
+  static const navyDark = Color(0xFF070C1B);   // Mélysötét navy
   static const navyCard = Color(0xFF1C2541);   // --paper: #1C2541
   static const navyLight = Color(0xFF253358);  // Másodlagos kártya & kiemelés
   static const gold = Color(0xFFFFB703);       // --accent: #FFB703
