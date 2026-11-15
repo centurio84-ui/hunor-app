@@ -690,8 +690,7 @@ class SupabaseRescuePlatformApi implements RescuePlatformApi {
         'start_date': startStr,
         'end_date': endStr,
       });
-    } catch (e) {
-      debugPrint('setMyAvailability error: $e');
+    } catch (_) {
       rethrow;
     }
   }

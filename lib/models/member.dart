@@ -24,6 +24,14 @@ enum AvailabilityStatus {
     'unavailable' => AvailabilityStatus.unavailable,
     _ => AvailabilityStatus.available,
   };
+
+  String toDatabase() => switch (this) {
+    AvailabilityStatus.available => 'available',
+    AvailabilityStatus.vacation => 'vacation',
+    AvailabilityStatus.sick => 'sick',
+    AvailabilityStatus.training => 'training',
+    AvailabilityStatus.unavailable => 'unavailable',
+  };
 }
 
 class Member {
