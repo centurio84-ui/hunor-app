@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import '../services/app_store.dart';
 import '../theme/hunor_theme.dart';
@@ -28,6 +29,11 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      try {
+        await Permission.notification.request();
+      } catch (_) {}
+    });
     if (kReleaseMode) {
       _timer = Timer.periodic(const Duration(seconds: 30), (_) {
         if (mounted) context.read<AppStore>().syncPendingResponses();

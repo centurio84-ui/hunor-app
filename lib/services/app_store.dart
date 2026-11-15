@@ -56,9 +56,9 @@ class AppStore extends ChangeNotifier {
   Future<void> _syncAppBadge() async {
     try {
       final count = totalNotificationCount;
-      if (await AppBadgePlus.isSupported()) {
+      try {
         await AppBadgePlus.updateBadge(count);
-      }
+      } catch (_) {}
     } catch (_) {}
   }
 
@@ -76,12 +76,28 @@ class AppStore extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> simulateIncomingHQMessage() async {
+    final hqMessage = ChatMessage(
+      id: 'hq-test-${DateTime.now().millisecondsSinceEpoch}',
+      authorId: 'hq-system-dispatch',
+      authorName: 'HUNOR Műveleti Központ',
+      content: 'Vétel! Üzenet-jelölő, csipogás és értesítési teszt sikeresen nyugtázva a központ által.',
+      createdAt: DateTime.now(),
+    );
+    chatMessages.add(hqMessage);
+    unreadChatCount++;
+    triggerNotificationChime();
+    await _syncAppBadge();
+    notifyListeners();
+  }
+
   void markChatAsRead() {
-    if (unreadChatCount > 0) {
-      unreadChatCount = 0;
-      unawaited(_syncAppBadge());
-      notifyListeners();
+    unreadChatCount = 0;
+    unawaited(_syncAppBadge());
+    if (api is SupabaseRescuePlatformApi && chatMessages.isNotEmpty) {
+      unawaited((api as SupabaseRescuePlatformApi).markChatRead(messageId: chatMessages.last.id));
     }
+    notifyListeners();
   }
 
   void markNewsAsRead() {
@@ -111,6 +127,14 @@ class AppStore extends ChangeNotifier {
     if (api is SupabaseRescuePlatformApi) {
       await (api as SupabaseRescuePlatformApi).sendChatMessage(content);
       await loadChatMessages();
+
+      // Ha tesztelőként tesztet küldött, a rendszer 3 mp múlva szimulál egy bejövő központi választ
+      final lower = content.toLowerCase();
+      if (lower.contains('teszt') || lower.contains('test')) {
+        Future.delayed(const Duration(seconds: 3), () {
+          simulateIncomingHQMessage();
+        });
+      }
     }
   }
   CoinBalance? coinBalance;
@@ -354,12 +378,20 @@ class AppStore extends ChangeNotifier {
           : ((membership?.hasPermission('members.manage_permissions')??false)?MemberRole.admin:MemberRole.member);
       events=nextEvents;alerts=nextAlerts;news=nextNews;eventParticipations=nextParticipations;eventRegistrations=nextRegistrations;coinBalance=null;alertResponses=responses;
       if (api is SupabaseRescuePlatformApi) {
-        members = await (api as SupabaseRescuePlatformApi).getMembers();
-        unawaited((api as SupabaseRescuePlatformApi).recordAppHeartbeat());
-        chatMessages = await (api as SupabaseRescuePlatformApi).getChatMessages();
+        final sbApi = api as SupabaseRescuePlatformApi;
+        members = await sbApi.getMembers();
+        unawaited(sbApi.recordAppHeartbeat());
+        chatMessages = await sbApi.getChatMessages();
+
+        final serverUnread = await sbApi.getUnreadChatCount();
+        if (serverUnread > 0) {
+          unreadChatCount = serverUnread;
+        }
+        unawaited(_syncAppBadge());
+
         if (!_isChatSubscribed) {
           _isChatSubscribed = true;
-          (api as SupabaseRescuePlatformApi).subscribeToChat((msg) {
+          sbApi.subscribeToChat((msg) {
             final myId = currentUser?.id ?? profile.user.id;
             if (msg.authorId != myId) {
               unreadChatCount++;

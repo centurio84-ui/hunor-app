@@ -95,6 +95,22 @@ class _ChatPageState extends State<ChatPage> {
         ),
         actions: [
           IconButton(
+            tooltip: 'Központi teszt-válasz (3 mp múlva érkezik)',
+            icon: const Icon(Icons.smart_toy_outlined, color: HunorColors.gold),
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('🤖 Központi teszt-válasz indítva! 3 mp múlva bejövő üzenet érkezik csipogással és jelvénnyel...'),
+                  backgroundColor: HunorColors.surface2,
+                  duration: Duration(seconds: 3),
+                ),
+              );
+              Future.delayed(const Duration(seconds: 3), () {
+                store.simulateIncomingHQMessage();
+              });
+            },
+          ),
+          IconButton(
             tooltip: 'Értesítés és jelvény tesztelése',
             icon: const Icon(Icons.notifications_active_outlined, color: HunorColors.orange),
             onPressed: () async {
@@ -282,12 +298,34 @@ class _MessageBubble extends StatelessWidget {
               style: const TextStyle(color: Colors.white, fontSize: 14, height: 1.3),
             ),
             const SizedBox(height: 4),
-            Text(
-              timeStr,
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.45),
-                fontSize: 10,
-              ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  timeStr,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.45),
+                    fontSize: 10,
+                  ),
+                ),
+                if (isMe) ...[
+                  const SizedBox(width: 4),
+                  const Icon(
+                    Icons.done_all_rounded,
+                    size: 14,
+                    color: HunorColors.gold,
+                  ),
+                  const SizedBox(width: 2),
+                  Text(
+                    'Kézbesítve',
+                    style: TextStyle(
+                      color: HunorColors.gold.withOpacity(0.85),
+                      fontSize: 9,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ],
             ),
           ],
         ),

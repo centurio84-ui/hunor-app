@@ -677,6 +677,27 @@ class SupabaseRescuePlatformApi implements RescuePlatformApi {
     });
   }
 
+  Future<int> getUnreadChatCount() async {
+    try {
+      final res = await client.rpc('hunor_chat_unread_count');
+      if (res != null) {
+        final val = int.tryParse(res.toString());
+        if (val != null) return val;
+      }
+    } catch (_) {}
+    return 0;
+  }
+
+  Future<void> markChatRead({String? messageId}) async {
+    try {
+      if (messageId != null && messageId.isNotEmpty) {
+        await client.rpc('hunor_mark_chat_read', params: {'p_message_id': messageId});
+      } else {
+        await client.rpc('hunor_mark_chat_read');
+      }
+    } catch (_) {}
+  }
+
   RealtimeChannel? _chatChannel;
 
   void subscribeToChat(void Function(ChatMessage msg) onMessage) {
