@@ -95,6 +95,22 @@ class _ChatPageState extends State<ChatPage> {
         ),
         actions: [
           IconButton(
+            tooltip: 'Értesítés és jelvény tesztelése',
+            icon: const Icon(Icons.notifications_active_outlined, color: HunorColors.orange),
+            onPressed: () async {
+              await store.simulateTestNotification();
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('🔔 Értesítési teszt: Hang lejátszva, rezgés aktív, app ikon jelvény frissítve!'),
+                    backgroundColor: HunorColors.surface2,
+                    duration: Duration(seconds: 3),
+                  ),
+                );
+              }
+            },
+          ),
+          IconButton(
             tooltip: 'Frissítés',
             icon: const Icon(Icons.refresh_rounded),
             onPressed: () async {

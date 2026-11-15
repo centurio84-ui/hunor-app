@@ -353,29 +353,119 @@ class SupabaseRescuePlatformApi implements RescuePlatformApi {
 
   // --- Hírek és közlemények (News) ---
 
+  Future<RescueNewsItem> _parseNewsPostRow(Map<String, dynamic> row) async {
+    final rawBody = (row['body'] ?? row['content'] ?? '').toString().trim();
+    final leadVal = (row['lead'] ?? row['summary'] ?? '').toString().trim();
+    final effectiveSummary = leadVal.isNotEmpty
+        ? leadVal
+        : (rawBody.length > 180 ? '${rawBody.substring(0, 180)}...' : rawBody);
+
+    final rawMedia = row['media'];
+    final List<RescueNewsMedia> mediaList = [];
+    final List<String> imageUrls = [];
+
+    if (rawMedia is List) {
+      for (final m in rawMedia) {
+        if (m is Map) {
+          final path = m['path']?.toString() ?? '';
+          final name = m['name']?.toString() ?? '';
+          final caption = m['caption']?.toString() ?? '';
+          final kind = m['kind']?.toString() ?? (name.toLowerCase().endsWith('.mp4') || name.toLowerCase().endsWith('.mov') ? 'video' : 'image');
+          String url = '';
+          if (path.isNotEmpty) {
+            if (path.startsWith('http://') || path.startsWith('https://')) {
+              url = path;
+            } else {
+              try {
+                url = await client.storage.from('hunor-news').createSignedUrl(path, 604800);
+              } catch (_) {
+                try {
+                  url = client.storage.from('hunor-news').getPublicUrl(path);
+                } catch (_) {}
+              }
+            }
+          }
+          final mediaItem = RescueNewsMedia(
+            path: path,
+            name: name,
+            caption: caption,
+            kind: kind,
+            url: url,
+          );
+          mediaList.add(mediaItem);
+          if (url.isNotEmpty && kind != 'video') {
+            imageUrls.add(url);
+          }
+        } else if (m is String && m.isNotEmpty) {
+          String url = m;
+          if (!m.startsWith('http')) {
+            try {
+              url = await client.storage.from('hunor-news').createSignedUrl(m, 604800);
+            } catch (_) {
+              try {
+                url = client.storage.from('hunor-news').getPublicUrl(m);
+              } catch (_) {}
+            }
+          }
+          mediaList.add(RescueNewsMedia(path: m, name: '', url: url));
+          imageUrls.add(url);
+        }
+      }
+    }
+
+    final rawLinks = row['links'];
+    final List<RescueNewsLink> links = [];
+    if (rawLinks is List) {
+      for (final l in rawLinks) {
+        if (l is Map) {
+          links.add(RescueNewsLink(
+            label: l['label']?.toString() ?? '',
+            url: l['url']?.toString() ?? '',
+          ));
+        }
+      }
+    }
+
+    return RescueNewsItem(
+      id: row['id']?.toString() ?? '',
+      organizationId: _currentOrgId,
+      title: row['title']?.toString() ?? '',
+      summary: effectiveSummary,
+      content: rawBody.isNotEmpty ? rawBody : effectiveSummary,
+      authorName: row['author_name']?.toString() ?? (row['author_id'] != null ? 'HUNOR Parancsnokság' : null),
+      publishedAt: DateTime.tryParse(row['created_at']?.toString() ?? '') ?? DateTime.now(),
+      isPinned: row['pinned'] == true || row['is_pinned'] == true,
+      media: mediaList,
+      imageUrls: imageUrls,
+      links: links,
+      category: row['category']?.toString(),
+      mapQuery: row['map_query']?.toString(),
+    );
+  }
+
   @override
   Future<List<RescueNewsItem>> getNews({int limit = 20, String? cursor}) async {
     try {
       final List<dynamic> rows = await client
           .from('news_posts')
           .select('*')
+          .eq('active', true)
           .order('created_at', ascending: false)
           .limit(limit);
 
-      return rows.map((row) {
-        return RescueNewsItem(
-          id: row['id']?.toString() ?? '',
-          organizationId: _currentOrgId,
-          title: row['title']?.toString() ?? '',
-          summary: row['lead']?.toString() ?? row['summary']?.toString() ?? '',
-          content: row['content']?.toString() ?? '',
-          authorName: row['author_name']?.toString(),
-          publishedAt: DateTime.tryParse(row['created_at']?.toString() ?? '') ?? DateTime.now(),
-          isPinned: row['pinned'] == true,
-        );
-      }).toList();
+      return await Future.wait(rows.map((row) => _parseNewsPostRow(Map<String, dynamic>.from(row))));
     } catch (_) {
-      return [];
+      try {
+        final List<dynamic> rows = await client
+            .from('news_posts')
+            .select('*')
+            .order('created_at', ascending: false)
+            .limit(limit);
+
+        return await Future.wait(rows.map((row) => _parseNewsPostRow(Map<String, dynamic>.from(row))));
+      } catch (_) {
+        return [];
+      }
     }
   }
 
@@ -387,16 +477,7 @@ class SupabaseRescuePlatformApi implements RescuePlatformApi {
         .eq('id', newsId)
         .single();
 
-    return RescueNewsItem(
-      id: row['id']?.toString() ?? '',
-      organizationId: _currentOrgId,
-      title: row['title']?.toString() ?? '',
-      summary: row['lead']?.toString() ?? row['summary']?.toString() ?? '',
-      content: row['content']?.toString() ?? '',
-      authorName: row['author_name']?.toString(),
-      publishedAt: DateTime.tryParse(row['created_at']?.toString() ?? '') ?? DateTime.now(),
-      isPinned: row['pinned'] == true,
-    );
+    return _parseNewsPostRow(Map<String, dynamic>.from(row));
   }
 
   // --- Riasztások (Alerts) ---

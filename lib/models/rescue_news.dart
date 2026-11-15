@@ -25,6 +25,62 @@ extension NewsAudienceX on NewsAudience {
   }
 }
 
+class RescueNewsMedia {
+  final String path;
+  final String name;
+  final String caption;
+  final String kind;
+  final String url;
+
+  const RescueNewsMedia({
+    required this.path,
+    required this.name,
+    this.caption = '',
+    this.kind = 'image',
+    this.url = '',
+  });
+
+  factory RescueNewsMedia.fromJson(Map<String, dynamic> json, {String url = ''}) {
+    return RescueNewsMedia(
+      path: json['path']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      caption: json['caption']?.toString() ?? '',
+      kind: json['kind']?.toString() ?? (json['mime']?.toString().startsWith('video') == true ? 'video' : 'image'),
+      url: url.isNotEmpty ? url : (json['url']?.toString() ?? ''),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'path': path,
+    'name': name,
+    'caption': caption,
+    'kind': kind,
+    'url': url,
+  };
+}
+
+class RescueNewsLink {
+  final String label;
+  final String url;
+
+  const RescueNewsLink({
+    required this.label,
+    required this.url,
+  });
+
+  factory RescueNewsLink.fromJson(Map<String, dynamic> json) {
+    return RescueNewsLink(
+      label: json['label']?.toString() ?? '',
+      url: json['url']?.toString() ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'label': label,
+    'url': url,
+  };
+}
+
 class RescueNewsItem {
   final String id;
   final String organizationId;
@@ -37,6 +93,11 @@ class RescueNewsItem {
   final bool isPinned;
   final List<String> tags;
   final String? externalUrl;
+  final List<RescueNewsMedia> media;
+  final List<String> imageUrls;
+  final List<RescueNewsLink> links;
+  final String? category;
+  final String? mapQuery;
 
   const RescueNewsItem({
     required this.id,
@@ -50,12 +111,14 @@ class RescueNewsItem {
     this.isPinned = false,
     this.tags = const [],
     this.externalUrl,
+    this.media = const [],
+    this.imageUrls = const [],
+    this.links = const [],
+    this.category,
+    this.mapQuery,
   });
 
   factory RescueNewsItem.fromJson(Map<String, dynamic> json) {
-    final summaryVal = json['summary'] ?? json['lead'] ?? '';
-    
-    // Body lehet közvetlen String, vagy a szerződés szerinti blokkok/bekezdések tömbje
     String contentVal = '';
     final rawBody = json['content'] ?? json['body'];
     if (rawBody is List) {
@@ -64,23 +127,66 @@ class RescueNewsItem {
           .where((s) => s.toString().trim().isNotEmpty)
           .join('\n\n');
     } else if (rawBody != null) {
-      contentVal = rawBody.toString();
-    } else {
-      contentVal = summaryVal.toString();
+      contentVal = rawBody.toString().trim();
+    }
+
+    final rawSummary = (json['summary'] ?? json['lead'] ?? '').toString().trim();
+    final String summaryVal = rawSummary.isNotEmpty
+        ? rawSummary
+        : (contentVal.length > 180 ? '${contentVal.substring(0, 180)}...' : contentVal);
+
+    if (contentVal.isEmpty && summaryVal.isNotEmpty) {
+      contentVal = summaryVal;
+    }
+
+    final mediaList = <RescueNewsMedia>[];
+    final images = <String>[];
+    if (json['media'] is List) {
+      for (final m in (json['media'] as List)) {
+        if (m is Map) {
+          final mediaItem = RescueNewsMedia.fromJson(Map<String, dynamic>.from(m));
+          mediaList.add(mediaItem);
+          if (mediaItem.url.isNotEmpty && mediaItem.kind != 'video') {
+            images.add(mediaItem.url);
+          }
+        }
+      }
+    }
+    if (json['imageUrls'] is List) {
+      for (final img in (json['imageUrls'] as List)) {
+        final s = img.toString().trim();
+        if (s.isNotEmpty && !images.contains(s)) {
+          images.add(s);
+        }
+      }
+    }
+
+    final linkList = <RescueNewsLink>[];
+    if (json['links'] is List) {
+      for (final l in (json['links'] as List)) {
+        if (l is Map) {
+          linkList.add(RescueNewsLink.fromJson(Map<String, dynamic>.from(l)));
+        }
+      }
     }
 
     return RescueNewsItem(
       id: (json['id'] ?? json['content_id'])?.toString() ?? '',
       organizationId: json['organization_id']?.toString() ?? '',
       title: json['title']?.toString() ?? '',
-      summary: summaryVal.toString(),
+      summary: summaryVal,
       content: contentVal,
       authorName: (json['author_name'] ?? json['author_display_name'])?.toString(),
       publishedAt: DateTime.tryParse((json['published_at'] ?? json['created_at'])?.toString() ?? '') ?? DateTime.now(),
       audience: NewsAudienceX.fromString(json['audience']?.toString()),
-      isPinned: json['is_pinned'] == true,
+      isPinned: json['is_pinned'] == true || json['pinned'] == true,
       tags: (json['tags'] as List?)?.map((e) => e.toString()).toList() ?? const [],
       externalUrl: json['external_url']?.toString(),
+      media: mediaList,
+      imageUrls: images,
+      links: linkList,
+      category: json['category']?.toString(),
+      mapQuery: json['map_query']?.toString(),
     );
   }
 
@@ -96,5 +202,10 @@ class RescueNewsItem {
     'is_pinned': isPinned,
     'tags': tags,
     if (externalUrl != null) 'external_url': externalUrl,
+    'media': media.map((m) => m.toJson()).toList(),
+    'imageUrls': imageUrls,
+    'links': links.map((l) => l.toJson()).toList(),
+    if (category != null) 'category': category,
+    if (mapQuery != null) 'map_query': mapQuery,
   };
 }

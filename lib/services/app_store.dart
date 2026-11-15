@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:app_badge_plus/app_badge_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import '../models/chat_message.dart';
@@ -52,16 +53,33 @@ class AppStore extends ChangeNotifier {
   int get totalNotificationCount => unreadChatCount + unreadNewsCount + unreadEventsCount;
   bool _isChatSubscribed = false;
 
+  Future<void> _syncAppBadge() async {
+    try {
+      final count = totalNotificationCount;
+      if (await AppBadgePlus.isSupported()) {
+        await AppBadgePlus.updateBadge(count);
+      }
+    } catch (_) {}
+  }
+
   void triggerNotificationChime() {
     try {
       SystemSound.play(SystemSoundType.alert);
-      HapticFeedback.mediumImpact();
+      HapticFeedback.heavyImpact();
     } catch (_) {}
+  }
+
+  Future<void> simulateTestNotification() async {
+    unreadChatCount++;
+    triggerNotificationChime();
+    await _syncAppBadge();
+    notifyListeners();
   }
 
   void markChatAsRead() {
     if (unreadChatCount > 0) {
       unreadChatCount = 0;
+      unawaited(_syncAppBadge());
       notifyListeners();
     }
   }
@@ -69,6 +87,7 @@ class AppStore extends ChangeNotifier {
   void markNewsAsRead() {
     if (unreadNewsCount > 0) {
       unreadNewsCount = 0;
+      unawaited(_syncAppBadge());
       notifyListeners();
     }
   }
@@ -76,6 +95,7 @@ class AppStore extends ChangeNotifier {
   void markEventsAsRead() {
     if (unreadEventsCount > 0) {
       unreadEventsCount = 0;
+      unawaited(_syncAppBadge());
       notifyListeners();
     }
   }
@@ -344,6 +364,7 @@ class AppStore extends ChangeNotifier {
             if (msg.authorId != myId) {
               unreadChatCount++;
               triggerNotificationChime();
+              unawaited(_syncAppBadge());
             }
             if (!chatMessages.any((m) => m.id == msg.id)) {
               chatMessages.add(msg);

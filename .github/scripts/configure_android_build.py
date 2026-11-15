@@ -33,16 +33,54 @@ def configure_manifest():
     manifest = Path("android/app/src/main/AndroidManifest.xml")
     if manifest.exists():
         text = manifest.read_text()
+        badge_permissions = """
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Launcher icon badges for various Android OEMs -->
+    <uses-permission android:name="com.sec.android.provider.badge.permission.READ" />
+    <uses-permission android:name="com.sec.android.provider.badge.permission.WRITE" />
+    <uses-permission android:name="com.htc.launcher.permission.READ_SETTINGS" />
+    <uses-permission android:name="com.htc.launcher.permission.UPDATE_SHORTCUT" />
+    <uses-permission android:name="com.sonyericsson.home.permission.BROADCAST_BADGE" />
+    <uses-permission android:name="com.sonymobile.home.permission.PROVIDER_INSERT_BADGE" />
+    <uses-permission android:name="com.anddoes.launcher.permission.READ_SETTINGS" />
+    <uses-permission android:name="com.anddoes.launcher.permission.UPDATE_SHORTCUT" />
+    <uses-permission android:name="com.huawei.android.launcher.permission.CHANGE_BADGE" />
+    <uses-permission android:name="com.huawei.android.launcher.permission.READ_SETTINGS" />
+    <uses-permission android:name="com.huawei.android.launcher.permission.WRITE_SETTINGS" />
+    <uses-permission android:name="com.oppo.launcher.permission.READ_SETTINGS" />
+    <uses-permission android:name="com.oppo.launcher.permission.WRITE_SETTINGS" />
+    <uses-permission android:name="me.everything.badger.permission.BADGE_COUNT_READ" />
+    <uses-permission android:name="me.everything.badger.permission.BADGE_COUNT_WRITE" />
+"""
         if "android.permission.INTERNET" not in text:
             text = text.replace(
                 "<application",
-                '<uses-permission android:name="android.permission.INTERNET" />\n    <application android:allowBackup="false" android:usesCleartextTraffic="false"',
+                badge_permissions + '\n    <application android:allowBackup="false" android:usesCleartextTraffic="false"',
                 1,
             )
         import re
         text = re.sub(r'android:label="[^"]*"', 'android:label="MAD Tech Rescue Platform"', text)
         manifest.write_text(text)
         print("Configured AndroidManifest.xml permissions and label to MAD Tech Rescue Platform.")
+
+def configure_launcher_icons():
+    import shutil
+    mapping = {
+        "mipmap-xxxhdpi": "assets/launcher_icons/icon_192.png",
+        "mipmap-xxhdpi": "assets/launcher_icons/icon_144.png",
+        "mipmap-xhdpi": "assets/launcher_icons/icon_96.png",
+        "mipmap-hdpi": "assets/launcher_icons/icon_72.png",
+        "mipmap-mdpi": "assets/launcher_icons/icon_48.png",
+    }
+    for folder, src in mapping.items():
+        dst_folder = Path(f"android/app/src/main/res/{folder}")
+        dst_folder.mkdir(parents=True, exist_ok=True)
+        src_path = Path(src)
+        if src_path.exists():
+            shutil.copy2(src_path, dst_folder / "ic_launcher.png")
+            print(f"Installed {src} -> {dst_folder}/ic_launcher.png")
 
 def configure_sdk_versions():
     gradle_kts = Path("android/app/build.gradle.kts")
@@ -128,4 +166,5 @@ if __name__ == "__main__":
     configure_google_services()
     configure_manifest()
     configure_sdk_versions()
+    configure_launcher_icons()
     configure_signing()
