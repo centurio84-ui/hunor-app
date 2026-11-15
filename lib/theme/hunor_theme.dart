@@ -14,6 +14,7 @@ class HunorColors {
   // Klasszikus HUNOR piros
   static const red = Color(0xFFD71920);
   static const redDark = Color(0xFFA80F14);
+  static const orange = Color(0xFFFB8500); // Műveleti narancs
 
   // Kompatibilitási aliasok a meglévő kódhoz
   static const graphite = navy;
