@@ -15,80 +15,84 @@ class AlertsPage extends StatelessWidget {
     final archived = s.alerts.where((a) => !a.isActive).toList();
     final canDispatch = s.isAdmin || (s.currentMembership?.hasPermission('alerts.dispatch') ?? false) || !s.isGuest;
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      floatingActionButton: canDispatch
-          ? FloatingActionButton.extended(
-              backgroundColor: HunorColors.exercise,
-              foregroundColor: Colors.white,
-              icon: const Icon(Icons.add_alert_rounded),
-              label: const Text('Próbariasztás', style: TextStyle(fontWeight: FontWeight.bold)),
-              onPressed: () => _openCreateAlertSheet(context, s),
-            )
-          : null,
-      body: RefreshIndicator(
-        onRefresh: s.loadData,
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(12, 8, 12, 80),
-          children: [
-            if (canDispatch) ...[
-              Card(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  side: BorderSide(color: HunorColors.exercise.withOpacity(0.4)),
-                ),
-                color: HunorColors.surface1,
-                child: Padding(
-                  padding: const EdgeInsets.all(14),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: HunorColors.exercise.withAlpha(35),
-                          borderRadius: BorderRadius.circular(10),
+    return RefreshIndicator(
+      onRefresh: s.loadData,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(14, 10, 14, 28),
+        children: [
+          if (canDispatch) ...[
+            Card(
+              color: HunorColors.surface1,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: BorderSide(color: HunorColors.exercise.withOpacity(0.4), width: 1.5),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: HunorColors.exercise.withAlpha(35),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(Icons.campaign_rounded, color: HunorColors.exercise, size: 22),
                         ),
-                        child: const Icon(Icons.campaign_rounded, color: HunorColors.exercise, size: 24),
-                      ),
-                      const SizedBox(width: 12),
-                      const Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'ADMINISZTRÁTORI PRÓBARIASZTÁS',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: 0.8,
-                                color: HunorColors.exercise,
+                        const SizedBox(width: 12),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'ADMINISZTRÁTORI MŰVELET',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 0.9,
+                                  color: HunorColors.exercise,
+                                ),
                               ),
-                            ),
-                            SizedBox(height: 2),
-                            Text(
-                              'Próbariasztást küldhetsz a tesztelőknek és a csapatnak.',
-                              style: TextStyle(fontSize: 12, color: HunorColors.muted),
-                            ),
-                          ],
+                              SizedBox(height: 2),
+                              Text(
+                                'Próbariasztás Kiküldése',
+                                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Colors.white),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      FilledButton.tonal(
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      'Próbariasztást küldhetsz ki a mentőtagoknak és tesztelőknek az állomány bevethetőségének ellenőrzésére.',
+                      style: TextStyle(fontSize: 12, color: HunorColors.muted, height: 1.3),
+                    ),
+                    const SizedBox(height: 14),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.icon(
                         style: FilledButton.styleFrom(
                           backgroundColor: HunorColors.exercise,
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
+                        icon: const Icon(Icons.add_alert_rounded, size: 18),
+                        label: const Text('Új próbariasztás indítása', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                         onPressed: () => _openCreateAlertSheet(context, s),
-                        child: const Text('＋ Indítás', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 10),
-            ],
+            ),
+            const SizedBox(height: 14),
+          ],
             if (active.isNotEmpty) ...[
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
@@ -138,8 +142,7 @@ class AlertsPage extends StatelessWidget {
             ],
           ],
         ),
-      ),
-    );
+      );
   }
 
   void _openCreateAlertSheet(BuildContext context, AppStore s) {
@@ -220,6 +223,8 @@ class _AlertCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       alert.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
