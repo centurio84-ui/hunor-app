@@ -6,6 +6,7 @@ import '../services/app_store.dart';
 import '../theme/hunor_theme.dart';
 import 'alerts_page.dart';
 import 'calendar_page.dart';
+import 'chat_page.dart';
 import 'excon_dashboard_screen.dart';
 import 'excon_screen.dart';
 import 'home_page.dart';
@@ -41,14 +42,14 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
     switch (pageIndex) {
       case 0:
         return 0; // Főoldal
+      case 9:
+        return 1; // Chat
       case 1:
-        return 1; // Riasztások
+        return 2; // Riasztások
       case 2:
-        return 2; // Naptár
+        return 3; // Naptár
       case 3:
-        return 3; // Hírek
-      case 7:
-        return 4; // Profil
+        return 4; // Hírek
       default:
         return 0;
     }
@@ -59,13 +60,13 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
       case 0:
         return 0; // Főoldal
       case 1:
-        return 1; // Riasztások
+        return 9; // Chat
       case 2:
-        return 2; // Naptár
+        return 1; // Riasztások
       case 3:
-        return 3; // Hírek
+        return 2; // Naptár
       case 4:
-        return 7; // Profil
+        return 3; // Hírek
       default:
         return 0;
     }
@@ -95,6 +96,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
         api: store.api,
         onOrganizationChanged: () => store.loadData(),
       ),
+      const ChatPage(),
     ];
 
     return Scaffold(
@@ -158,6 +160,28 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
               onTap: () {
                 Navigator.pop(context);
                 setState(() => index = 0);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.chat_bubble_rounded, color: HunorColors.muted),
+              title: const Text('Csapat Chat'),
+              trailing: store.unreadChatCount > 0
+                  ? Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: HunorColors.red,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        '${store.unreadChatCount}',
+                        style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                      ),
+                    )
+                  : null,
+              selected: index == 9,
+              onTap: () {
+                Navigator.pop(context);
+                setState(() => index = 9);
               },
             ),
             ListTile(
@@ -305,6 +329,17 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
           ),
         ),
         actions: [
+          IconButton(
+            tooltip: 'Csapat Chat',
+            icon: store.unreadChatCount > 0
+                ? Badge.count(
+                    count: store.unreadChatCount,
+                    backgroundColor: HunorColors.red,
+                    child: const Icon(Icons.chat_bubble_rounded),
+                  )
+                : const Icon(Icons.chat_bubble_outline_rounded),
+            onPressed: () => setState(() => index = 9),
+          ),
           if (store.isGuest)
             Padding(
               padding: const EdgeInsets.only(right: 12),
@@ -357,32 +392,61 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
       ]),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _bottomNavIndex(index),
-        onDestinationSelected: (i) => setState(() => index = _pageIndexFromNav(i)),
-        destinations: const [
-          NavigationDestination(
+        onDestinationSelected: (i) {
+          final targetPage = _pageIndexFromNav(i);
+          if (targetPage == 9) store.markChatAsRead();
+          if (targetPage == 3) store.markNewsAsRead();
+          setState(() => index = targetPage);
+        },
+        destinations: [
+          const NavigationDestination(
             icon: Icon(Icons.home_outlined),
             selectedIcon: Icon(Icons.home_rounded),
             label: 'Főoldal',
           ),
           NavigationDestination(
+            icon: store.unreadChatCount > 0
+                ? Badge.count(
+                    count: store.unreadChatCount,
+                    backgroundColor: HunorColors.red,
+                    child: const Icon(Icons.chat_bubble_outline_rounded),
+                  )
+                : const Icon(Icons.chat_bubble_outline_rounded),
+            selectedIcon: store.unreadChatCount > 0
+                ? Badge.count(
+                    count: store.unreadChatCount,
+                    backgroundColor: HunorColors.red,
+                    child: const Icon(Icons.chat_bubble_rounded),
+                  )
+                : const Icon(Icons.chat_bubble_rounded),
+            label: 'Chat',
+          ),
+          const NavigationDestination(
             icon: Icon(Icons.warning_amber_outlined),
             selectedIcon: Icon(Icons.warning_amber_rounded),
             label: 'Riasztások',
           ),
-          NavigationDestination(
+          const NavigationDestination(
             icon: Icon(Icons.calendar_month_outlined),
             selectedIcon: Icon(Icons.calendar_month_rounded),
             label: 'Naptár',
           ),
           NavigationDestination(
-            icon: Icon(Icons.newspaper_outlined),
-            selectedIcon: Icon(Icons.newspaper_rounded),
+            icon: store.unreadNewsCount > 0
+                ? Badge.count(
+                    count: store.unreadNewsCount,
+                    backgroundColor: HunorColors.red,
+                    child: const Icon(Icons.newspaper_outlined),
+                  )
+                : const Icon(Icons.newspaper_outlined),
+            selectedIcon: store.unreadNewsCount > 0
+                ? Badge.count(
+                    count: store.unreadNewsCount,
+                    backgroundColor: HunorColors.red,
+                    child: const Icon(Icons.newspaper_rounded),
+                  )
+                : const Icon(Icons.newspaper_rounded),
             label: 'Hírek',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.person_outline_rounded),
-            selectedIcon: Icon(Icons.person_rounded),
-            label: 'Profil',
           ),
         ],
       ),

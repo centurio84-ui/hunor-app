@@ -170,11 +170,18 @@ class ProfilePage extends StatelessWidget {
                     runSpacing: 8,
                     children: [for (final x in u.skills) Chip(label: Text(x))],
                   ),
-                const SizedBox(height: 12),
-                OutlinedButton.icon(
-                  onPressed: () => _editSkills(context, s, u.skills),
-                  icon: const Icon(Icons.edit_outlined),
-                  label: const Text('Képességek szerkesztése'),
+                const SizedBox(height: 10),
+                const Row(
+                  children: [
+                    Icon(Icons.info_outline, size: 15, color: HunorColors.muted),
+                    SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        'A képességek módosítása a központi webes felületen (hun01usar.hu) érhető el.',
+                        style: TextStyle(fontSize: 11, color: HunorColors.muted, fontStyle: FontStyle.italic),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:supabase_flutter/supabase_flutter.dart' hide User;
 import '../config.dart';
 import '../models/api_error.dart';
+import '../models/chat_message.dart';
 import '../models/coin_balance.dart';
 import '../models/event_participation.dart';
 import '../models/installation.dart';
@@ -564,6 +565,65 @@ class SupabaseRescuePlatformApi implements RescuePlatformApi {
     } catch (_) {
       return [];
     }
+  }
+
+  // --- Csapat Chat (Team Chat) ---
+
+  Future<List<ChatMessage>> getChatMessages({int limit = 60}) async {
+    try {
+      final List<dynamic> rows = await client
+          .from('team_chat_messages')
+          .select('id, author_id, content, created_at, profiles(name)')
+          .order('created_at', ascending: false)
+          .limit(limit);
+
+      final list = rows.map((r) => ChatMessage.fromJson(r as Map<String, dynamic>)).toList();
+      return list.reversed.toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<void> sendChatMessage(String content) async {
+    final user = client.auth.currentUser;
+    if (user == null) throw const UnauthorizedException();
+    final text = content.trim();
+    if (text.isEmpty) return;
+
+    await client.from('team_chat_messages').insert({
+      'author_id': user.id,
+      'content': text,
+    });
+  }
+
+  RealtimeChannel? _chatChannel;
+
+  void subscribeToChat(void Function(ChatMessage msg) onMessage) {
+    try {
+      _chatChannel?.unsubscribe();
+      _chatChannel = client.channel('public:team_chat_messages').onPostgresChanges(
+        event: PostgresChangeEvent.insert,
+        schema: 'public',
+        table: 'team_chat_messages',
+        callback: (payload) async {
+          try {
+            final id = payload.newRecord['id'];
+            if (id != null) {
+              final row = await client
+                  .from('team_chat_messages')
+                  .select('id, author_id, content, created_at, profiles(name)')
+                  .eq('id', id)
+                  .maybeSingle();
+              if (row != null) {
+                onMessage(ChatMessage.fromJson(row));
+                return;
+              }
+            }
+            onMessage(ChatMessage.fromJson(payload.newRecord));
+          } catch (_) {}
+        },
+      )..subscribe();
+    } catch (_) {}
   }
 
   // --- Értesítések és eszközregisztráció ---

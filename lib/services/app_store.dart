@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
+import '../models/chat_message.dart';
 import '../api/mock_rescue_platform_api.dart';
 import '../api/staging_api.dart';
 import '../api/supabase_rescue_platform_api.dart';
@@ -43,6 +45,54 @@ class AppStore extends ChangeNotifier {
   Map<String, EventParticipation> eventParticipations = {};
   Map<String, EventRegistrationInfo> eventRegistrations = {};
   List<Member> members = [];
+  List<ChatMessage> chatMessages = [];
+  int unreadChatCount = 0;
+  int unreadNewsCount = 0;
+  int unreadEventsCount = 0;
+  int get totalNotificationCount => unreadChatCount + unreadNewsCount + unreadEventsCount;
+  bool _isChatSubscribed = false;
+
+  void triggerNotificationChime() {
+    try {
+      SystemSound.play(SystemSoundType.alert);
+      HapticFeedback.mediumImpact();
+    } catch (_) {}
+  }
+
+  void markChatAsRead() {
+    if (unreadChatCount > 0) {
+      unreadChatCount = 0;
+      notifyListeners();
+    }
+  }
+
+  void markNewsAsRead() {
+    if (unreadNewsCount > 0) {
+      unreadNewsCount = 0;
+      notifyListeners();
+    }
+  }
+
+  void markEventsAsRead() {
+    if (unreadEventsCount > 0) {
+      unreadEventsCount = 0;
+      notifyListeners();
+    }
+  }
+
+  Future<void> loadChatMessages() async {
+    if (api is SupabaseRescuePlatformApi) {
+      chatMessages = await (api as SupabaseRescuePlatformApi).getChatMessages();
+      notifyListeners();
+    }
+  }
+
+  Future<void> sendChatMessage(String content) async {
+    if (api is SupabaseRescuePlatformApi) {
+      await (api as SupabaseRescuePlatformApi).sendChatMessage(content);
+      await loadChatMessages();
+    }
+  }
   CoinBalance? coinBalance;
   OrganizationCapabilities? capabilities;
   // Rescue Coins is frozen. Legacy read API/data are preserved, not loaded by the UI.
@@ -286,6 +336,21 @@ class AppStore extends ChangeNotifier {
       if (api is SupabaseRescuePlatformApi) {
         members = await (api as SupabaseRescuePlatformApi).getMembers();
         unawaited((api as SupabaseRescuePlatformApi).recordAppHeartbeat());
+        chatMessages = await (api as SupabaseRescuePlatformApi).getChatMessages();
+        if (!_isChatSubscribed) {
+          _isChatSubscribed = true;
+          (api as SupabaseRescuePlatformApi).subscribeToChat((msg) {
+            final myId = currentUser?.id ?? profile.user.id;
+            if (msg.authorId != myId) {
+              unreadChatCount++;
+              triggerNotificationChime();
+            }
+            if (!chatMessages.any((m) => m.id == msg.id)) {
+              chatMessages.add(msg);
+            }
+            notifyListeners();
+          });
+        }
       } else if (api is MockRescuePlatformApi) {
         _loadMembersForCurrentOrganization(orgId ?? '');
       } else {
