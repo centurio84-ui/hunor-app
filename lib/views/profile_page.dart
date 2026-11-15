@@ -5,6 +5,7 @@ import '../models/theme_config.dart';
 import '../services/app_store.dart';
 import '../services/theme_controller.dart';
 import '../theme/hunor_theme.dart';
+import 'availability_dialog.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -141,14 +142,21 @@ class ProfilePage extends StatelessWidget {
               u.status == AvailabilityStatus.available
                   ? Icons.check_circle
                   : Icons.event_busy,
-              color: u.status == AvailabilityStatus.available
-                  ? HunorColors.success
-                  : HunorColors.warning,
+              color: switch (u.status) {
+                AvailabilityStatus.available => HunorColors.success,
+                AvailabilityStatus.sick => HunorColors.red,
+                AvailabilityStatus.vacation => HunorColors.blue,
+                AvailabilityStatus.training => HunorColors.exercise,
+                _ => HunorColors.muted,
+              },
             ),
-            title: const Text('Elérhetőség', style: TextStyle(fontWeight: FontWeight.w800)),
-            subtitle: Text(u.status.label, style: const TextStyle(color: HunorColors.muted)),
+            title: const Text('Szolgálati állapot', style: TextStyle(fontWeight: FontWeight.w800)),
+            subtitle: Text(
+              '${u.status.shortLabel} • ${u.statusPeriodFormatted}',
+              style: const TextStyle(color: HunorColors.muted),
+            ),
             trailing: const Icon(Icons.chevron_right),
-            onTap: () => _editAvailability(context, s, u.status),
+            onTap: () => showAvailabilityDialog(context),
           ),
         ),
         const SizedBox(height: 10),
@@ -347,84 +355,6 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  static Future<void> _editAvailability(
-    BuildContext context,
-    AppStore s,
-    AvailabilityStatus current,
-  ) async {
-    var status = current;
-    DateTime start = DateTime.now();
-    DateTime? end;
-
-    await showDialog(
-      context: context,
-      builder: (_) => StatefulBuilder(
-        builder: (c, set) => AlertDialog(
-          title: const Text('Elérhetőség beállítása'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              DropdownButtonFormField<AvailabilityStatus>(
-                initialValue: status,
-                decoration: const InputDecoration(labelText: 'Állapot'),
-                items: const [
-                  DropdownMenuItem(value: AvailabilityStatus.available, child: Text('Elérhető')),
-                  DropdownMenuItem(value: AvailabilityStatus.vacation, child: Text('Szabadságon')),
-                  DropdownMenuItem(value: AvailabilityStatus.sick, child: Text('Beteg')),
-                  DropdownMenuItem(value: AvailabilityStatus.training, child: Text('Képzésen')),
-                  DropdownMenuItem(value: AvailabilityStatus.unavailable, child: Text('Egyéb / nem elérhető')),
-                ],
-                onChanged: (v) => v == null ? null : set(() => status = v),
-              ),
-              const SizedBox(height: 8),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Kezdőnap'),
-                subtitle: Text(_date(start)),
-                onTap: () async {
-                  final d = await showDatePicker(
-                    context: c,
-                    initialDate: start,
-                    firstDate: DateTime.now().subtract(const Duration(days: 365)),
-                    lastDate: DateTime.now().add(const Duration(days: 3650)),
-                  );
-                  if (d != null) set(() => start = d);
-                },
-              ),
-              if (status != AvailabilityStatus.available)
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text('Végdátum'),
-                  subtitle: Text(end == null ? 'Nincs megadva' : _date(end!)),
-                  onTap: () async {
-                    final d = await showDatePicker(
-                      context: c,
-                      initialDate: end ?? start,
-                      firstDate: start,
-                      lastDate: DateTime.now().add(const Duration(days: 3650)),
-                    );
-                    if (d != null) set(() => end = d);
-                  },
-                ),
-            ],
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(c), child: const Text('Mégse')),
-            FilledButton(
-              onPressed: () async {
-                if (status != AvailabilityStatus.available &&
-                    end != null &&
-                    end!.isBefore(start)) return;
-                await s.setAvailability(status, startDate: start, endDate: end);
-                if (c.mounted) Navigator.pop(c);
-              },
-              child: const Text('Mentés'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   static Future<void> _editSkills(
     BuildContext context,

@@ -3,9 +3,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
+import '../models/member.dart';
 import '../services/app_store.dart';
 import '../theme/hunor_theme.dart';
 import 'alerts_page.dart';
+import 'availability_dialog.dart';
 import 'calendar_page.dart';
 import 'chat_page.dart';
 import 'excon_dashboard_screen.dart';
@@ -167,6 +169,57 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
                 Navigator.pop(context);
                 setState(() => index = 0);
               },
+            ),
+            // Szolgálati állapot menüpont
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: HunorColors.surface2,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: switch (store.currentUser?.status) {
+                    AvailabilityStatus.available => HunorColors.success.withOpacity(0.4),
+                    AvailabilityStatus.sick => HunorColors.red.withOpacity(0.4),
+                    AvailabilityStatus.vacation => HunorColors.blue.withOpacity(0.4),
+                    AvailabilityStatus.training => HunorColors.exercise.withOpacity(0.4),
+                    _ => HunorColors.border,
+                  },
+                ),
+              ),
+              child: ListTile(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                leading: Icon(
+                  switch (store.currentUser?.status) {
+                    AvailabilityStatus.available => Icons.check_circle_rounded,
+                    AvailabilityStatus.sick => Icons.medical_services_rounded,
+                    AvailabilityStatus.vacation => Icons.beach_access_rounded,
+                    AvailabilityStatus.training => Icons.school_rounded,
+                    _ => Icons.do_not_disturb_on_rounded,
+                  },
+                  color: switch (store.currentUser?.status) {
+                    AvailabilityStatus.available => HunorColors.success,
+                    AvailabilityStatus.sick => HunorColors.red,
+                    AvailabilityStatus.vacation => HunorColors.blue,
+                    AvailabilityStatus.training => HunorColors.exercise,
+                    _ => HunorColors.muted,
+                  },
+                ),
+                title: Text(
+                  store.currentUser?.status.shortLabel ?? 'Elérhető',
+                  style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
+                ),
+                subtitle: Text(
+                  store.currentUser?.statusPeriodFormatted ?? 'Folyamatosan elérhető',
+                  style: const TextStyle(fontSize: 11, color: HunorColors.muted),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                trailing: const Icon(Icons.edit_outlined, size: 18, color: HunorColors.gold),
+                onTap: () {
+                  Navigator.pop(context);
+                  showAvailabilityDialog(context);
+                },
+              ),
             ),
             ListTile(
               leading: const Icon(Icons.chat_bubble_rounded, color: HunorColors.muted),

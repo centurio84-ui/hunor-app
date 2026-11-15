@@ -607,7 +607,7 @@ class SupabaseRescuePlatformApi implements RescuePlatformApi {
     try {
       final List<dynamic> rows = await client
           .from('profiles')
-          .select('id, name, rank, workplace, position, phone, updated_at, skills(name), availability(status)')
+          .select('id, name, rank, workplace, position, phone, updated_at, skills(name), availability(status, start_date, end_date, created_at)')
           .order('name');
 
       return rows.map((p) {
@@ -619,9 +619,24 @@ class SupabaseRescuePlatformApi implements RescuePlatformApi {
         }
 
         AvailabilityStatus status = AvailabilityStatus.available;
+        DateTime? statusStartDate;
+        DateTime? statusEndDate;
+
         if (p['availability'] is List && (p['availability'] as List).isNotEmpty) {
-          final first = (p['availability'] as List).first;
+          final list = (p['availability'] as List);
+          // Pick the most recent entry if multiple exist
+          final first = list.first;
           status = AvailabilityStatus.fromDatabase(first['status']?.toString());
+          if (first['start_date'] != null) {
+            try {
+              statusStartDate = DateTime.parse(first['start_date'].toString());
+            } catch (_) {}
+          }
+          if (first['end_date'] != null) {
+            try {
+              statusEndDate = DateTime.parse(first['end_date'].toString());
+            } catch (_) {}
+          }
         }
 
         DateTime? lastActive;
@@ -640,11 +655,44 @@ class SupabaseRescuePlatformApi implements RescuePlatformApi {
           phone: p['phone']?.toString() ?? '',
           skills: skillsList,
           status: status,
+          statusStartDate: statusStartDate,
+          statusEndDate: statusEndDate,
           lastActive: lastActive,
         );
       }).toList();
     } catch (_) {
       return [];
+    }
+  }
+
+  /// Sets the current member's availability status and date range in Supabase.
+  /// Synchronized with the web platform (`public.availability` table).
+  Future<void> setMyAvailability({
+    required AvailabilityStatus status,
+    required DateTime startDate,
+    DateTime? endDate,
+  }) async {
+    final user = client.auth.currentUser;
+    if (user == null) return;
+
+    final startStr = '${startDate.year.toString().padLeft(4, '0')}-${startDate.month.toString().padLeft(2, '0')}-${startDate.day.toString().padLeft(2, '0')}';
+    final endStr = endDate != null
+        ? '${endDate.year.toString().padLeft(4, '0')}-${endDate.month.toString().padLeft(2, '0')}-${endDate.day.toString().padLeft(2, '0')}'
+        : null;
+
+    try {
+      // Delete existing records to maintain single active availability record per member
+      await client.from('availability').delete().eq('member_id', user.id);
+
+      await client.from('availability').insert({
+        'member_id': user.id,
+        'status': status.toDatabase(),
+        'start_date': startStr,
+        'end_date': endStr,
+      });
+    } catch (e) {
+      debugPrint('setMyAvailability error: $e');
+      rethrow;
     }
   }
 

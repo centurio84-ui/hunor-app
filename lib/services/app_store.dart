@@ -422,6 +422,8 @@ class AppStore extends ChangeNotifier {
         phone: profile.contactPhone ?? myMember?.phone ?? '',
         skills: effectiveSkills,
         status: myMember?.status ?? ((membership?.alertable ?? false) ? AvailabilityStatus.available : AvailabilityStatus.unavailable),
+        statusStartDate: myMember?.statusStartDate,
+        statusEndDate: myMember?.statusEndDate,
       );
       isAuthenticated=true;
       if (themeController != null && orgId != null) {
@@ -713,7 +715,16 @@ class AppStore extends ChangeNotifier {
   }
 
   Future<void> setAvailability(AvailabilityStatus status, {DateTime? startDate, DateTime? endDate}) async {
-    if(isStaging) throw unsupportedStaging;
+    if (isStaging) throw unsupportedStaging;
+    final effectiveStart = startDate ?? DateTime.now();
+    if (api is SupabaseRescuePlatformApi) {
+      await (api as SupabaseRescuePlatformApi).setMyAvailability(
+        status: status,
+        startDate: effectiveStart,
+        endDate: endDate,
+      );
+    }
+
     if (currentUser != null) {
       currentUser = Member(
         id: currentUser!.id,
@@ -724,7 +735,29 @@ class AppStore extends ChangeNotifier {
         phone: currentUser!.phone,
         skills: currentUser!.skills,
         status: status,
+        statusStartDate: effectiveStart,
+        statusEndDate: endDate,
+        lastActive: currentUser!.lastActive,
       );
+
+      final memberIdx = members.indexWhere((m) => m.id == currentUser!.id);
+      if (memberIdx != -1) {
+        final old = members[memberIdx];
+        members[memberIdx] = Member(
+          id: old.id,
+          name: old.name,
+          rank: old.rank,
+          workplace: old.workplace,
+          position: old.position,
+          phone: old.phone,
+          skills: old.skills,
+          status: status,
+          statusStartDate: effectiveStart,
+          statusEndDate: endDate,
+          lastActive: old.lastActive,
+        );
+      }
+
       notifyListeners();
     }
   }

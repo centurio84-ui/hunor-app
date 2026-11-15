@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../models/member.dart';
 import '../services/app_store.dart';
 import '../theme/hunor_theme.dart';
+import 'availability_dialog.dart';
 import 'excon_dashboard_screen.dart';
 import 'organization_switcher_view.dart';
 
@@ -119,6 +121,123 @@ class HomePage extends StatelessWidget {
                       const Icon(Icons.swap_horiz_rounded, color: HunorColors.gold),
                     ],
                   ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // Szolgálati Állapot Kártya
+          Card(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(
+                color: switch (u?.status) {
+                  AvailabilityStatus.available => HunorColors.success.withOpacity(0.5),
+                  AvailabilityStatus.sick => HunorColors.red.withOpacity(0.5),
+                  AvailabilityStatus.vacation => HunorColors.blue.withOpacity(0.5),
+                  AvailabilityStatus.training => HunorColors.exercise.withOpacity(0.5),
+                  _ => HunorColors.border,
+                },
+                width: 1.5,
+              ),
+            ),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(16),
+              onTap: () => showAvailabilityDialog(context),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 46,
+                      height: 46,
+                      decoration: BoxDecoration(
+                        color: switch (u?.status) {
+                          AvailabilityStatus.available => HunorColors.success.withAlpha(35),
+                          AvailabilityStatus.sick => HunorColors.red.withAlpha(35),
+                          AvailabilityStatus.vacation => HunorColors.blue.withAlpha(35),
+                          AvailabilityStatus.training => HunorColors.exercise.withAlpha(35),
+                          _ => HunorColors.muted.withAlpha(35),
+                        },
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        switch (u?.status) {
+                          AvailabilityStatus.available => Icons.check_circle_rounded,
+                          AvailabilityStatus.sick => Icons.medical_services_rounded,
+                          AvailabilityStatus.vacation => Icons.beach_access_rounded,
+                          AvailabilityStatus.training => Icons.school_rounded,
+                          _ => Icons.do_not_disturb_on_rounded,
+                        },
+                        color: switch (u?.status) {
+                          AvailabilityStatus.available => HunorColors.success,
+                          AvailabilityStatus.sick => HunorColors.red,
+                          AvailabilityStatus.vacation => HunorColors.blue,
+                          AvailabilityStatus.training => HunorColors.exercise,
+                          _ => HunorColors.muted,
+                        },
+                        size: 26,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Text(
+                                'SZOLGÁLATI ÁLLAPOT',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 1.1,
+                                  color: HunorColors.muted,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Container(
+                                width: 7,
+                                height: 7,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: switch (u?.status) {
+                                    AvailabilityStatus.available => HunorColors.success,
+                                    AvailabilityStatus.sick => HunorColors.red,
+                                    AvailabilityStatus.vacation => HunorColors.blue,
+                                    AvailabilityStatus.training => HunorColors.exercise,
+                                    _ => HunorColors.muted,
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            u?.status.label ?? 'Elérhető / Bevethető',
+                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Colors.white),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Érvényes: ${u?.statusPeriodFormatted ?? "Folyamatosan"}',
+                            style: const TextStyle(fontSize: 12, color: HunorColors.muted),
+                          ),
+                        ],
+                      ),
+                    ),
+                    FilledButton.tonalIcon(
+                      onPressed: () => showAvailabilityDialog(context),
+                      style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        backgroundColor: HunorColors.surface2,
+                      ),
+                      icon: const Icon(Icons.edit, size: 14, color: HunorColors.gold),
+                      label: const Text('Módosítás', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: HunorColors.gold)),
+                    ),
+                  ],
                 ),
               ),
             ),
