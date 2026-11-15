@@ -155,20 +155,6 @@ class AlertsPage extends StatelessWidget {
     );
   }
 }
-                  fontSize: 12,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1.1,
-                  color: HunorColors.muted,
-                ),
-              ),
-            ),
-            ...archived.map((a) => _AlertCard(alert: a, muted: true)),
-          ],
-        ],
-      ),
-    );
-  }
-}
 
 class _AlertCard extends StatelessWidget {
   final RescueAlert alert;
