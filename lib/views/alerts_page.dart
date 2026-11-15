@@ -13,7 +13,7 @@ class AlertsPage extends StatelessWidget {
     final s = context.watch<AppStore>();
     final active = s.alerts.where((a) => a.isActive).toList();
     final archived = s.alerts.where((a) => !a.isActive).toList();
-    final canDispatch = s.isAdmin || (s.currentMembership?.hasPermission('alerts.dispatch') ?? false) || !s.isGuest;
+    final canDispatch = s.isAdmin;
 
     return RefreshIndicator(
       onRefresh: s.loadData,
