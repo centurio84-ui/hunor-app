@@ -746,15 +746,30 @@ function getUserExercisePermission(evId) {
 
   // 2. Ha bejelentkezett csapattag
   if (!guest && user && user.name) {
+    // 2.1 Ha a tagnak van központi EXCON jogosultsága vagy admin:
+    if (user.canAccessExcon || user.isAdmin || user.grantedRoles?.includes('excon') || user.grantedRoles?.includes('admin')) {
+      return 'approved_full';
+    }
+
+    // 2.2 Ha a kiválasztott gyakorlaton EXCON szerepben regisztrált / jóváhagyott:
+    const evObj = events.find(e => e.id === evId);
+    if (evObj) {
+      if (evObj.myParticipationRole === 'excon' || (Array.isArray(evObj.exconRegistrants) && evObj.exconRegistrants.includes(user.name))) {
+        return 'approved_full';
+      }
+    }
+
+    // 2.3 Ha bármely más gyakorlaton már volt EXCON:
+    const anyExconEvent = events.find(e => e.myParticipationRole === 'excon' || (Array.isArray(e.exconRegistrants) && e.exconRegistrants.includes(user.name)));
+    if (anyExconEvent) {
+      return 'approved_full';
+    }
+
+    // 2.4 Helyi vagy szinkronizált jogosultság ellenőrzése
     const acc = getExerciseAccess(evId);
     const rec = acc.members[user.name];
     if (rec && rec.status) {
       return rec.status; // 'approved_full', 'approved_view', 'pending', 'none'
-    }
-    // Ha az eseménynél már EXCON-ként jelentkezett, de még nincs a listában, akkor 'pending'
-    const evObj = events.find(e => e.id === evId);
-    if (evObj && evObj.myResponse === 'going' && evObj.myParticipationRole === 'excon') {
-      return 'pending';
     }
   }
 
@@ -786,14 +801,14 @@ window.registerPendingExconApplicant = function(evId, memberName, memberEmail) {
   }
 };
 
-// Szinkronizálás az eseményre EXCON szerepben jelentkezett csapattagokkal
+// Szinkronizálás az eseményre EXCON szerepben jelentkezett csapattagokkal (már jóváhagyott EXCON-ok)
 window.syncExconApplicantsFromEvent = function(evId, applicantNames) {
   if (!evId || !Array.isArray(applicantNames)) return;
   const acc = getExerciseAccess(evId);
   let changed = false;
   applicantNames.forEach(name => {
-    if (name && !acc.members[name]) {
-      acc.members[name] = { status: 'pending', updated_at: new Date().toISOString() };
+    if (name && (!acc.members[name] || acc.members[name].status === 'pending')) {
+      acc.members[name] = { status: 'approved_full', updated_at: new Date().toISOString() };
       changed = true;
     }
   });
@@ -810,7 +825,7 @@ function requestMyExconAccess(evId) {
   if (page === 'dashboard') renderDashboard();
 }
 
-function setMemberExerciseAccess(evId, memberName, newStatus, rerenderModal = true) {
+async function setMemberExerciseAccess(evId, memberName, newStatus, rerenderModal = true) {
   if (!canUserReopenCheckpoint()) return notify('Csak adminisztrátor módosíthatja a jogosultságokat!');
   const acc = getExerciseAccess(evId);
   if (!newStatus || newStatus === 'none') {
@@ -819,6 +834,47 @@ function setMemberExerciseAccess(evId, memberName, newStatus, rerenderModal = tr
     acc.members[memberName] = { status: newStatus, updated_at: new Date().toISOString(), updated_by: displayName() };
   }
   saveExerciseAccess(evId, acc);
+
+  // Supabase szinkronizálás, hogy minden eszközön és tagnál azonnal éljen a jogosultság:
+  try {
+    const sb = window.hunorSb || window.supabase;
+    if (sb) {
+      const allM = getAllKnownMembersList();
+      const targetM = (members || []).find(m => m.name === memberName) || allM.find(m => m.name === memberName);
+      if (targetM && targetM.id) {
+        if (newStatus === 'approved_full') {
+          await sb.from('member_roles').update({ can_access_excon: true }).eq('member_id', targetM.id);
+          targetM.canAccessExcon = true;
+          if (evId) {
+            await sb.from('event_participants').upsert({
+              event_id: evId,
+              member_id: targetM.id,
+              participation_role: 'excon',
+              response: 'going'
+            }, { onConflict: 'event_id,member_id' });
+            const ev = events.find(e => e.id === evId);
+            if (ev) {
+              if (!Array.isArray(ev.exconRegistrants)) ev.exconRegistrants = [];
+              if (!ev.exconRegistrants.includes(memberName)) ev.exconRegistrants.push(memberName);
+              if (targetM.id === user?.id) ev.myParticipationRole = 'excon';
+            }
+          }
+        } else if (newStatus === 'none' && evId) {
+          await sb.from('event_participants').update({
+            participation_role: 'participant'
+          }).eq('event_id', evId).eq('member_id', targetM.id);
+          const ev = events.find(e => e.id === evId);
+          if (ev && Array.isArray(ev.exconRegistrants)) {
+            ev.exconRegistrants = ev.exconRegistrants.filter(n => n !== memberName);
+            if (targetM.id === user?.id) ev.myParticipationRole = 'participant';
+          }
+        }
+      }
+    }
+  } catch (syncErr) {
+    console.warn('Hiba a Supabase EXCON szinkronizálásakor:', syncErr);
+  }
+
   const statusLabels = {
     approved_full: 'EXCON Értékelő + Eredmény jogosultság megadva',
     approved_view: 'Csak Eredmény megtekintési jogosultság megadva',
@@ -830,18 +886,52 @@ function setMemberExerciseAccess(evId, memberName, newStatus, rerenderModal = tr
   if (page === 'dashboard') renderDashboard();
 }
 
-function approveAllPendingExcon(evId) {
+async function approveAllPendingExcon(evId) {
   if (!canUserReopenCheckpoint()) return;
   const acc = getExerciseAccess(evId);
   let cnt = 0;
+  const pendingNames = [];
   Object.keys(acc.members).forEach(name => {
     if (acc.members[name]?.status === 'pending') {
       acc.members[name].status = 'approved_full';
       acc.members[name].updated_at = new Date().toISOString();
+      pendingNames.push(name);
       cnt++;
     }
   });
   saveExerciseAccess(evId, acc);
+
+  // Supabase szinkronizálás a jóváhagyott tagoknak:
+  try {
+    const sb = window.hunorSb || window.supabase;
+    if (sb && pendingNames.length) {
+      const allM = getAllKnownMembersList();
+      for (const name of pendingNames) {
+        const targetM = (members || []).find(m => m.name === name) || allM.find(m => m.name === name);
+        if (targetM && targetM.id) {
+          await sb.from('member_roles').update({ can_access_excon: true }).eq('member_id', targetM.id);
+          targetM.canAccessExcon = true;
+          if (evId) {
+            await sb.from('event_participants').upsert({
+              event_id: evId,
+              member_id: targetM.id,
+              participation_role: 'excon',
+              response: 'going'
+            }, { onConflict: 'event_id,member_id' });
+            const ev = events.find(e => e.id === evId);
+            if (ev) {
+              if (!Array.isArray(ev.exconRegistrants)) ev.exconRegistrants = [];
+              if (!ev.exconRegistrants.includes(name)) ev.exconRegistrants.push(name);
+              if (targetM.id === user?.id) ev.myParticipationRole = 'excon';
+            }
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('Supabase tömeges jóváhagyás hiba:', err);
+  }
+
   notify(`${cnt} fő EXCON jelentkező jóváhagyva!`);
   openExerciseAccessModal(evId);
   if (page === 'dashboard') renderDashboard();
