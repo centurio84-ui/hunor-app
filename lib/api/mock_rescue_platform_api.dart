@@ -97,6 +97,8 @@ class MockRescuePlatformApi implements RescuePlatformApi {
     ),
   };
 
+  static DateTime get _today => DateTime.now();
+
   final List<RescueEvent> _events = [
     RescueEvent(
       id: mockEventAId,
@@ -104,8 +106,8 @@ class MockRescuePlatformApi implements RescuePlatformApi {
       title: 'HUNOR Tavaszi Gyakorlat',
       description: 'Romkutatási és kötéltechnikai felkészítés.',
       location: 'Hajdúszoboszló Gyakorlótér',
-      startsAt: DateTime(2026, 11, 15, 8, 0),
-      endsAt: DateTime(2026, 11, 16, 18, 0),
+      startsAt: DateTime(_today.year, _today.month, _today.day, 8, 0),
+      endsAt: DateTime(_today.year, _today.month, _today.day, 18, 0),
       version: 1,
     ),
     RescueEvent(
@@ -114,8 +116,8 @@ class MockRescuePlatformApi implements RescuePlatformApi {
       title: 'BMSZ Barlangi Kötélgyakorlat',
       description: 'Szűk járatú hordágyas mentés.',
       location: 'Pál-völgyi barlangrendszer',
-      startsAt: DateTime(2026, 11, 20, 9, 0),
-      endsAt: DateTime(2026, 11, 20, 17, 0),
+      startsAt: DateTime(_today.year, _today.month, _today.day, 9, 0),
+      endsAt: DateTime(_today.year, _today.month, _today.day, 17, 0),
       version: 1,
     ),
   ];
