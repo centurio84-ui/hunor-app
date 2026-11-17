@@ -1049,6 +1049,41 @@ function setMemberAccessFilterTab(filterKey) {
   applyMemberAccessFilters();
 }
 
+window.syncAllApprovedExconToSupabase = async function(evId) {
+  const sb = window.hunorSb || window.supabase;
+  if (!sb) return notify('Adatbázis-kapcsolat nem érhető el.');
+  const targetEvId = evId || selectedDashboardEventId;
+  const acc = getExerciseAccess(targetEvId);
+  const allM = getAllKnownMembersList();
+  const approvedNames = Object.keys(acc.members).filter(name => acc.members[name]?.status === 'approved_full');
+  if (!approvedNames.length) {
+    return notify('Nincs kijelölt jóváhagyott tag a listában.');
+  }
+  let count = 0;
+  for (const name of approvedNames) {
+    const targetM = (members || []).find(m => m.name === name) || allM.find(m => m.name === name);
+    if (targetM && targetM.id) {
+      try {
+        await sb.from('member_roles').update({ can_access_excon: true }).eq('member_id', targetM.id);
+        if (targetEvId) {
+          await sb.from('event_participants').upsert({
+            event_id: targetEvId,
+            member_id: targetM.id,
+            participation_role: 'excon',
+            response: 'going'
+          }, { onConflict: 'event_id,member_id' });
+        }
+        targetM.canAccessExcon = true;
+        count++;
+      } catch (e) {
+        console.warn('Sync hiba:', name, e);
+      }
+    }
+  }
+  notify(`✓ ${count} fő EXCON értékelő jogosultsága sikeresen rögzítve a központi szerveren!`);
+  if (page === 'dashboard') renderDashboard();
+};
+
 async function openExerciseAccessModal(evId) {
   if (!canUserReopenCheckpoint()) {
     return notify('Csak az Adminisztrátor kezelheti a gyakorlat jogosultságait!');
@@ -1074,6 +1109,37 @@ async function openExerciseAccessModal(evId) {
   }
 
   const acc = getExerciseAccess(targetEvId);
+
+  // Automatikus háttér-szinkronizáció: a korábban már kijelölt tagok beküldése a Supabase szerverre
+  (async () => {
+    try {
+      const sb = window.hunorSb || window.supabase;
+      if (!sb || !targetEvId) return;
+      const allM = getAllKnownMembersList();
+      const approvedNames = Object.keys(acc.members).filter(name => acc.members[name]?.status === 'approved_full');
+      for (const name of approvedNames) {
+        const targetM = (members || []).find(m => m.name === name) || allM.find(m => m.name === name);
+        if (targetM && targetM.id) {
+          await sb.from('member_roles').update({ can_access_excon: true }).eq('member_id', targetM.id);
+          await sb.from('event_participants').upsert({
+            event_id: targetEvId,
+            member_id: targetM.id,
+            participation_role: 'excon',
+            response: 'going'
+          }, { onConflict: 'event_id,member_id' });
+          targetM.canAccessExcon = true;
+          const ev = events.find(e => e.id === targetEvId);
+          if (ev) {
+            if (!Array.isArray(ev.exconRegistrants)) ev.exconRegistrants = [];
+            if (!ev.exconRegistrants.includes(name)) ev.exconRegistrants.push(name);
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Auto background sync warning:', e);
+    }
+  })();
+
   const allKnownMembers = getAllKnownMembersList();
   Object.keys(acc.members).forEach(mName => {
     if (!allKnownMembers.some(x => x.name === mName)) {
@@ -1126,6 +1192,15 @@ async function openExerciseAccessModal(evId) {
         </div>
         <span style="font-size:11px;color:${pendingMembers.length > 0 ? '#fbbf24' : '#8fa6bf'};background:rgba(255,255,255,0.05);padding:4px 8px;border-radius:6px;font-weight:700">${pendingMembers.length > 0 ? '⏳ Beavatkozás szükséges' : '✓ Nincs függő'}</span>
       </div>
+    </div>
+
+    <div style="margin-bottom:14px;background:rgba(4,120,87,0.18);border:1px solid #10b981;border-radius:10px;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+      <div style="font-size:12px;color:#a7f3d0">
+        <b>⚡ Szerver szinkronizáció:</b> A kijelölt belső tagok (${regAuthorizedCount} fő) azonnal megkapják a szerveren az EXCON kitöltési jogot.
+      </div>
+      <button type="button" class="pill-btn" onclick="syncAllApprovedExconToSupabase('${esc(targetEvId)}')" style="background:#059669;border-color:#34d399;font-size:11px;padding:6px 14px;font-weight:800">
+        🔄 Jogosultságok beküldése a szerverre
+      </button>
     </div>
 
     <div class="excon-access-scroll">
