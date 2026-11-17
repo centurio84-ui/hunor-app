@@ -719,7 +719,7 @@ function getAllKnownMembersList() {
   const map = new Map();
   combined.forEach(m => {
     if (m && m.name && !map.has(m.name)) {
-      map.set(m.name, { name: m.name, role: m.role || 'Csapattag', email: m.email || '' });
+      map.set(m.name, { id: m.id || null, name: m.name, role: m.role || 'Csapattag', email: m.email || '', canAccessExcon: Boolean(m.canAccessExcon) });
     }
   });
   return Array.from(map.values());
@@ -739,20 +739,34 @@ function getUserExercisePermission(evId) {
     }
   }
 
-  // 2. Ha bejelentkezett HUNOR csapattag:
+  // 2. Bejelentkezett HUNOR csapattag:
   if (!guest && user && user.name) {
-    // 2.1 Ellenőrizzük, hogy az admin kifejezetten korlátozta-e a helyi beállításokban:
-    const acc = getExerciseAccess(evId);
-    const rec = acc.members ? acc.members[user.name] : null;
-    if (rec && rec.status === 'none') {
-      return 'none'; // Kifejezetten zárt
-    }
-    if (rec && rec.status === 'approved_view') {
-      return 'approved_view'; // Csak eredmények megtekintése
+    // 2.1 Ha a kiválasztott gyakorlatra EXCON szerepkörben jelentkezett:
+    const evObj = events.find(e => e.id === evId);
+    if (evObj) {
+      if (evObj.myParticipationRole === 'excon' || (Array.isArray(evObj.exconRegistrants) && evObj.exconRegistrants.includes(user.name))) {
+        return 'approved_full';
+      }
     }
 
-    // 2.2 Minden bejelentkezett, jóváhagyott csapattagnak azonnali teljes EXCON értékelői jogot adunk!
-    return 'approved_full';
+    // 2.2 Ha az Adminisztrátor kijelölte erre a gyakorlatra (jóváhagyott értékelő):
+    const acc = getExerciseAccess(evId);
+    const rec = acc.members ? acc.members[user.name] : null;
+    if (rec) {
+      if (rec.status === 'approved_full') return 'approved_full';
+      if (rec.status === 'approved_view') return 'approved_view';
+      if (rec.status === 'none') return 'none';
+      if (rec.status === 'pending') return 'pending';
+    }
+
+    // 2.3 Ha központi EXCON jogosultsága van:
+    if (user.canAccessExcon || user.grantedRoles?.includes('excon')) {
+      return 'approved_full';
+    }
+
+    // 2.4 Bárki más (aki nem jelentkezett EXCON-ként és az admin sem jelölte ki):
+    // SZÁMUKRA A FELÜLET ZÁRT, NEM TÖLTHETIK KI AZ ÉRTÉKELŐLAPOT!
+    return 'none';
   }
 
   return 'none';
@@ -822,33 +836,44 @@ async function setMemberExerciseAccess(evId, memberName, newStatus, rerenderModa
     const sb = window.hunorSb || window.supabase;
     if (sb) {
       const allM = getAllKnownMembersList();
-      const targetM = (members || []).find(m => m.name === memberName) || allM.find(m => m.name === memberName);
-      if (targetM && targetM.id) {
+      let targetM = (members || []).find(m => m.name === memberName) || allM.find(m => m.name === memberName);
+      let memberId = targetM?.id;
+      if (!memberId) {
+        try {
+          const { data: p } = await sb.from('profiles').select('id').eq('name', memberName).maybeSingle();
+          if (p?.id) memberId = p.id;
+        } catch (_) {}
+      }
+      if (memberId) {
         if (newStatus === 'approved_full') {
-          await sb.from('member_roles').update({ can_access_excon: true }).eq('member_id', targetM.id);
-          targetM.canAccessExcon = true;
+          await sb.from('member_roles').update({ can_access_excon: true }).eq('member_id', memberId);
+          if (targetM) targetM.canAccessExcon = true;
           if (evId) {
-            await sb.from('event_participants').upsert({
-              event_id: evId,
-              member_id: targetM.id,
-              participation_role: 'excon',
-              response: 'going'
-            }, { onConflict: 'event_id,member_id' });
+            try {
+              await sb.from('event_participants').upsert({
+                event_id: evId,
+                member_id: memberId,
+                participation_role: 'excon',
+                response: 'going'
+              }, { onConflict: 'event_id,member_id' });
+            } catch (_) {}
             const ev = events.find(e => e.id === evId);
             if (ev) {
               if (!Array.isArray(ev.exconRegistrants)) ev.exconRegistrants = [];
               if (!ev.exconRegistrants.includes(memberName)) ev.exconRegistrants.push(memberName);
-              if (targetM.id === user?.id) ev.myParticipationRole = 'excon';
+              if (memberId === user?.id) ev.myParticipationRole = 'excon';
             }
           }
         } else if (newStatus === 'none' && evId) {
-          await sb.from('event_participants').update({
-            participation_role: 'participant'
-          }).eq('event_id', evId).eq('member_id', targetM.id);
+          try {
+            await sb.from('event_participants').update({
+              participation_role: 'participant'
+            }).eq('event_id', evId).eq('member_id', memberId);
+          } catch (_) {}
           const ev = events.find(e => e.id === evId);
           if (ev && Array.isArray(ev.exconRegistrants)) {
             ev.exconRegistrants = ev.exconRegistrants.filter(n => n !== memberName);
-            if (targetM.id === user?.id) ev.myParticipationRole = 'participant';
+            if (memberId === user?.id) ev.myParticipationRole = 'participant';
           }
         }
       }
@@ -889,14 +914,21 @@ async function approveAllPendingExcon(evId) {
     if (sb && pendingNames.length) {
       const allM = getAllKnownMembersList();
       for (const name of pendingNames) {
-        const targetM = (members || []).find(m => m.name === name) || allM.find(m => m.name === name);
-        if (targetM && targetM.id) {
-          await sb.from('member_roles').update({ can_access_excon: true }).eq('member_id', targetM.id);
-          targetM.canAccessExcon = true;
+        let targetM = (members || []).find(m => m.name === name) || allM.find(m => m.name === name);
+        let memberId = targetM?.id;
+        if (!memberId) {
+          try {
+            const { data: p } = await sb.from('profiles').select('id').eq('name', name).maybeSingle();
+            if (p?.id) memberId = p.id;
+          } catch (_) {}
+        }
+        if (memberId) {
+          await sb.from('member_roles').update({ can_access_excon: true }).eq('member_id', memberId);
+          if (targetM) targetM.canAccessExcon = true;
           if (evId) {
             await sb.from('event_participants').upsert({
               event_id: evId,
-              member_id: targetM.id,
+              member_id: memberId,
               participation_role: 'excon',
               response: 'going'
             }, { onConflict: 'event_id,member_id' });
@@ -904,7 +936,7 @@ async function approveAllPendingExcon(evId) {
             if (ev) {
               if (!Array.isArray(ev.exconRegistrants)) ev.exconRegistrants = [];
               if (!ev.exconRegistrants.includes(name)) ev.exconRegistrants.push(name);
-              if (targetM.id === user?.id) ev.myParticipationRole = 'excon';
+              if (memberId === user?.id) ev.myParticipationRole = 'excon';
             }
           }
         }
@@ -1043,19 +1075,26 @@ window.syncAllApprovedExconToSupabase = async function(evId) {
   }
   let count = 0;
   for (const name of approvedNames) {
-    const targetM = (members || []).find(m => m.name === name) || allM.find(m => m.name === name);
-    if (targetM && targetM.id) {
+    let targetM = (members || []).find(m => m.name === name) || allM.find(m => m.name === name);
+    let memberId = targetM?.id;
+    if (!memberId) {
       try {
-        await sb.from('member_roles').update({ can_access_excon: true }).eq('member_id', targetM.id);
+        const { data: p } = await sb.from('profiles').select('id').eq('name', name).maybeSingle();
+        if (p?.id) memberId = p.id;
+      } catch (_) {}
+    }
+    if (memberId) {
+      try {
+        await sb.from('member_roles').update({ can_access_excon: true }).eq('member_id', memberId);
         if (targetEvId) {
           await sb.from('event_participants').upsert({
             event_id: targetEvId,
-            member_id: targetM.id,
+            member_id: memberId,
             participation_role: 'excon',
             response: 'going'
           }, { onConflict: 'event_id,member_id' });
         }
-        targetM.canAccessExcon = true;
+        if (targetM) targetM.canAccessExcon = true;
         count++;
       } catch (e) {
         console.warn('Sync hiba:', name, e);
@@ -1100,16 +1139,23 @@ async function openExerciseAccessModal(evId) {
       const allM = getAllKnownMembersList();
       const approvedNames = Object.keys(acc.members).filter(name => acc.members[name]?.status === 'approved_full');
       for (const name of approvedNames) {
-        const targetM = (members || []).find(m => m.name === name) || allM.find(m => m.name === name);
-        if (targetM && targetM.id) {
-          await sb.from('member_roles').update({ can_access_excon: true }).eq('member_id', targetM.id);
+        let targetM = (members || []).find(m => m.name === name) || allM.find(m => m.name === name);
+        let memberId = targetM?.id;
+        if (!memberId) {
+          try {
+            const { data: p } = await sb.from('profiles').select('id').eq('name', name).maybeSingle();
+            if (p?.id) memberId = p.id;
+          } catch (_) {}
+        }
+        if (memberId) {
+          await sb.from('member_roles').update({ can_access_excon: true }).eq('member_id', memberId);
+          if (targetM) targetM.canAccessExcon = true;
           await sb.from('event_participants').upsert({
             event_id: targetEvId,
-            member_id: targetM.id,
+            member_id: memberId,
             participation_role: 'excon',
             response: 'going'
           }, { onConflict: 'event_id,member_id' });
-          targetM.canAccessExcon = true;
           const ev = events.find(e => e.id === targetEvId);
           if (ev) {
             if (!Array.isArray(ev.exconRegistrants)) ev.exconRegistrants = [];

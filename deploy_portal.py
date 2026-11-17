@@ -7,6 +7,7 @@ Használat Mac-en:
 import hashlib
 import json
 import os
+import ssl
 import sys
 import time
 import urllib.request
@@ -34,7 +35,8 @@ def api_request(url: str, method: str, token: str, data: bytes = None, content_t
     req.add_header("Authorization", f"Bearer {token}")
     if data is not None:
         req.add_header("Content-Type", content_type)
-    with urllib.request.urlopen(req) as resp:
+    ctx = ssl._create_unverified_context()
+    with urllib.request.urlopen(req, context=ctx) as resp:
         return json.loads(resp.read().decode("utf-8"))
 
 
