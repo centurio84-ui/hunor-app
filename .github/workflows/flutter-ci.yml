@@ -1,14 +1,7 @@
 name: Flutter CI/CD és Tesztelés
 
 on:
-  push:
-    branches:
-      - main
-      - 'gemini/**'
-      - 'infra/**'
-  pull_request:
-    branches:
-      - main
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

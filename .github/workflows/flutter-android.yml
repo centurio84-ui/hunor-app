@@ -42,8 +42,8 @@ jobs:
       - name: Build Android Release APK
         run: |
           flutter build apk --release \
-            --build-number=10011 \
-            --build-name=1.0.9 \
+            --build-number=10012 \
+            --build-name=1.0.10 \
             --dart-define=RESCUE_API_MODE=supabase \
             --dart-define=SUPABASE_URL=https://embicteneumubwlqqfik.supabase.co \
             --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_Vt7KtNGznwvPrDRr5VEn0Q_r-Z6sas1
@@ -57,8 +57,8 @@ jobs:
       - name: Build Android App Bundle (.aab)
         run: |
           flutter build appbundle --release \
-            --build-number=10011 \
-            --build-name=1.0.9 \
+            --build-number=10012 \
+            --build-name=1.0.10 \
             --dart-define=RESCUE_API_MODE=supabase \
             --dart-define=SUPABASE_URL=https://embicteneumubwlqqfik.supabase.co \
             --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_Vt7KtNGznwvPrDRr5VEn0Q_r-Z6sas1
