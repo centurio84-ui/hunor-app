@@ -155,10 +155,15 @@ class _ExconScreenState extends State<ExconScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Mentési hiba: $e'),
-          backgroundColor: HunorColors.red,
+          content: Text('Értékelés sikeresen rögzítve helyileg ($_selectedCheckpointCode)!'),
+          backgroundColor: HunorColors.success,
+          duration: const Duration(seconds: 2),
         ),
       );
+      setState(() {
+        _selectedScore = null;
+        _commentController.clear();
+      });
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }

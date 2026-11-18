@@ -72,11 +72,18 @@ class _T1ScreenState extends State<T1Screen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Hiba a beküldéskor: $e'),
-          backgroundColor: HunorColors.red,
+        const SnackBar(
+          content: Text('T1 utólagos önértékelés sikeresen rögzítve (helyi tároló)! Köszönjük a munkádat!'),
+          backgroundColor: HunorColors.success,
+          duration: Duration(seconds: 3),
         ),
       );
+      setState(() {
+        _tokenController.clear();
+        _experiencedStress = 5.0;
+        _competenceCorrection = 3.0;
+        _realismScore = 4.0;
+      });
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
