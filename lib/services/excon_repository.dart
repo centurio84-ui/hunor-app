@@ -138,6 +138,7 @@ class ExconRepository {
 
     final Map<String, List<int>> catScores = {};
     for (final ev in localList) {
+      if (ev.score < 0) continue; // "Nem értékelem" (-1) nem számít bele a százalékos értékelésbe
       String cat = ev.checkpointCode;
       if (cat.startsWith('OP-K9')) {
         cat = 'OP-K9';

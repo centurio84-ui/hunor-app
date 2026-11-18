@@ -3,7 +3,7 @@ class ExconEvaluation {
   final DateTime? createdAt;
   final String evaluatorName;
   final String checkpointCode;
-  final int score; // 0, 1, vagy 2
+  final int score; // -1: Nem értékelem, 0: Nem megfelelő, 1: Részben megfelelő, 2: Megfelelő
   final String? comment;
 
   const ExconEvaluation({
@@ -13,7 +13,7 @@ class ExconEvaluation {
     required this.checkpointCode,
     required this.score,
     this.comment,
-  }) : assert(score >= 0 && score <= 2, 'A pontszámnak 0, 1 vagy 2-nek kell lennie');
+  }) : assert(score >= -1 && score <= 2, 'A pontszámnak -1, 0, 1 vagy 2-nek kell lennie');
 
   factory ExconEvaluation.fromJson(Map<String, dynamic> json) {
     return ExconEvaluation(

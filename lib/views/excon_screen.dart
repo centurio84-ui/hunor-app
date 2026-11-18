@@ -21,7 +21,76 @@ class _ExconScreenState extends State<ExconScreen> {
   final _repository = ExconRepository();
   final _commentController = TextEditingController();
 
-    final List<Map<String, String>> _checkpointOptions = const [
+  static const List<Map<String, dynamic>> _categories = [
+    {
+      'id': 'I. Mobilizáció és Érkezés',
+      'label': 'Mobilizáció',
+      'fullName': 'I. Mobilizáció és Érkezés',
+      'icon': Icons.flight_takeoff_rounded,
+    },
+    {
+      'id': 'II. Kárhelyszíni Koordináció',
+      'label': 'Koordináció',
+      'fullName': 'II. Kárhelyszíni Koordináció',
+      'icon': Icons.hub_rounded,
+    },
+    {
+      'id': 'III. Műveleti Tervezés',
+      'label': 'Műveleti Tervezés',
+      'fullName': 'III. Műveleti Tervezés',
+      'icon': Icons.assignment_rounded,
+    },
+    {
+      'id': 'IV. Biztonság és Veszélyhelyzet',
+      'label': 'Biztonság',
+      'fullName': 'IV. Biztonság és Veszélyhelyzet',
+      'icon': Icons.health_and_safety_rounded,
+    },
+    {
+      'id': 'V. Demobilizáció',
+      'label': 'Demobilizáció',
+      'fullName': 'V. Demobilizáció',
+      'icon': Icons.flight_land_rounded,
+    },
+    {
+      'id': 'III/A. K9 Kutatás',
+      'label': 'K9 Keresés',
+      'fullName': 'III/A. K9 Kutatás',
+      'icon': Icons.pets_rounded,
+    },
+    {
+      'id': 'III/B. Vágás',
+      'label': 'Vágás',
+      'fullName': 'III/B. Vágás',
+      'icon': Icons.content_cut_rounded,
+    },
+    {
+      'id': 'III/C. Törés',
+      'label': 'Törés',
+      'fullName': 'III/C. Törés',
+      'icon': Icons.hardware_rounded,
+    },
+    {
+      'id': 'III/D. Alpin',
+      'label': 'Alpin',
+      'fullName': 'III/D. Alpin',
+      'icon': Icons.terrain_rounded,
+    },
+    {
+      'id': 'III/E. Dúcolás',
+      'label': 'Dúcolás',
+      'fullName': 'III/E. Dúcolás',
+      'icon': Icons.construction_rounded,
+    },
+    {
+      'id': 'ALL',
+      'label': 'Összes pont',
+      'fullName': 'Összes ellenőrzőpont',
+      'icon': Icons.list_alt_rounded,
+    },
+  ];
+
+  final List<Map<String, String>> _checkpointOptions = const [
     // I. Mobilizáció és Érkezés
     {'code': '1.1', 'title': 'Riasztási protokoll és csapattagok beérkezése', 'category': 'I. Mobilizáció és Érkezés'},
     {'code': '1.2', 'title': 'DGR és veszélyes áru vámlista, szállítási dokumentáció', 'category': 'I. Mobilizáció és Érkezés'},
@@ -98,14 +167,35 @@ class _ExconScreenState extends State<ExconScreen> {
     {'code': 'OP-SHR-05', 'title': 'Biztonságos menekülési útvonal biztosítása a dúcolási munkaterületen', 'category': 'III/E. Dúcolás'},
   ];
 
+  String _selectedCategoryId = 'I. Mobilizáció és Érkezés';
   late String _selectedCheckpointCode;
   int? _selectedScore;
   bool _isSubmitting = false;
 
+  List<Map<String, String>> get _filteredCheckpoints {
+    if (_selectedCategoryId == 'ALL') {
+      return _checkpointOptions;
+    }
+    final filtered = _checkpointOptions.where((opt) => opt['category'] == _selectedCategoryId).toList();
+    return filtered.isNotEmpty ? filtered : _checkpointOptions;
+  }
+
+  void _onCategorySelected(String categoryId) {
+    setState(() {
+      _selectedCategoryId = categoryId;
+      final filtered = _filteredCheckpoints;
+      if (!filtered.any((opt) => opt['code'] == _selectedCheckpointCode)) {
+        if (filtered.isNotEmpty) {
+          _selectedCheckpointCode = filtered.first['code']!;
+        }
+      }
+    });
+  }
+
   @override
   void initState() {
     super.initState();
-    _selectedCheckpointCode = _checkpointOptions.first['code']!;
+    _selectedCheckpointCode = _filteredCheckpoints.first['code']!;
   }
 
   @override
@@ -118,7 +208,7 @@ class _ExconScreenState extends State<ExconScreen> {
     if (_selectedScore == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Kérlek, válassz egy pontszámot (0, 1 vagy 2)!'),
+          content: Text('Kérlek, válassz egy értékelést (-1: Nem értékelem, 0, 1 vagy 2)!'),
           backgroundColor: HunorColors.warning,
         ),
       );
@@ -139,9 +229,10 @@ class _ExconScreenState extends State<ExconScreen> {
 
       if (!mounted) return;
 
+      final scoreText = _selectedScore == -1 ? 'Nem értékelt' : '$_selectedScore pont';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Értékelés sikeresen rögzítve ($_selectedCheckpointCode)!'),
+          content: Text('Értékelés sikeresen rögzítve ($_selectedCheckpointCode - $scoreText)!'),
           backgroundColor: HunorColors.success,
           duration: const Duration(seconds: 2),
         ),
@@ -153,9 +244,10 @@ class _ExconScreenState extends State<ExconScreen> {
       });
     } catch (e) {
       if (!mounted) return;
+      final scoreText = _selectedScore == -1 ? 'Nem értékelt' : '$_selectedScore pont';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Értékelés sikeresen rögzítve helyileg ($_selectedCheckpointCode)!'),
+          content: Text('Értékelés helyileg rögzítve ($_selectedCheckpointCode - $scoreText)!'),
           backgroundColor: HunorColors.success,
           duration: const Duration(seconds: 2),
         ),
@@ -233,6 +325,11 @@ class _ExconScreenState extends State<ExconScreen> {
 
               const SizedBox(height: 18),
 
+              // Felső vízszintes kategória görgető (Mobilizáció, Koordináció, Tervezés, stb.)
+              _buildCategorySelector(),
+
+              const SizedBox(height: 18),
+
               // 1. INSARAG Kód Dropdown
               const Text(
                 'INSARAG Ellenőrzőpont (Checkpoint):',
@@ -240,7 +337,9 @@ class _ExconScreenState extends State<ExconScreen> {
               ),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
-                value: _selectedCheckpointCode,
+                value: _filteredCheckpoints.any((opt) => opt['code'] == _selectedCheckpointCode)
+                    ? _selectedCheckpointCode
+                    : (_filteredCheckpoints.isNotEmpty ? _filteredCheckpoints.first['code'] : null),
                 isExpanded: true,
                 decoration: InputDecoration(
                   filled: true,
@@ -252,7 +351,7 @@ class _ExconScreenState extends State<ExconScreen> {
                   contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 ),
                 dropdownColor: HunorColors.surface2,
-                items: _checkpointOptions.map((opt) {
+                items: _filteredCheckpoints.map((opt) {
                   return DropdownMenuItem<String>(
                     value: opt['code'],
                     child: Text(
@@ -271,10 +370,28 @@ class _ExconScreenState extends State<ExconScreen> {
 
               const SizedBox(height: 22),
 
-              // 2. Három nagy pontozó gomb kesztyűhöz (0, 1, 2)
+              // 2. Pontozó gombok kesztyűhöz (0, 1, 2, és Nem értékelem)
               const Text(
-                'Pontszám rögzítése:',
+                'Értékelés / Pontszám rögzítése:',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              ),
+              const SizedBox(height: 10),
+
+              _buildScoreButton(
+                score: 2,
+                label: '2 PONT  ·  MEGFELELŐ / KIVÁLÓ',
+                activeColor: HunorColors.success,
+                inactiveBg: HunorColors.success.withOpacity(0.12),
+                icon: Icons.check_circle_outline,
+              ),
+              const SizedBox(height: 10),
+
+              _buildScoreButton(
+                score: 1,
+                label: '1 PONT  ·  RÉSZBEN MEGFELELŐ',
+                activeColor: HunorColors.warning,
+                inactiveBg: HunorColors.warning.withOpacity(0.12),
+                icon: Icons.change_circle_outlined,
               ),
               const SizedBox(height: 10),
 
@@ -285,23 +402,14 @@ class _ExconScreenState extends State<ExconScreen> {
                 inactiveBg: HunorColors.red.withOpacity(0.12),
                 icon: Icons.cancel_outlined,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
 
               _buildScoreButton(
-                score: 1,
-                label: '1 PONT  ·  RÉSZBEN MEGFELELŐ',
-                activeColor: HunorColors.warning,
-                inactiveBg: HunorColors.warning.withOpacity(0.12),
-                icon: Icons.change_circle_outlined,
-              ),
-              const SizedBox(height: 12),
-
-              _buildScoreButton(
-                score: 2,
-                label: '2 PONT  ·  MEGFELELŐ / KIVÁLÓ',
-                activeColor: HunorColors.success,
-                inactiveBg: HunorColors.success.withOpacity(0.12),
-                icon: Icons.check_circle_outline,
+                score: -1,
+                label: 'NEM ÉRTÉKELEM  ·  NEM RELEVÁNS / N/A',
+                activeColor: const Color(0xFF64748B),
+                inactiveBg: const Color(0xFF64748B).withOpacity(0.15),
+                icon: Icons.do_not_disturb_on_outlined,
               ),
 
               const SizedBox(height: 22),
@@ -359,6 +467,88 @@ class _ExconScreenState extends State<ExconScreen> {
   ),
 );
 }
+
+  Widget _buildCategorySelector() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Műveleti Kategória (Görgethető):',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white),
+            ),
+            Text(
+              '${_filteredCheckpoints.length} pont',
+              style: const TextStyle(fontSize: 12, color: HunorColors.gold, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 48,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            itemCount: _categories.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            itemBuilder: (context, index) {
+              final cat = _categories[index];
+              final isSelected = _selectedCategoryId == cat['id'];
+              final label = cat['label'] as String;
+              final icon = cat['icon'] as IconData;
+
+              return InkWell(
+                onTap: () => _onCategorySelected(cat['id'] as String),
+                borderRadius: BorderRadius.circular(12),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: isSelected ? HunorColors.redDark : HunorColors.surface1,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isSelected ? HunorColors.gold : HunorColors.border,
+                      width: isSelected ? 2.5 : 1.0,
+                    ),
+                    boxShadow: isSelected
+                        ? [
+                            BoxShadow(
+                              color: HunorColors.redDark.withOpacity(0.5),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        icon,
+                        size: 20,
+                        color: isSelected ? HunorColors.gold : HunorColors.muted,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        label,
+                        style: TextStyle(
+                          color: isSelected ? Colors.white : HunorColors.muted,
+                          fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
 
   Widget _buildScoreButton({
     required int score,
