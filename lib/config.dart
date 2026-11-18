@@ -1,3 +1,9 @@
+class AppConfig {
+  static const String version = '1.0.9';
+  static const String buildNumber = '10011';
+  static const String displayVersion = 'v$version ($buildNumber)';
+}
+
 class SupabaseConfig {
   static const url = String.fromEnvironment(
     'SUPABASE_URL',

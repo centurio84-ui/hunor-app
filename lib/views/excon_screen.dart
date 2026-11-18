@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../config.dart';
 import '../models/excon_evaluation.dart';
 import '../services/app_store.dart';
 import '../services/excon_repository.dart';
@@ -318,6 +319,23 @@ class _ExconScreenState extends State<ExconScreen> {
                           ],
                         ),
                       ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: HunorColors.surface2,
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: HunorColors.border.withOpacity(0.5)),
+                        ),
+                        child: Text(
+                          AppConfig.displayVersion,
+                          style: TextStyle(
+                            color: HunorColors.muted.withOpacity(0.8),
+                            fontSize: 10,
+                            letterSpacing: 0.5,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -459,6 +477,20 @@ class _ExconScreenState extends State<ExconScreen> {
                   ),
                 ),
               ),
+
+              const SizedBox(height: 24),
+
+              Center(
+                child: Text(
+                  'MADtech Rescue Platform · ${AppConfig.displayVersion}',
+                  style: TextStyle(
+                    color: HunorColors.muted.withOpacity(0.55),
+                    fontSize: 11,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
             ],
           ),
         ),

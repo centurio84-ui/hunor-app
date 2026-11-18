@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../config.dart';
 import '../services/app_store.dart';
 import '../theme/hunor_theme.dart';
 
@@ -262,6 +263,20 @@ class _LoginPageState extends State<LoginPage> {
                       color: HunorColors.muted,
                       fontSize: 12,
                       height: 1.5,
+                    ),
+                  ),
+
+                  const SizedBox(height: 18),
+
+                  // Verziószám nyomon követéshez
+                  Text(
+                    AppConfig.displayVersion,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: HunorColors.muted.withOpacity(0.55),
+                      fontSize: 11,
+                      letterSpacing: 0.5,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],

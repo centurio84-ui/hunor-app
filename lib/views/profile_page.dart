@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../config.dart';
 import '../models/member.dart';
 import '../models/theme_config.dart';
 import '../services/app_store.dart';
@@ -224,6 +225,18 @@ class ProfilePage extends StatelessWidget {
             ),
           ),
         ),
+        const SizedBox(height: 18),
+        Center(
+          child: Text(
+            'MADtech Rescue Platform · ${AppConfig.displayVersion}',
+            style: TextStyle(
+              color: HunorColors.muted.withOpacity(0.55),
+              fontSize: 11,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
       ],
     );
   }
