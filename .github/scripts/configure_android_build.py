@@ -16,6 +16,18 @@ def configure_google_services():
             p_app.write_text(s)
             print("Added google-services to android/app/build.gradle.")
 
+    p_app_kts = Path("android/app/build.gradle.kts")
+    if p_app_kts.exists():
+        s = p_app_kts.read_text()
+        if "com.google.gms.google-services" not in s:
+            s = s.replace(
+                "plugins {",
+                "plugins {\n    id(\"com.google.gms.google-services\")",
+                1,
+            )
+            p_app_kts.write_text(s)
+            print("Added google-services to android/app/build.gradle.kts.")
+
     p_settings = Path("android/settings.gradle")
     if p_settings.exists():
         s = p_settings.read_text()
@@ -28,6 +40,19 @@ def configure_google_services():
                     s = s[:end] + "\n    id 'com.google.gms.google-services' version '4.4.4' apply false" + s[end:]
                     p_settings.write_text(s)
                     print("Added google-services to android/settings.gradle.")
+
+    p_settings_kts = Path("android/settings.gradle.kts")
+    if p_settings_kts.exists():
+        s = p_settings_kts.read_text()
+        if "com.google.gms.google-services" not in s:
+            marker = "plugins {"
+            idx = s.find(marker)
+            if idx >= 0:
+                end = s.find("\n}", idx)
+                if end >= 0:
+                    s = s[:end] + "\n    id(\"com.google.gms.google-services\") version \"4.4.4\" apply false" + s[end:]
+                    p_settings_kts.write_text(s)
+                    print("Added google-services to android/settings.gradle.kts.")
 
 def configure_manifest():
     manifest = Path("android/app/src/main/AndroidManifest.xml")
@@ -173,7 +198,49 @@ def configure_signing():
             gradle_groovy.write_text(s)
             print("Injected release signing configuration into build.gradle.")
 
+def configure_package_name():
+    # Enforce exact package name hu.madtech.rescue as required by Google Play Console
+    pkg = "hu.madtech.rescue"
+    import re
+
+    gradle_kts = Path("android/app/build.gradle.kts")
+    if gradle_kts.exists():
+        s = gradle_kts.read_text()
+        s = re.sub(r'applicationId\s*=\s*"[^"]*"', f'applicationId = "{pkg}"', s)
+        s = re.sub(r'namespace\s*=\s*"[^"]*"', f'namespace = "{pkg}"', s)
+        gradle_kts.write_text(s)
+        print(f"Set applicationId and namespace to {pkg} in build.gradle.kts.")
+
+    gradle_groovy = Path("android/app/build.gradle")
+    if gradle_groovy.exists():
+        s = gradle_groovy.read_text()
+        s = re.sub(r'applicationId\s+["\'][^"\']*["\']', f'applicationId "{pkg}"', s)
+        s = re.sub(r'namespace\s+["\'][^"\']*["\']', f'namespace "{pkg}"', s)
+        gradle_groovy.write_text(s)
+        print(f"Set applicationId and namespace to {pkg} in build.gradle.")
+
+    manifest = Path("android/app/src/main/AndroidManifest.xml")
+    if manifest.exists():
+        s = manifest.read_text()
+        if 'package="' in s:
+            s = re.sub(r'package="[^"]*"', f'package="{pkg}"', s)
+            manifest.write_text(s)
+            print(f"Updated package in AndroidManifest.xml to {pkg}.")
+
+    for ext in ("kt", "java"):
+        for f in list(Path("android/app/src/main").rglob(f"MainActivity.{ext}")):
+            txt = f.read_text()
+            txt = re.sub(r'package\s+[a-zA-Z0-9_.]+', f'package {pkg}', txt)
+            new_dir = Path("android/app/src/main") / ("kotlin" if ext == "kt" else "java") / "hu" / "madtech" / "rescue"
+            new_dir.mkdir(parents=True, exist_ok=True)
+            new_file = new_dir / f"MainActivity.{ext}"
+            new_file.write_text(txt)
+            if new_file.resolve() != f.resolve():
+                f.unlink()
+            print(f"Moved and updated {f} -> {new_file}")
+
 if __name__ == "__main__":
+    configure_package_name()
     configure_google_services()
     configure_manifest()
     configure_sdk_versions()

@@ -26,7 +26,7 @@ jobs:
           cache: true
 
       - name: Generate platform folders
-        run: flutter create --platforms=android .
+        run: flutter create --platforms=android --org hu.madtech.rescue .
 
       - name: Get packages
         run: flutter pub get

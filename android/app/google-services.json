@@ -9,6 +9,25 @@
       "client_info": {
         "mobilesdk_app_id": "1:580173043151:android:ab282de1683aa08479aeba",
         "android_client_info": {
+          "package_name": "hu.madtech.rescue"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCQjS77GqLTYsshaf6vYz5rwleYyKiRocc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:580173043151:android:ab282de1683aa08479aeba",
+        "android_client_info": {
           "package_name": "hu.hunor.app"
         }
       },
