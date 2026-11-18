@@ -58,6 +58,10 @@ void main() {
     });
 
     testWidgets('2. Cross-tenant adatelkülönítés a felületen (HUNOR vs BMSZ)', (tester) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
       await store.initialize();
 
       // Alapértelmezett szervezet: HUNOR
