@@ -120,7 +120,9 @@ def configure_signing():
 
     keystore_path = Path("android/app/release.keystore")
     keystore_path.parent.mkdir(parents=True, exist_ok=True)
-    keystore_path.write_bytes(base64.b64decode(keystore_b64))
+    keystore_bytes = base64.b64decode(keystore_b64)
+    keystore_path.write_bytes(keystore_bytes)
+    Path("android/release.keystore").write_bytes(keystore_bytes)
     print("Extracted release.keystore from environment/default MAD Tech production key.")
 
     gradle_kts = Path("android/app/build.gradle.kts")
@@ -137,6 +139,14 @@ def configure_signing():
     }}
     buildTypes {{'''
             s = s.replace("buildTypes {", signing_code)
+            s = s.replace(
+                'signingConfig = signingConfigs.getByName("debug")',
+                'signingConfig = signingConfigs.getByName("release")',
+            )
+            s = s.replace(
+                'signingConfig = signingConfigs.debug',
+                'signingConfig = signingConfigs.getByName("release")',
+            )
             s = s.replace(
                 'getByName("release") {',
                 'getByName("release") {\n            signingConfig = signingConfigs.getByName("release")',

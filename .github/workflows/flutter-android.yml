@@ -62,6 +62,16 @@ jobs:
             --dart-define=RESCUE_API_MODE=supabase \
             --dart-define=SUPABASE_URL=https://embicteneumubwlqqfik.supabase.co \
             --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_Vt7KtNGznwvPrDRr5VEn0Q_r-Z6sas1
+          
+          echo "Aláírás megerősítése a hivatalos Google Play production kulccsal (jarsigner)..."
+          jarsigner -sigalg SHA256withRSA -digestalg SHA-256 \
+            -keystore android/app/release.keystore \
+            -storepass madtech_rescue_2026 \
+            -keypass madtech_rescue_2026 \
+            build/app/outputs/bundle/release/app-release.aab madtech_upload
+          
+          echo "Aláírás ellenőrzése:"
+          keytool -printcert -jarfile build/app/outputs/bundle/release/app-release.aab
 
       - name: Upload Release AAB
         uses: actions/upload-artifact@v4
