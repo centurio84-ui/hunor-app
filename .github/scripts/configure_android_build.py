@@ -110,29 +110,37 @@ def configure_launcher_icons():
 def configure_sdk_versions():
     gradle_kts = Path("android/app/build.gradle.kts")
     if gradle_kts.exists():
+        import re
         gt = gradle_kts.read_text()
         gt = gt.replace("minSdk = flutter.minSdkVersion", "minSdk = 21")
-        gt = gt.replace("targetSdk = flutter.targetSdkVersion", "targetSdk = 34")
+        gt = re.sub(r'targetSdk\s*=\s*\d+', 'targetSdk = 35', gt)
+        gt = gt.replace("targetSdk = flutter.targetSdkVersion", "targetSdk = 35")
+        gt = re.sub(r'compileSdk\s*=\s*\d+', 'compileSdk = 35', gt)
+        gt = gt.replace("compileSdk = flutter.compileSdkVersion", "compileSdk = 35")
         if "lint {" not in gt:
             gt = gt.replace(
                 "buildTypes {",
                 "lint {\n        checkReleaseBuilds = false\n        abortOnError = false\n    }\n\n    buildTypes {"
             )
         gradle_kts.write_text(gt)
-        print("Configured build.gradle.kts SDK versions (minSdk=21, targetSdk=34) and disabled lintRelease.")
+        print("Configured build.gradle.kts SDK versions (minSdk=21, targetSdk=35, compileSdk=35) and disabled lintRelease.")
 
     gradle_groovy = Path("android/app/build.gradle")
     if gradle_groovy.exists():
+        import re
         gt = gradle_groovy.read_text()
         gt = gt.replace("minSdkVersion flutter.minSdkVersion", "minSdkVersion 21")
-        gt = gt.replace("targetSdkVersion flutter.targetSdkVersion", "targetSdkVersion 34")
+        gt = re.sub(r'targetSdkVersion\s+\d+', 'targetSdkVersion 35', gt)
+        gt = gt.replace("targetSdkVersion flutter.targetSdkVersion", "targetSdkVersion 35")
+        gt = re.sub(r'compileSdkVersion\s+\d+', 'compileSdkVersion 35', gt)
+        gt = gt.replace("compileSdkVersion flutter.compileSdkVersion", "compileSdkVersion 35")
         if "lintOptions {" not in gt:
             gt = gt.replace(
                 "buildTypes {",
                 "lintOptions {\n        checkReleaseBuilds false\n        abortOnError false\n    }\n\n    buildTypes {"
             )
         gradle_groovy.write_text(gt)
-        print("Configured build.gradle SDK versions (minSdk=21, targetSdk=34) and disabled lintRelease.")
+        print("Configured build.gradle SDK versions (minSdk=21, targetSdk=35, compileSdk=35) and disabled lintRelease.")
 
 DEFAULT_KEYSTORE_B64 = """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"""
 
