@@ -262,7 +262,15 @@
           if (!upErr && Array.isArray(inserted)) {
             remoteExcon.unshift(...inserted);
           } else if (upErr) {
-            console.warn('Helyi EXCON értékelések feltöltése hiba:', upErr);
+            console.warn('Batch EXCON feltöltés hiba, egyenkénti próba:', upErr);
+            for (const row of toUpload) {
+              const safeScore = [-1, 0, 1, 2].includes(row.score) ? row.score : -1;
+              let r1 = await sb.from('excon_evaluations').insert({ ...row, score: safeScore }).select('*');
+              if (r1.error && row.event_id) {
+                r1 = await sb.from('excon_evaluations').insert({ ...row, event_id: null, score: safeScore }).select('*');
+              }
+              if (!r1.error && Array.isArray(r1.data)) remoteExcon.unshift(...r1.data);
+            }
           }
         }
         const mergedMap = new Map();
