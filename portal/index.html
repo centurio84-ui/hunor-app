@@ -2305,7 +2305,7 @@ function exconPage(){
 }
 
 
-let selectedDashboardEventId = '';
+let selectedDashboardEventId = read('selected_dashboard_event_id', '');
 let dashboardSubTab = 'events'; // 'events', 'excon', 't0', 't1', 'analysis', 'conclusion'
 let conclusionText = '';
 let strengthsText = '';
@@ -2321,6 +2321,7 @@ function setDashboardTab(tab) {
 
 function selectDashboardEvent(id) {
   selectedDashboardEventId = id;
+  save('selected_dashboard_event_id', id || '');
   renderDashboard();
 }
 
@@ -2662,6 +2663,14 @@ function getDashboardMetrics(eventId, evaluatorFilter = selectedAnalysisEvaluato
 
 function renderPieChartSvg(m) {
   if (m.count === 0) {
+    const allSaved = read('excon_evaluations', []);
+    const otherEventIds = [...new Set(allSaved.map(x => x.event_id).filter(id => id && id !== selectedDashboardEventId))];
+    const otherEventHtml = otherEventIds.length ? `<div style="margin-top:14px">${otherEventIds.map(id => {
+      const evObj = events.find(e => e.id === id);
+      const cnt = allSaved.filter(x => x.event_id === id).length;
+      const evLabel = evObj ? evObj.title : 'Aktív gyakorlat';
+      return `<button type="button" class="pill-btn" style="margin:4px;font-size:12px;padding:8px 16px" onclick="selectDashboardEvent('${esc(id)}')">📊 Ugrás ide: ${esc(evLabel)} (${cnt} db rögzített értékelés)</button>`;
+    }).join('')}</div>` : '';
     const whoText = m.activeFilter === 'ALL'
       ? 'Még nincs rögzített értékelés a szerveren ehhez a gyakorlathoz'
       : `${esc(m.activeFilter)} még nem rögzített értékelést ehhez a gyakorlathoz`;
@@ -2669,6 +2678,7 @@ function renderPieChartSvg(m) {
       <div style="font-size:36px;margin-bottom:8px">⭕</div>
       <div style="font-weight:700">${whoText}</div>
       <small>Amint bármelyik EXCON tag beküld egy pontot a webről vagy a mobilappból, itt azonnal kirajzolódik a kördiagram!</small>
+      ${otherEventHtml}
     </div>`;
   }
 
@@ -2842,10 +2852,15 @@ function dashboardPage() {
   if (extSession && extSession.eventId && !selectedDashboardEventId) {
     selectedDashboardEventId = extSession.eventId;
   }
+  const allSavedExcon = read('excon_evaluations', []);
+  const eventHasData = id => allSavedExcon.some(x => x.event_id === id);
+  const firstEventWithData = activeEventList.find(e => eventHasData(e.id));
+
+  // Ha nincs kiválasztott gyakorlat, vagy a kiválasztott nincs a listában, vagy üres de másik gyakorlaton van éles értékelés (ha a user még nem választott kézzel)
   if (!selectedDashboardEventId && activeEventList.length) {
-    selectedDashboardEventId = activeEventList[0].id;
+    selectedDashboardEventId = firstEventWithData ? firstEventWithData.id : activeEventList[activeEventList.length - 1].id;
   }
-  const curEvent = activeEventList.find(e => e.id === selectedDashboardEventId) || activeEventList[0] || null;
+  const curEvent = activeEventList.find(e => e.id === selectedDashboardEventId) || firstEventWithData || activeEventList[activeEventList.length - 1] || null;
   if (curEvent && curEvent.id !== selectedDashboardEventId) {
     selectedDashboardEventId = curEvent.id;
   }
