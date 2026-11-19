@@ -1796,15 +1796,12 @@ function renderCompletedCheckpointsManager(selectedEventId) {
 
   // Adminisztrátori ellenőrző panel: kik mit töltöttek ki és mit nem (Zöld és Piros füllel!)
   // Vegyük bele a kijelölt belső tagokat és a külsős PIN-es értékelőket is!
-  const acc = getExerciseAccess(selectedEventId);
-  const authorizedMemberNames = Object.keys(acc.members || {}).filter(k => acc.members[k]?.status === 'approved_full');
-  const externalNames = (acc.externals || []).map(x => x.name).filter(Boolean);
   const evEvaluatorNames = evAll.map(x => x.evaluator_name).filter(Boolean);
+  const exconEventMembers = getExconEvaluatorsForEvent(selectedEventId);
   const evaluatorNames = [...new Set([
     ...evEvaluatorNames,
-    ...authorizedMemberNames,
-    ...externalNames
-  ])];
+    ...exconEventMembers
+  ])].sort((a, b) => a.localeCompare(b, 'hu'));
   if (evaluatorNames.length === 0 && currentPerson) {
     evaluatorNames.push(currentPerson);
   }
@@ -2483,14 +2480,54 @@ function setAnalysisEvaluator(val) {
   renderDashboard();
 }
 
+function getExconEvaluatorsForEvent(eventId) {
+  const names = new Set();
+  const acc = getExerciseAccess(eventId);
+  const evObj = eventId ? events.find(e => e.id === eventId) : null;
+
+  // 1. Eseményre EXCON szerepkörben jelentkezett tagok
+  if (evObj && Array.isArray(evObj.exconRegistrants)) {
+    evObj.exconRegistrants.forEach(n => { if (n) names.add(n); });
+  }
+
+  // 2. Adminisztrátor által jóváhagyott belső EXCON értékelők
+  Object.keys(acc.members || {}).forEach(k => {
+    if (acc.members[k]?.status === 'approved_full') names.add(k);
+  });
+
+  // 3. Külsős PIN-es EXCON értékelők (aki nem csak megtekintő)
+  (acc.externals || []).forEach(ext => {
+    if (ext && ext.name && ext.access !== 'view') names.add(ext.name);
+  });
+
+  // 4. Központi EXCON jogosultsággal rendelkező csapattagok (ha nincs letiltva az eseményről)
+  (members || []).forEach(m => {
+    if (!m?.name) return;
+    const isCentralExcon = Boolean(m.canAccessExcon) || (Array.isArray(m.grantedRoles) && m.grantedRoles.includes('excon'));
+    const explicitlyRevoked = acc.members && acc.members[m.name]?.status === 'none';
+    if (isCentralExcon && !explicitlyRevoked) {
+      names.add(m.name);
+    }
+  });
+
+  return Array.from(names);
+}
+
 function getDashboardMetrics(eventId, evaluatorFilter = selectedAnalysisEvaluator) {
   const allExcon = read('excon_evaluations', []);
   const allPart = read('participant_evaluations', []);
   const evExconAll = eventId ? allExcon.filter(x => x.event_id === eventId) : allExcon;
   const evPart = eventId ? allPart.filter(x => x.event_id === eventId) : allPart;
 
-  // Gyűjtsük ki az összes értékelőt, aki ehhez a gyakorlathoz már rögzített pontot
+  // Először vegyük fel az összes EXCON tagot (akkor is, ha még 0 pontot töltött ki)
   const evaluatorMap = {};
+  getExconEvaluatorsForEvent(eventId).forEach(name => {
+    if (!evaluatorMap[name]) {
+      evaluatorMap[name] = { name, count: 0, scoredCount: 0, totalScore: 0 };
+    }
+  });
+
+  // Gyűjtsük ki és aggregáljuk a ténylegesen beküldött értékeléseket
   evExconAll.forEach(item => {
     const name = item.evaluator_name || 'Ismeretlen Értékelő';
     if (!evaluatorMap[name]) evaluatorMap[name] = { name, count: 0, scoredCount: 0, totalScore: 0 };
@@ -2501,7 +2538,10 @@ function getDashboardMetrics(eventId, evaluatorFilter = selectedAnalysisEvaluato
       evaluatorMap[name].totalScore += sc;
     }
   });
-  const evaluatorsList = Object.values(evaluatorMap);
+  const evaluatorsList = Object.values(evaluatorMap).sort((a, b) => {
+    if (b.count !== a.count) return b.count - a.count;
+    return a.name.localeCompare(b.name, 'hu');
+  });
 
   // Ha a kiválasztott értékelő nem szerepel az adott gyakorlatban, állítsuk vissza ALL-ra
   const activeFilter = (evaluatorFilter && evaluatorFilter !== 'ALL' && evaluatorMap[evaluatorFilter]) ? evaluatorFilter : 'ALL';
@@ -3022,7 +3062,7 @@ function dashboardPage() {
       </div>
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
         <select onchange="setAnalysisEvaluator(this.value)" style="height:42px;padding:0 14px;border-radius:10px;border:1px solid #4d87a6;font-weight:800;font-size:13px;min-width:260px">
-          <option value="ALL" ${metrics.activeFilter === 'ALL' ? 'selected' : ''}>📊 Összes értékelő (Átlagolt nézet · ${metrics.evaluatorsList.length} fő)</option>
+          <option value="ALL" ${metrics.activeFilter === 'ALL' ? 'selected' : ''}>📊 Összesített (Minden EXCON értékelő · ${metrics.evaluatorsList.length} fő)</option>
           ${metrics.evaluatorsList.map(ev => {
             const pct = ev.scoredCount > 0 ? Math.round((ev.totalScore / (ev.scoredCount * 2)) * 100) + '%' : 'N/A';
             return `<option value="${esc(ev.name)}" ${metrics.activeFilter === ev.name ? 'selected' : ''}>👤 ${esc(ev.name)} (${ev.count}/55 pont kitöltve · Átlag: ${pct})</option>`;
