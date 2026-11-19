@@ -236,17 +236,77 @@
 
   window.syncExconFromSupabase = async function() {
     try {
-      const { data: exconRows, error: exconErr } = await sb.from('excon_evaluations').select('*').order('created_at', { ascending: false });
-      if (!exconErr && Array.isArray(exconRows)) {
-        save('excon_evaluations', exconRows);
+      const localExcon = read('excon_evaluations', []);
+      const { data: remoteExcon, error: exconErr } = await sb.from('excon_evaluations').select('*').order('created_at', { ascending: false });
+      if (!exconErr && Array.isArray(remoteExcon)) {
+        const makeKey = x => `${(x.evaluator_name || '').trim().toLowerCase()}|${(x.checkpoint_code || '').trim().toLowerCase()}|${x.event_id || ''}`;
+        const remoteKeys = new Set(remoteExcon.map(makeKey));
+        const toUpload = [];
+        const seenUpload = new Set();
+        for (const item of localExcon) {
+          if (!item || !item.evaluator_name || !item.checkpoint_code) continue;
+          const k = makeKey(item);
+          if (!remoteKeys.has(k) && !seenUpload.has(k)) {
+            seenUpload.add(k);
+            toUpload.push({
+              evaluator_name: item.evaluator_name,
+              checkpoint_code: item.checkpoint_code,
+              event_id: (item.event_id && /^[0-9a-f-]{36}$/i.test(item.event_id)) ? item.event_id : null,
+              score: Number(item.score),
+              comment: item.comment || ''
+            });
+          }
+        }
+        if (toUpload.length > 0) {
+          const { data: inserted, error: upErr } = await sb.from('excon_evaluations').insert(toUpload).select('*');
+          if (!upErr && Array.isArray(inserted)) {
+            remoteExcon.unshift(...inserted);
+          } else if (upErr) {
+            console.warn('Helyi EXCON értékelések feltöltése hiba:', upErr);
+          }
+        }
+        const mergedMap = new Map();
+        remoteExcon.forEach(r => mergedMap.set(makeKey(r), r));
+        localExcon.forEach(l => {
+          const k = makeKey(l);
+          if (!mergedMap.has(k)) mergedMap.set(k, l);
+        });
+        save('excon_evaluations', Array.from(mergedMap.values()));
       }
     } catch (e) {
       console.warn('excon_evaluations sync nem sikerült:', e);
     }
     try {
-      const { data: partRows, error: partErr } = await sb.from('participant_evaluations').select('*').order('created_at', { ascending: false });
-      if (!partErr && Array.isArray(partRows)) {
-        save('participant_evaluations', partRows);
+      const localPart = read('participant_evaluations', []);
+      const { data: remotePart, error: partErr } = await sb.from('participant_evaluations').select('*').order('created_at', { ascending: false });
+      if (!partErr && Array.isArray(remotePart)) {
+        const pKey = x => `${x.form_type || ''}|${x.anon_token || ''}|${x.event_id || ''}`;
+        const remotePKeys = new Set(remotePart.map(pKey));
+        const toUploadP = [];
+        for (const item of localPart) {
+          if (!item || !item.form_type || !item.anon_token) continue;
+          const k = pKey(item);
+          if (!remotePKeys.has(k)) {
+            remotePKeys.add(k);
+            toUploadP.push({
+              event_id: (item.event_id && /^[0-9a-f-]{36}$/i.test(item.event_id)) ? item.event_id : null,
+              form_type: item.form_type,
+              anon_token: item.anon_token,
+              responses: item.responses || {}
+            });
+          }
+        }
+        if (toUploadP.length > 0) {
+          const { data: insertedP } = await sb.from('participant_evaluations').insert(toUploadP).select('*');
+          if (Array.isArray(insertedP)) remotePart.unshift(...insertedP);
+        }
+        const mergedP = new Map();
+        remotePart.forEach(r => mergedP.set(pKey(r), r));
+        localPart.forEach(l => {
+          const k = pKey(l);
+          if (!mergedP.has(k)) mergedP.set(k, l);
+        });
+        save('participant_evaluations', Array.from(mergedP.values()));
       }
     } catch (e) {
       console.warn('participant_evaluations sync nem sikerült:', e);
@@ -4173,6 +4233,7 @@
       const activeExtInvite=!user&&window.getActiveExternalExcon?window.getActiveExternalExcon():null;guest=Boolean(activeExtInvite);if(activeExtInvite){if(activeExtInvite.eventId)selectedDashboardEventId=activeExtInvite.eventId;dashboardSubTab=activeExtInvite.access==='view'?'analysis':'excon';document.querySelector('#lqGuestInvite')?.close();document.querySelector('#lqGuestInvite')?.remove();}
       if (siteLocked && !user?.isAdmin) { await forceNonAdminOut(); return; }
       const target=activeExtInvite?'dashboard':((user&&previousPage!=='landing'&&previousPage!=='pending'?previousPage:null)||ntRequested()||(['educationmenu','elearning','paramedic','education'].includes(elRequested)&&elAllowed()?elRequested:['quiz','quizadmin'].includes(lqRequestedRoute)?lqRequestedRoute:(user ? (user.membershipStatus==='approved' ? 'home' : 'pending') : 'landing')));
+      window.syncExconFromSupabase?.();
       await render();
       if(page!==target)await window.setPage(target);
     } catch(error) {
