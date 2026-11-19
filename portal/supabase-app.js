@@ -234,6 +234,25 @@
     return rows;
   }
 
+  window.syncExconFromSupabase = async function() {
+    try {
+      const { data: exconRows, error: exconErr } = await sb.from('excon_evaluations').select('*').order('created_at', { ascending: false });
+      if (!exconErr && Array.isArray(exconRows)) {
+        save('excon_evaluations', exconRows);
+      }
+    } catch (e) {
+      console.warn('excon_evaluations sync nem sikerült:', e);
+    }
+    try {
+      const { data: partRows, error: partErr } = await sb.from('participant_evaluations').select('*').order('created_at', { ascending: false });
+      if (!partErr && Array.isArray(partRows)) {
+        save('participant_evaluations', partRows);
+      }
+    } catch (e) {
+      console.warn('participant_evaluations sync nem sikerült:', e);
+    }
+  };
+
   async function loadPageData(page) {
     if(page==='home') await loadNews();
     await refreshNavigationCounts();
@@ -332,22 +351,7 @@
       })));
     }
     if (page === 'dashboard' || page === 'excon' || page === 'evaluations') {
-      try {
-        const { data: exconRows, error: exconErr } = await sb.from('excon_evaluations').select('*').order('created_at', { ascending: false });
-        if (!exconErr && Array.isArray(exconRows)) {
-          save('excon_evaluations', exconRows);
-        }
-      } catch (e) {
-        console.warn('excon_evaluations sync nem sikerült:', e);
-      }
-      try {
-        const { data: partRows, error: partErr } = await sb.from('participant_evaluations').select('*').order('created_at', { ascending: false });
-        if (!partErr && Array.isArray(partRows)) {
-          save('participant_evaluations', partRows);
-        }
-      } catch (e) {
-        console.warn('participant_evaluations sync nem sikerült:', e);
-      }
+      await window.syncExconFromSupabase();
     }
     if (user?.isAdmin && page === 'approvals') {
       const { data, error } = await sb.from('profiles').select('id,name,phone,email,workplace,county,position,requested_skills,created_at').eq('membership_status','pending').order('created_at');

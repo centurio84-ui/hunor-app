@@ -1756,7 +1756,7 @@ function setAdminMatrixTab(tab) {
 function renderCompletedCheckpointsManager(selectedEventId) {
   const currentPerson = displayName();
   const allList = read('excon_evaluations', []);
-  const evAll = selectedEventId ? allList.filter(x => x.event_id === selectedEventId) : allList;
+  const evAll = selectedEventId ? allList.filter(x => !x.event_id || x.event_id === selectedEventId) : allList;
   const myEvaluations = evAll.filter(x => x.evaluator_name === currentPerson);
   const isAdmin = canUserReopenCheckpoint();
   const allCheckpoints = getAllCheckpointItems();
@@ -2314,6 +2314,9 @@ let improvementsText = '';
 function setDashboardTab(tab) {
   dashboardSubTab = tab;
   renderDashboard();
+  if ((tab === 'analysis' || tab === 'excon') && typeof window.syncExconFromSupabase === 'function') {
+    window.syncExconFromSupabase().then(() => { if (page === 'dashboard') renderDashboard(); });
+  }
 }
 
 function selectDashboardEvent(id) {
@@ -2479,6 +2482,13 @@ function setAnalysisEvaluator(val) {
   selectedAnalysisEvaluator = val || 'ALL';
   renderDashboard();
 }
+async function refreshExconAnalysisNow() {
+  if (typeof window.syncExconFromSupabase === 'function') {
+    await window.syncExconFromSupabase();
+  }
+  renderDashboard();
+  notify('EXCON adatok frissítve a szerverről.');
+}
 
 function getExconEvaluatorsForEvent(eventId) {
   const names = new Set();
@@ -2516,8 +2526,8 @@ function getExconEvaluatorsForEvent(eventId) {
 function getDashboardMetrics(eventId, evaluatorFilter = selectedAnalysisEvaluator) {
   const allExcon = read('excon_evaluations', []);
   const allPart = read('participant_evaluations', []);
-  const evExconAll = eventId ? allExcon.filter(x => x.event_id === eventId) : allExcon;
-  const evPart = eventId ? allPart.filter(x => x.event_id === eventId) : allPart;
+  const evExconAll = eventId ? allExcon.filter(x => !x.event_id || x.event_id === eventId) : allExcon;
+  const evPart = eventId ? allPart.filter(x => !x.event_id || x.event_id === eventId) : allPart;
 
   // Először vegyük fel az összes EXCON tagot (akkor is, ha még 0 pontot töltött ki)
   const evaluatorMap = {};
@@ -2652,10 +2662,13 @@ function getDashboardMetrics(eventId, evaluatorFilter = selectedAnalysisEvaluato
 
 function renderPieChartSvg(m) {
   if (m.count === 0) {
+    const whoText = m.activeFilter === 'ALL'
+      ? 'Még nincs rögzített értékelés a szerveren ehhez a gyakorlathoz'
+      : `${esc(m.activeFilter)} még nem rögzített értékelést ehhez a gyakorlathoz`;
     return `<div style="text-align:center;padding:30px 10px;color:var(--muted)">
       <div style="font-size:36px;margin-bottom:8px">⭕</div>
-      <div style="font-weight:700">Még nincs rögzített értékelés</div>
-      <small>Tölts ki egy EXCON lapot a kördiagram megjelenítéséhez!</small>
+      <div style="font-weight:700">${whoText}</div>
+      <small>Amint bármelyik EXCON tag beküld egy pontot a webről vagy a mobilappból, itt azonnal kirajzolódik a kördiagram!</small>
     </div>`;
   }
 
@@ -3069,6 +3082,7 @@ function dashboardPage() {
           }).join('')}
         </select>
         ${metrics.activeFilter !== 'ALL' ? `<button type="button" class="secondary" style="height:42px;font-size:12px;font-weight:700;padding:0 14px" onclick="setAnalysisEvaluator('ALL')">✕ Összes mutatása</button>` : ''}
+        <button type="button" class="secondary" style="height:42px;font-size:12px;font-weight:700;padding:0 14px" onclick="refreshExconAnalysisNow()">🔄 Frissítés</button>
       </div>
     </div>`;
 
