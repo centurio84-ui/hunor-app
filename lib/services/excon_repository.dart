@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -52,6 +53,9 @@ class ExconRepository {
 
   /// Kategóriánkénti összegzés lekérése
   Future<List<ExconCategorySummary>> fetchCategorySummaries() async {
+    // Ha van a készüléken offline ragadt értékelés, próbáljuk felszinkronizálni
+    unawaited(syncPendingEvaluations());
+
     try {
       final response = await _client
           .from('excon_category_summary')
@@ -86,6 +90,27 @@ class ExconRepository {
     } catch (e) {
       debugPrint('Önértékelés távoli mentés sikertelen (offline tároló aktív): $e');
       return evaluation;
+    }
+  }
+
+  /// Offline tárolt értékelések feltöltése a központi szerverre
+  Future<void> syncPendingEvaluations() async {
+    try {
+      final localList = await getLocalEvaluations();
+      if (localList.isEmpty) return;
+
+      for (final ev in localList) {
+        final payload = ev.toJson();
+        payload.remove('id');
+        try {
+          await _client.from('excon_evaluations').upsert(payload, onConflict: 'evaluator_name,checkpoint_code');
+        } catch (_) {
+          // Ha az upsert nem támogatott vagy nincs unique constraint, próba sima inserttel
+          await _client.from('excon_evaluations').insert(payload);
+        }
+      }
+    } catch (e) {
+      debugPrint('Sync pending evaluations hiba: $e');
     }
   }
 

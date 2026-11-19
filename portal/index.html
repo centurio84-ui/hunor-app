@@ -1634,11 +1634,12 @@ function promptReopenCheckpoint(cpCode, targetEvaluator) {
     setEvaluatorSheetLock(evId, evalName, false, reason);
 
     try {
-      if (window.supabase) {
+      const sbClient = window.hunorSb || (window.supabase?.from ? window.supabase : null);
+      if (sbClient) {
         if (evId) {
-          await window.supabase.from('excon_evaluations').delete().match({ event_id: evId, checkpoint_code: cpCode, evaluator_name: evalName });
+          await sbClient.from('excon_evaluations').delete().match({ event_id: evId, checkpoint_code: cpCode, evaluator_name: evalName });
         } else {
-          await window.supabase.from('excon_evaluations').delete().match({ checkpoint_code: cpCode, evaluator_name: evalName });
+          await sbClient.from('excon_evaluations').delete().match({ checkpoint_code: cpCode, evaluator_name: evalName });
         }
       }
     } catch (err) {
@@ -1798,13 +1799,15 @@ function renderCompletedCheckpointsManager(selectedEventId) {
   const acc = getExerciseAccess(selectedEventId);
   const authorizedMemberNames = Object.keys(acc.members || {}).filter(k => acc.members[k]?.status === 'approved_full');
   const externalNames = (acc.externals || []).map(x => x.name).filter(Boolean);
+  const evEvaluatorNames = evAll.map(x => x.evaluator_name).filter(Boolean);
   const evaluatorNames = [...new Set([
-    ...evAll.map(x => x.evaluator_name).filter(Boolean),
+    ...evEvaluatorNames,
     ...authorizedMemberNames,
-    ...externalNames,
-    currentPerson,
-    ...members.map(m => m.name)
+    ...externalNames
   ])];
+  if (evaluatorNames.length === 0 && currentPerson) {
+    evaluatorNames.push(currentPerson);
+  }
   if (!selectedAdminInspectorEvaluator || !evaluatorNames.includes(selectedAdminInspectorEvaluator)) {
     selectedAdminInspectorEvaluator = evaluatorNames[0] || currentPerson;
   }
@@ -2057,14 +2060,15 @@ async function submitExconForm(e) {
     setEvaluatorSheetLock(evId, evaluator, true, 'Minden ellenőrzőpont (55/55) kitöltve.');
   }
 
-  // Supabase mentés ha elérhető (a -1-es "Nem értékelem" értéket is küldjük vagy ha a tábla csak 0..2-t fogad, kezeljük)
+  // Supabase mentés ha elérhető (a -1-es "Nem értékelem" értéket is küldjük)
   try {
-    if (window.supabase && Number(exconSelectedScore) >= 0) {
-      await window.supabase.from("excon_evaluations").insert({
+    const sbClient = window.hunorSb || (window.supabase?.from ? window.supabase : null);
+    if (sbClient) {
+      await sbClient.from("excon_evaluations").insert({
         evaluator_name: evaluator,
         checkpoint_code: cp,
         event_id: evId || null,
-        score: exconSelectedScore,
+        score: Number(exconSelectedScore),
         comment: comment
       });
     }
