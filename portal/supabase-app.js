@@ -239,7 +239,8 @@
       const localExcon = read('excon_evaluations', []);
       const { data: remoteExcon, error: exconErr } = await sb.from('excon_evaluations').select('*').order('created_at', { ascending: false });
       if (!exconErr && Array.isArray(remoteExcon)) {
-        const makeKey = x => `${(x.evaluator_name || '').trim().toLowerCase()}|${(x.checkpoint_code || '').trim().toLowerCase()}|${x.event_id || ''}`;
+        const remapEv = id => id === 'daecad36-acba-4568-b94a-472076b04467' ? '57cc70be-38e0-41ab-a1c5-49b54d3062d2' : id;
+        const makeKey = x => `${(x.evaluator_name || '').trim().toLowerCase()}|${(x.checkpoint_code || '').trim().toLowerCase()}|${remapEv(x.event_id) || ''}`;
         const remoteKeys = new Set(remoteExcon.map(makeKey));
         const toUpload = [];
         const seenUpload = new Set();
@@ -251,7 +252,7 @@
             toUpload.push({
               evaluator_name: item.evaluator_name,
               checkpoint_code: item.checkpoint_code,
-              event_id: (item.event_id && /^[0-9a-f-]{36}$/i.test(item.event_id)) ? item.event_id : null,
+              event_id: (item.event_id && /^[0-9a-f-]{36}$/i.test(item.event_id)) ? remapEv(item.event_id) : null,
               score: Number(item.score),
               comment: item.comment || ''
             });
