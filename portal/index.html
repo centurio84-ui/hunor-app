@@ -255,6 +255,11 @@ body .team-chat-panel{background:#12213a;border-color:#2f4663}body .team-chat-he
   color: #ffffff;
   border-color: #3b82f6;
 }
+.excon-seg-btn.active-part {
+  background: rgba(245, 158, 11, 0.22);
+  color: #fde68a;
+  border-color: #f59e0b;
+}
 .excon-seg-btn.active-full {
   background: #047857;
   color: #ffffff;
@@ -864,6 +869,24 @@ async function setMemberExerciseAccess(evId, memberName, newStatus, rerenderModa
               if (memberId === user?.id) ev.myParticipationRole = 'excon';
             }
           }
+        } else if (newStatus === 'participant' && evId) {
+          try {
+            await sb.from('event_participants').upsert({
+              event_id: evId,
+              member_id: memberId,
+              participation_role: 'participant',
+              response: 'going'
+            }, { onConflict: 'event_id,member_id' });
+          } catch (_) {}
+          const ev = events.find(e => e.id === evId);
+          if (ev) {
+            if (Array.isArray(ev.exconRegistrants)) {
+              ev.exconRegistrants = ev.exconRegistrants.filter(n => n !== memberName);
+            }
+            if (!Array.isArray(ev.participantRegistrants)) ev.participantRegistrants = [];
+            if (!ev.participantRegistrants.includes(memberName)) ev.participantRegistrants.push(memberName);
+            if (memberId === user?.id) ev.myParticipationRole = 'participant';
+          }
         } else if (newStatus === 'none' && evId) {
           try {
             await sb.from('event_participants').update({
@@ -875,6 +898,9 @@ async function setMemberExerciseAccess(evId, memberName, newStatus, rerenderModa
             ev.exconRegistrants = ev.exconRegistrants.filter(n => n !== memberName);
             if (memberId === user?.id) ev.myParticipationRole = 'participant';
           }
+          if (ev && Array.isArray(ev.participantRegistrants)) {
+            ev.participantRegistrants = ev.participantRegistrants.filter(n => n !== memberName);
+          }
         }
       }
     }
@@ -885,6 +911,7 @@ async function setMemberExerciseAccess(evId, memberName, newStatus, rerenderModa
   const statusLabels = {
     approved_full: 'EXCON Értékelő + Eredmény jogosultság megadva',
     approved_view: 'Csak Eredmény megtekintési jogosultság megadva',
+    participant: 'Kijelölt Résztvevő (T0/T1 kitöltési jog megadva)',
     pending: 'Jóváhagyásra váró státuszba állítva',
     none: 'Hozzáférés visszavonva'
   };
@@ -1042,6 +1069,7 @@ function applyMemberAccessFilters() {
     const matchesStatus =
       memberAccessStatusFilter === 'all' ||
       (memberAccessStatusFilter === 'authorized' && (mStatus === 'approved_full' || mStatus === 'approved_view')) ||
+      (memberAccessStatusFilter === 'participant' && mStatus === 'participant') ||
       (memberAccessStatusFilter === 'none' && mStatus === 'none');
     r.style.display = (matchesSearch && matchesStatus) ? 'flex' : 'none';
   });
@@ -1179,13 +1207,23 @@ async function openExerciseAccessModal(evId) {
   allKnownMembers.sort((a, b) => {
     const stA = acc.members[a.name]?.status || 'none';
     const stB = acc.members[b.name]?.status || 'none';
-    const rank = s => s === 'approved_full' ? 0 : s === 'approved_view' ? 1 : s === 'pending' ? 2 : 3;
+    const rank = s => s === 'approved_full' ? 0 : s === 'participant' ? 1 : s === 'approved_view' ? 2 : s === 'pending' ? 3 : 4;
     if (rank(stA) !== rank(stB)) return rank(stA) - rank(stB);
     return (a.name || '').localeCompare(b.name || '', 'hu');
   });
 
+  // Automatikusan vegyük fel résztvevőként a nem-EXCON jelentkezőket (ha még nincs más státuszuk)
+  if (evObj && Array.isArray(evObj.participantRegistrants)) {
+    evObj.participantRegistrants.forEach(pName => {
+      if (pName && !acc.members[pName]) {
+        acc.members[pName] = { status: 'participant', updated_at: new Date().toISOString(), updated_by: 'auto' };
+      }
+    });
+  }
+
   const pendingMembers = allKnownMembers.filter(m => acc.members[m.name]?.status === 'pending');
   const regAuthorizedCount = allKnownMembers.filter(m => ['approved_full', 'approved_view'].includes(acc.members[m.name]?.status)).length;
+  const participantCount = allKnownMembers.filter(m => acc.members[m.name]?.status === 'participant').length;
   const authorizedCount = regAuthorizedCount + acc.externals.length;
 
   openModal(`<div class="excon-access-modal">
@@ -1316,9 +1354,10 @@ async function openExerciseAccessModal(evId) {
             <small style="color:#9eb3c9;font-size:12px">Kattints a tag melletti kapcsolóra a hozzáférés azonnali beállításához:</small>
           </div>
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-            <div style="display:inline-flex;background:#0a1324;padding:3px;border-radius:8px;border:1px solid #293d58;gap:3px">
+            <div style="display:inline-flex;background:#0a1324;padding:3px;border-radius:8px;border:1px solid #293d58;gap:3px;flex-wrap:wrap">
               <button type="button" class="member-filter-chip" data-filter-key="all" onclick="setMemberAccessFilterTab('all')" style="border:1px solid #74bbd8;background:#24415a;color:#c2e9f5;border-radius:6px;padding:5px 9px;font-size:11px;font-weight:700;cursor:pointer">Összes (${allKnownMembers.length})</button>
-              <button type="button" class="member-filter-chip" data-filter-key="authorized" onclick="setMemberAccessFilterTab('authorized')" style="border:1px solid transparent;background:transparent;color:#8fa6bf;border-radius:6px;padding:5px 9px;font-size:11px;font-weight:700;cursor:pointer">✓ Kijelöltek (${regAuthorizedCount})</button>
+              <button type="button" class="member-filter-chip" data-filter-key="authorized" onclick="setMemberAccessFilterTab('authorized')" style="border:1px solid transparent;background:transparent;color:#8fa6bf;border-radius:6px;padding:5px 9px;font-size:11px;font-weight:700;cursor:pointer">📋 EXCON (${regAuthorizedCount})</button>
+              <button type="button" class="member-filter-chip" data-filter-key="participant" onclick="setMemberAccessFilterTab('participant')" style="border:1px solid transparent;background:transparent;color:#fde68a;border-radius:6px;padding:5px 9px;font-size:11px;font-weight:700;cursor:pointer">🧑‍🚒 Résztvevők (${participantCount})</button>
               <button type="button" class="member-filter-chip" data-filter-key="none" onclick="setMemberAccessFilterTab('none')" style="border:1px solid transparent;background:transparent;color:#8fa6bf;border-radius:6px;padding:5px 9px;font-size:11px;font-weight:700;cursor:pointer">🔒 Zártak</button>
             </div>
             <input type="search" placeholder="🔍 Keresés név szerint..." oninput="filterMemberAccessModalList(this.value)" style="height:34px;padding:0 12px;border-radius:8px;font-size:12px;width:200px">
@@ -1328,10 +1367,10 @@ async function openExerciseAccessModal(evId) {
         <div style="display:grid;gap:6px;max-height:280px;overflow-y:auto;padding-right:4px">
           ${allKnownMembers.map(m => {
             const st = acc.members[m.name]?.status || 'none';
-            const borderCol = st === 'approved_full' ? '#10b981' : st === 'approved_view' ? '#3b82f6' : st === 'pending' ? '#d97706' : '#293d58';
+            const borderCol = st === 'approved_full' ? '#10b981' : st === 'participant' ? '#f59e0b' : st === 'approved_view' ? '#3b82f6' : st === 'pending' ? '#d97706' : '#293d58';
             return `<div class="excon-member-row member-access-row-item" data-member-name="${esc(m.name)}" data-member-status="${esc(st)}" style="border-color:${borderCol}">
               <div class="excon-member-info">
-                <div class="excon-member-av" style="${st === 'approved_full' ? 'background:#065f46;color:#a7f3d0;border-color:#10b981' : st === 'approved_view' ? 'background:#1e3a8a;color:#bfdbfe;border-color:#3b82f6' : ''}">${esc(initials(m.name))}</div>
+                <div class="excon-member-av" style="${st === 'approved_full' ? 'background:#065f46;color:#a7f3d0;border-color:#10b981' : st === 'participant' ? 'background:#78350f;color:#fde68a;border-color:#f59e0b' : st === 'approved_view' ? 'background:#1e3a8a;color:#bfdbfe;border-color:#3b82f6' : ''}">${esc(initials(m.name))}</div>
                 <div style="min-width:0">
                   <b style="font-size:13px;color:#f1f5f9;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(m.name)}</b>
                   <small style="color:#8fa6bf;font-size:11px">${esc(m.role || 'Csapattag')}</small>
@@ -1339,6 +1378,7 @@ async function openExerciseAccessModal(evId) {
               </div>
               <div class="excon-seg-group">
                 <button type="button" class="excon-seg-btn ${st === 'none' ? 'active-none' : ''}" onclick="setMemberExerciseAccess('${esc(targetEvId)}','${esc(m.name)}','none')">🔒 Zárt</button>
+                <button type="button" class="excon-seg-btn ${st === 'participant' ? 'active-part' : ''}" onclick="setMemberExerciseAccess('${esc(targetEvId)}','${esc(m.name)}','participant')">🧑‍🚒 Résztvevő (T0/T1)</button>
                 <button type="button" class="excon-seg-btn ${st === 'approved_view' ? 'active-view' : ''}" onclick="setMemberExerciseAccess('${esc(targetEvId)}','${esc(m.name)}','approved_view')">👁️ Csak Eredmény</button>
                 <button type="button" class="excon-seg-btn ${st === 'approved_full' ? 'active-full' : ''}" onclick="setMemberExerciseAccess('${esc(targetEvId)}','${esc(m.name)}','approved_full')">📋 EXCON + Eredmény</button>
               </div>
@@ -2314,7 +2354,7 @@ let improvementsText = '';
 function setDashboardTab(tab) {
   dashboardSubTab = tab;
   renderDashboard();
-  if ((tab === 'analysis' || tab === 'excon') && typeof window.syncExconFromSupabase === 'function') {
+  if (['analysis', 'excon', 't0', 't1'].includes(tab) && typeof window.syncExconFromSupabase === 'function') {
     window.syncExconFromSupabase().then(() => { if (page === 'dashboard') renderDashboard(); });
   }
 }
@@ -2418,14 +2458,170 @@ async function submitEventConclusion(e) {
   renderDashboard();
 }
 
+function getDesignatedParticipantsForEvent(eventId) {
+  const names = new Set();
+  const acc = getExerciseAccess(eventId);
+  const exconSet = new Set(getExconEvaluatorsForEvent(eventId));
+  const evObj = eventId ? events.find(e => e.id === eventId) : null;
+
+  // 1. Admin által kifejezetten 'participant' (Résztvevő T0/T1) státuszba sorolt tagok
+  Object.keys(acc.members || {}).forEach(k => {
+    if (acc.members[k]?.status === 'participant') names.add(k);
+  });
+
+  // 2. Eseményre nem-EXCON résztvevőként jelentkezett tagok (ha nincs letiltva vagy EXCON-ba téve)
+  if (evObj && Array.isArray(evObj.participantRegistrants)) {
+    evObj.participantRegistrants.forEach(n => {
+      if (!n) return;
+      const st = acc.members?.[n]?.status;
+      if (!exconSet.has(n) && st !== 'none' && st !== 'approved_full') {
+        names.add(n);
+      }
+    });
+  }
+
+  // 3. Bárki, aki már leadott T0 vagy T1 űrlapot ehhez a gyakorlathoz
+  const allPart = read('participant_evaluations', []);
+  allPart.filter(x => !eventId || !x.event_id || x.event_id === eventId).forEach(p => {
+    if (p.anon_token) names.add(p.anon_token);
+  });
+
+  return Array.from(names).sort((a, b) => a.localeCompare(b, 'hu'));
+}
+
+function canFillParticipantForms(eventId) {
+  if (canUserReopenCheckpoint()) return true; // Admin mindig elérheti
+  if (guest || !user?.name) return false;
+  const participants = getDesignatedParticipantsForEvent(eventId);
+  return participants.includes(user.name);
+}
+
+let selectedParticipantFilter = 'ALL';
+function setParticipantFilter(val) {
+  selectedParticipantFilter = val || 'ALL';
+  renderDashboard();
+}
+
+function renderParticipantAnalysisPanel(eventId) {
+  const isAdmin = canUserReopenCheckpoint();
+  const allPart = read('participant_evaluations', []);
+  const evPartAll = eventId ? allPart.filter(x => !x.event_id || x.event_id === eventId) : allPart;
+  const designated = getDesignatedParticipantsForEvent(eventId);
+
+  // Legfrissebb T0 és T1 minden egyes résztvevőhöz
+  const latestByPerson = {};
+  designated.forEach(name => { latestByPerson[name] = { name, t0: null, t1: null }; });
+  evPartAll.forEach(row => {
+    const name = (row.anon_token || 'Ismeretlen résztvevő').trim();
+    if (!latestByPerson[name]) latestByPerson[name] = { name, t0: null, t1: null };
+    if (row.form_type === 'T0' && !latestByPerson[name].t0) latestByPerson[name].t0 = row;
+    if (row.form_type === 'T1' && !latestByPerson[name].t1) latestByPerson[name].t1 = row;
+  });
+
+  const personList = Object.values(latestByPerson).sort((a, b) => {
+    const scA = (a.t0 ? 1 : 0) + (a.t1 ? 1 : 0);
+    const scB = (b.t0 ? 1 : 0) + (b.t1 ? 1 : 0);
+    if (scB !== scA) return scB - scA;
+    return a.name.localeCompare(b.name, 'hu');
+  });
+
+  const activeFilter = (selectedParticipantFilter !== 'ALL' && latestByPerson[selectedParticipantFilter])
+    ? selectedParticipantFilter
+    : 'ALL';
+  const filteredPeople = activeFilter === 'ALL' ? personList : [latestByPerson[activeFilter]];
+
+  const t0Rows = filteredPeople.map(p => p.t0).filter(Boolean);
+  const t1Rows = filteredPeople.map(p => p.t1).filter(Boolean);
+
+  const avgOf = (rows, key) => {
+    const vals = rows.map(r => Number(r.responses?.[key])).filter(v => !isNaN(v) && v > 0);
+    if (!vals.length) return 0;
+    return Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10;
+  };
+
+  const avgT0Load = avgOf(t0Rows, 'load');
+  const avgT1Load = avgOf(t1Rows, 'felt_load');
+  const avgT0Prep = avgOf(t0Rows, 'prep');
+  const avgT0Cohesion = avgOf(t0Rows, 'cohesion');
+  const avgT1Corr = avgOf(t1Rows, 'correction');
+  const avgT1Real = avgOf(t1Rows, 'realism');
+
+  const totalT0Done = personList.filter(p => p.t0).length;
+  const totalT1Done = personList.filter(p => p.t1).length;
+  const totalPeople = personList.length;
+
+  const scaleBar = (label, val, maxVal, color, subtitle) => {
+    const pct = maxVal > 0 ? Math.min(100, Math.round((val / maxVal) * 100)) : 0;
+    return `<div style="background:var(--bg);padding:12px 14px;border-radius:10px;border:1px solid var(--line)">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;gap:8px">
+        <span style="font-weight:700;font-size:13px">${label}</span>
+        <span style="font-weight:900;font-size:14px;color:${val > 0 ? color : 'var(--muted)'}">${val > 0 ? val + ' / ' + maxVal : '– / ' + maxVal}</span>
+      </div>
+      <div style="height:10px;background:rgba(255,255,255,0.08);border-radius:999px;overflow:hidden">
+        <div style="width:${pct}%;height:100%;background:${color};border-radius:999px;transition:width .3s"></div>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:5px">${subtitle}</div>
+    </div>`;
+  };
+
+  return `<div class="panel" style="margin-top:18px;border-top:3px solid #f59e0b">
+    <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px">
+      <div>
+        <div class="eyebrow" style="color:#fbbf24;letter-spacing:1px">🧑‍🚒 RÉSZTVEVŐK (NEM EXCON) · T0 & T1 ELEMZÉS</div>
+        <h3 style="margin:4px 0 2px">Beavatkozói Önértékelés (T0 Előtte vs. T1 Utána)</h3>
+        <small style="color:var(--muted)">Kijelölt résztvevők: <b>${totalPeople} fő</b> · T0 leadva: <b>${totalT0Done}/${totalPeople}</b> · T1 leadva: <b>${totalT1Done}/${totalPeople}</b></small>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <select onchange="setParticipantFilter(this.value)" style="height:40px;padding:0 12px;border-radius:10px;border:1px solid #f59e0b;font-weight:800;font-size:12px;min-width:240px">
+          <option value="ALL" ${activeFilter === 'ALL' ? 'selected' : ''}>📊 Összes résztvevő (Csapatátlag · ${totalPeople} fő)</option>
+          ${personList.map(p => `<option value="${esc(p.name)}" ${activeFilter === p.name ? 'selected' : ''}>🧑‍🚒 ${esc(p.name)} (T0: ${p.t0 ? '✓' : '✗'} · T1: ${p.t1 ? '✓' : '✗'})</option>`).join('')}
+        </select>
+        ${isAdmin ? `<button type="button" class="secondary" style="height:40px;font-size:12px;font-weight:700;padding:0 12px;border-color:#f59e0b;color:#fde68a" onclick="openExerciseAccessModal('${esc(eventId)}')">👥 Résztvevők kijelölése</button>` : ''}
+      </div>
+    </div>
+
+    <!-- T0 vs T1 Sávdiagramok -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));gap:12px;margin-bottom:18px">
+      ${scaleBar('⏱️ Várt terhelés (T0 – Előtte)', avgT0Load, 10, '#60a5fa', t0Rows.length ? `${t0Rows.length} db T0 válasz alapján (1–10 skála)` : 'Még nincs T0 válasz')}
+      ${scaleBar('🔥 Megélt fizikai & kognitív terhelés (T1 – Utána)', avgT1Load, 10, '#f97316', t1Rows.length ? `${t1Rows.length} db T1 válasz alapján (1–10 skála)` : 'Még nincs T1 válasz')}
+      ${scaleBar('🎯 Szakmai felkészültség (T0)', avgT0Prep, 5, '#10b981', t0Rows.length ? `${t0Rows.length} db T0 válasz alapján (1–5 skála)` : 'Még nincs T0 válasz')}
+      ${scaleBar('🤝 Csapatkohézió és együttműködés (T0)', avgT0Cohesion, 5, '#34d399', t0Rows.length ? `${t0Rows.length} db T0 válasz alapján (1–5 skála)` : 'Még nincs T0 válasz')}
+      ${scaleBar('⚡ Mennyivel volt nehezebb a vártnál (T1)', avgT1Corr, 5, '#fbbf24', t1Rows.length ? `${t1Rows.length} db T1 válasz alapján (1–5 skála)` : 'Még nincs T1 válasz')}
+      ${scaleBar('🏆 Gyakorlat realisztikussága (T1)', avgT1Real, 5, '#22c55e', t1Rows.length ? `${t1Rows.length} db T1 válasz alapján (1–5 skála)` : 'Még nincs T1 válasz')}
+    </div>
+
+    <!-- Admin résztvevői kitöltöttségi lista (Zöld/Piros) -->
+    ${isAdmin ? `
+    <div style="border-top:1px solid var(--line);padding-top:14px">
+      <div style="font-size:12px;font-weight:800;color:#fbbf24;text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px">📋 Kijelölt Résztvevők Kitöltöttségi Állapota (${totalPeople} fő)</div>
+      ${totalPeople === 0 ? `
+        <div style="padding:14px;background:var(--bg);border-radius:10px;text-align:center;color:var(--muted);font-size:12px">
+          Még nincs kijelölt résztvevő (nem EXCON) ehhez a gyakorlathoz. Kattints a <b>„👥 Résztvevők kijelölése”</b> gombra!
+        </div>` : `
+        <div style="display:grid;gap:6px;max-height:260px;overflow-y:auto;padding-right:4px">
+          ${personList.map(p => `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:9px 12px;flex-wrap:wrap">
+            <div style="display:flex;align-items:center;gap:10px">
+              <div style="width:28px;height:28px;border-radius:50%;background:#78350f;color:#fde68a;display:grid;place-items:center;font-weight:800;font-size:11px">${esc(initials(p.name))}</div>
+              <b style="font-size:13px">${esc(p.name)}</b>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <span style="padding:3px 9px;border-radius:6px;font-size:11px;font-weight:800;background:${p.t0 ? 'rgba(16,185,129,0.16);color:#6ee7b7;border:1px solid rgba(16,185,129,0.4)' : 'rgba(239,68,68,0.14);color:#fca5a5;border:1px solid rgba(239,68,68,0.35)'}">${p.t0 ? '🟢 T0 Leadva' : '🔴 T0 Hiányzik'}</span>
+              <span style="padding:3px 9px;border-radius:6px;font-size:11px;font-weight:800;background:${p.t1 ? 'rgba(16,185,129,0.16);color:#6ee7b7;border:1px solid rgba(16,185,129,0.4)' : 'rgba(239,68,68,0.14);color:#fca5a5;border:1px solid rgba(239,68,68,0.35)'}">${p.t1 ? '🟢 T1 Leadva' : '🔴 T1 Hiányzik'}</span>
+            </div>
+          </div>`).join('')}
+        </div>`}
+    </div>` : ''}
+  </div>`;
+}
+
 async function submitParticipantEvaluation(type, e) {
   e.preventDefault();
-  const token = document.getElementById(type + 'Token').value.trim();
-  if (!token) return notify('Kérlek, add meg az anonim azonosító tokent!');
-  
+  const participantName = (document.getElementById(type + 'Token')?.value || displayName() || '').trim();
+  if (!participantName) return notify('Hiányzik a résztvevő neve!');
+
   const submitBtn = document.getElementById(type + 'SubmitBtn');
   if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Mentés...'; }
-  
+
   const responses = {};
   if (type === 'T0') {
     responses.prep = Number(document.getElementById('t0_prep').value);
@@ -2436,38 +2632,41 @@ async function submitParticipantEvaluation(type, e) {
     responses.correction = Number(document.getElementById('t1_correction').value);
     responses.realism = Number(document.getElementById('t1_realism').value);
   }
-  
+
+  const evId = selectedDashboardEventId || '';
   const rec = {
     id: 'part_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
-    event_id: selectedDashboardEventId || '',
+    event_id: evId,
     form_type: type,
-    anon_token: token,
+    anon_token: participantName,
     responses: responses,
     created_at: new Date().toISOString()
   };
 
-  // Local storage mentés
-  let list = read('participant_evaluations', []);
+  // Local storage mentés (frissítjük a saját korábbi beküldést, ne duplikáljon)
+  let list = read('participant_evaluations', []).filter(x =>
+    !(x.form_type === type && x.anon_token === participantName && (!evId || !x.event_id || x.event_id === evId))
+  );
   list.unshift(rec);
   save('participant_evaluations', list);
 
   try {
-    if (window.supabase) {
-      await window.supabase.from('participant_evaluations').insert({
+    const sbClient = window.hunorSb || (window.supabase?.from ? window.supabase : null);
+    if (sbClient) {
+      await sbClient.from('participant_evaluations').insert({
         form_type: type,
-        anon_token: token,
+        anon_token: participantName,
         responses: responses,
-        event_id: selectedDashboardEventId || null
+        event_id: (evId && /^[0-9a-f-]{36}$/i.test(evId)) ? evId : null
       });
     }
   } catch (err) {
     console.warn('Supabase T0/T1 mentés offline, helyi tároló mentve:', err);
   } finally {
-    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'ŰRLAP BEKÜLDÉSE'; }
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = type + ' ŰRLAP RÖGZÍTÉSE'; }
   }
 
-  notify(type + ' önértékelés sikeresen rögzítve! Köszönjük a visszajelzést.');
-  dashboardSubTab = 'analysis';
+  notify(type + ' önértékelés sikeresen rögzítve (' + participantName + ')! Köszönjük!');
   renderDashboard();
 }
 
@@ -3009,71 +3208,99 @@ function dashboardPage() {
     </div>`;
   }
 
-  // 3. T0 BEAVATKOZÓI FELMÉRÉS (MŰVELET ELŐTT)
+  // 3. T0 BEAVATKOZÓI FELMÉRÉS (MŰVELET ELŐTT · KIZÁRÓLAG KIJELÖLT RÉSZTVEVŐKNEK)
   if (dashboardSubTab === 't0') {
-    return `<div class="page-title"><div><div class="eyebrow">BEAVATKOZÓI FELMÉRÉS</div><h1>T0 Űrlap (Művelet előtt)</h1><p>Anonim felkészültségi és várt terhelési állapotfelmérés.</p></div></div>
+    const canPart = canFillParticipantForms(selectedDashboardEventId);
+    if (!canPart) {
+      return `<div class="page-title"><div><div class="eyebrow">BEAVATKOZÓI FELMÉRÉS</div><h1>T0 Űrlap (Művelet előtt)</h1><p>Kizárólag a gyakorlatra kijelölt résztvevők (nem EXCON tagok) számára.</p></div></div>
+      ${tabsHtml}
+      ${eventBanner}
+      <div class="panel" style="max-width:640px;margin:0 auto;padding:28px;text-align:center;border-left:4px solid #f59e0b">
+        <div style="font-size:36px;margin-bottom:8px">🧑‍🚒</div>
+        <h3 style="margin:0 0 8px">A T0 űrlapot a kijelölt Résztvevők töltik ki</h3>
+        <p style="color:var(--muted);font-size:13px;margin:0">EXCON értékelőként a <b>2. EXCON Értékelőlap</b> fülön tudsz pontozni. A T0/T1 önértékelő űrlapokat az Adminisztrátor által kijelölt nem-EXCON résztvevők töltik ki.</p>
+      </div>`;
+    }
+    const me = displayName();
+    const myT0 = read('participant_evaluations', []).find(x => x.form_type === 'T0' && x.anon_token === me && (!selectedDashboardEventId || !x.event_id || x.event_id === selectedDashboardEventId));
+    return `<div class="page-title"><div><div class="eyebrow">BEAVATKOZÓI FELMÉRÉS</div><h1>T0 Űrlap (Művelet előtt)</h1><p>Felkészültségi és várt terhelési állapotfelmérés a gyakorlat résztvevőinek.</p></div></div>
     ${tabsHtml}
     ${eventBanner}
     <div style="max-width:640px;margin:0 auto">
       <div class="panel" style="padding:24px">
+        ${myT0 ? `<div style="margin-bottom:16px;padding:12px 14px;border-radius:10px;background:rgba(16,185,129,0.14);border:1px solid rgba(16,185,129,0.45);color:#6ee7b7;font-size:13px;font-weight:700">✓ A T0 űrlapodat már sikeresen leadtad (${esc(me)}). Ha szeretnéd, az alábbiakban módosíthatod.</div>` : ''}
         <form onsubmit="submitParticipantEvaluation('T0', event)">
           <div class="field" style="margin-bottom:18px">
-            <label style="font-weight:700;display:block;margin-bottom:6px">ANONIM AZONOSÍTÓ TOKEN</label>
-            <input type="text" id="T0Token" required placeholder="Pl. HUN-84-KZ" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;font-weight:700">
-            <small style="color:var(--muted)">Ezzel a kóddal tudjuk majd összefésülni a T1 utólagos felméréssel!</small>
+            <label style="font-weight:700;display:block;margin-bottom:6px">RÉSZTVEVŐ NEVE (AUTOMATIKUS)</label>
+            <input type="text" id="T0Token" readonly value="${esc(me)}" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;font-weight:800;opacity:0.9">
+            <small style="color:var(--muted)">A rendszer automatikusan a saját nevedhez rögzíti a kitöltést.</small>
           </div>
           
           <div class="field" style="margin-bottom:18px">
-            <label style="font-weight:700;display:block;margin-bottom:6px">1. Szakmai felkészültség a feladatra (1 - 5 skála): <span id="t0_prep_val" style="color:var(--green)">4</span> / 5</label>
-            <input type="range" id="t0_prep" min="1" max="5" value="4" oninput="document.getElementById('t0_prep_val').textContent=this.value" style="width:100%">
+            <label style="font-weight:700;display:block;margin-bottom:6px">1. Szakmai felkészültség a feladatra (1 - 5 skála): <span id="t0_prep_val" style="color:var(--green)">${myT0?.responses?.prep || 4}</span> / 5</label>
+            <input type="range" id="t0_prep" min="1" max="5" value="${myT0?.responses?.prep || 4}" oninput="document.getElementById('t0_prep_val').textContent=this.value" style="width:100%">
           </div>
 
           <div class="field" style="margin-bottom:18px">
-            <label style="font-weight:700;display:block;margin-bottom:6px">2. Csapatkohézió és együttműködés (1 - 5 skála): <span id="t0_cohesion_val" style="color:var(--green)">5</span> / 5</label>
-            <input type="range" id="t0_cohesion" min="1" max="5" value="5" oninput="document.getElementById('t0_cohesion_val').textContent=this.value" style="width:100%">
+            <label style="font-weight:700;display:block;margin-bottom:6px">2. Csapatkohézió és együttműködés (1 - 5 skála): <span id="t0_cohesion_val" style="color:var(--green)">${myT0?.responses?.cohesion || 5}</span> / 5</label>
+            <input type="range" id="t0_cohesion" min="1" max="5" value="${myT0?.responses?.cohesion || 5}" oninput="document.getElementById('t0_cohesion_val').textContent=this.value" style="width:100%">
           </div>
 
           <div class="field" style="margin-bottom:24px">
-            <label style="font-weight:700;display:block;margin-bottom:6px">3. Várható pszichofizikai terhelés (1 - 10 skála): <span id="t0_load_val" style="color:#ef956c">7</span> / 10</label>
-            <input type="range" id="t0_load" min="1" max="10" value="7" oninput="document.getElementById('t0_load_val').textContent=this.value" style="width:100%">
+            <label style="font-weight:700;display:block;margin-bottom:6px">3. Várható pszichofizikai terhelés (1 - 10 skála): <span id="t0_load_val" style="color:#ef956c">${myT0?.responses?.load || 7}</span> / 10</label>
+            <input type="range" id="t0_load" min="1" max="10" value="${myT0?.responses?.load || 7}" oninput="document.getElementById('t0_load_val').textContent=this.value" style="width:100%">
           </div>
 
-          <button type="submit" id="T0SubmitBtn" class="pill-btn" style="width:100%;padding:16px;font-size:16px;font-weight:800">T0 ŰRLAP RÖGZÍTÉSE</button>
+          <button type="submit" id="T0SubmitBtn" class="pill-btn" style="width:100%;padding:16px;font-size:16px;font-weight:800">${myT0 ? 'T0 ŰRLAP FRISSÍTÉSE' : 'T0 ŰRLAP RÖGZÍTÉSE'}</button>
         </form>
       </div>
     </div>`;
   }
 
-  // 4. T1 BEAVATKOZÓI ŰRLAP (MŰVELET UTÁN)
+  // 4. T1 BEAVATKOZÓI ŰRLAP (MŰVELET UTÁN · KIZÁRÓLAG KIJELÖLT RÉSZTVEVŐKNEK)
   if (dashboardSubTab === 't1') {
+    const canPart = canFillParticipantForms(selectedDashboardEventId);
+    if (!canPart) {
+      return `<div class="page-title"><div><div class="eyebrow">BEAVATKOZÓI ÉRTÉKELÉS</div><h1>T1 Űrlap (Művelet után)</h1><p>Kizárólag a gyakorlatra kijelölt résztvevők (nem EXCON tagok) számára.</p></div></div>
+      ${tabsHtml}
+      ${eventBanner}
+      <div class="panel" style="max-width:640px;margin:0 auto;padding:28px;text-align:center;border-left:4px solid #f59e0b">
+        <div style="font-size:36px;margin-bottom:8px">🧑‍🚒</div>
+        <h3 style="margin:0 0 8px">A T1 űrlapot a kijelölt Résztvevők töltik ki</h3>
+        <p style="color:var(--muted);font-size:13px;margin:0">EXCON értékelőként a <b>2. EXCON Értékelőlap</b> fülön tudsz pontozni. A T0/T1 önértékelő űrlapokat az Adminisztrátor által kijelölt nem-EXCON résztvevők töltik ki.</p>
+      </div>`;
+    }
+    const me = displayName();
+    const myT1 = read('participant_evaluations', []).find(x => x.form_type === 'T1' && x.anon_token === me && (!selectedDashboardEventId || !x.event_id || x.event_id === selectedDashboardEventId));
     return `<div class="page-title"><div><div class="eyebrow">BEAVATKOZÓI ÉRTÉKELÉS</div><h1>T1 Űrlap (Művelet után)</h1><p>Megélt terhelés, kompetencia és tapasztalatok rögzítése a feladat lezárásakor.</p></div></div>
     ${tabsHtml}
     ${eventBanner}
     <div style="max-width:640px;margin:0 auto">
       <div class="panel" style="padding:24px">
+        ${myT1 ? `<div style="margin-bottom:16px;padding:12px 14px;border-radius:10px;background:rgba(16,185,129,0.14);border:1px solid rgba(16,185,129,0.45);color:#6ee7b7;font-size:13px;font-weight:700">✓ A T1 űrlapodat már sikeresen leadtad (${esc(me)}). Ha szeretnéd, az alábbiakban módosíthatod.</div>` : ''}
         <form onsubmit="submitParticipantEvaluation('T1', event)">
           <div class="field" style="margin-bottom:18px">
-            <label style="font-weight:700;display:block;margin-bottom:6px">ANONIM AZONOSÍTÓ TOKEN</label>
-            <input type="text" id="T1Token" required placeholder="Pl. HUN-84-KZ" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;font-weight:700">
-            <small style="color:var(--muted)">Add meg a T0-nál használt kódot!</small>
+            <label style="font-weight:700;display:block;margin-bottom:6px">RÉSZTVEVŐ NEVE (AUTOMATIKUS)</label>
+            <input type="text" id="T1Token" readonly value="${esc(me)}" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;font-weight:800;opacity:0.9">
+            <small style="color:var(--muted)">A rendszer automatikusan összepárosítja a T0 előzetes űrlapoddal.</small>
           </div>
           
           <div class="field" style="margin-bottom:18px">
-            <label style="font-weight:700;display:block;margin-bottom:6px">1. Megélt fizikai és kognitív terhelés (1 - 10 skála): <span id="t1_load_val" style="color:#ef956c">8</span> / 10</label>
-            <input type="range" id="t1_felt_load" min="1" max="10" value="8" oninput="document.getElementById('t1_load_val').textContent=this.value" style="width:100%">
+            <label style="font-weight:700;display:block;margin-bottom:6px">1. Megélt fizikai és kognitív terhelés (1 - 10 skála): <span id="t1_load_val" style="color:#ef956c">${myT1?.responses?.felt_load || 8}</span> / 10</label>
+            <input type="range" id="t1_felt_load" min="1" max="10" value="${myT1?.responses?.felt_load || 8}" oninput="document.getElementById('t1_load_val').textContent=this.value" style="width:100%">
           </div>
 
           <div class="field" style="margin-bottom:18px">
-            <label style="font-weight:700;display:block;margin-bottom:6px">2. Mennyivel volt nehezebb a vártnál (1 - 5 skála): <span id="t1_corr_val" style="color:var(--green)">3</span> / 5</label>
-            <input type="range" id="t1_correction" min="1" max="5" value="3" oninput="document.getElementById('t1_corr_val').textContent=this.value" style="width:100%">
+            <label style="font-weight:700;display:block;margin-bottom:6px">2. Mennyivel volt nehezebb a vártnál (1 - 5 skála): <span id="t1_corr_val" style="color:var(--green)">${myT1?.responses?.correction || 3}</span> / 5</label>
+            <input type="range" id="t1_correction" min="1" max="5" value="${myT1?.responses?.correction || 3}" oninput="document.getElementById('t1_corr_val').textContent=this.value" style="width:100%">
           </div>
 
           <div class="field" style="margin-bottom:24px">
-            <label style="font-weight:700;display:block;margin-bottom:6px">3. Gyakorlat realisztikussága (1 - 5 skála): <span id="t1_real_val" style="color:var(--green)">5</span> / 5</label>
-            <input type="range" id="t1_realism" min="1" max="5" value="5" oninput="document.getElementById('t1_real_val').textContent=this.value" style="width:100%">
+            <label style="font-weight:700;display:block;margin-bottom:6px">3. Gyakorlat realisztikussága (1 - 5 skála): <span id="t1_real_val" style="color:var(--green)">${myT1?.responses?.realism || 5}</span> / 5</label>
+            <input type="range" id="t1_realism" min="1" max="5" value="${myT1?.responses?.realism || 5}" oninput="document.getElementById('t1_real_val').textContent=this.value" style="width:100%">
           </div>
 
-          <button type="submit" id="T1SubmitBtn" class="pill-btn" style="width:100%;padding:16px;font-size:16px;font-weight:800">T1 ŰRLAP RÖGZÍTÉSE</button>
+          <button type="submit" id="T1SubmitBtn" class="pill-btn" style="width:100%;padding:16px;font-size:16px;font-weight:800">${myT1 ? 'T1 ŰRLAP FRISSÍTÉSE' : 'T1 ŰRLAP RÖGZÍTÉSE'}</button>
         </form>
       </div>
     </div>`;
@@ -3166,27 +3393,8 @@ function dashboardPage() {
       ${renderCompletedCheckpointsManager(selectedDashboardEventId)}
     </div>
 
-    <!-- T0 vs T1 Terhelési összehasonlító kártya -->
-    <div class="panel">
-      <div class="panel-head"><h3>Beavatkozói Állapotfelmérés (T0 vs T1 Korreláció)</h3></div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));gap:16px;margin-top:10px">
-        <div style="background:var(--bg);padding:14px;border-radius:10px">
-          <small style="color:var(--muted);font-weight:700">SZAKMAI MAGABIZTOSSÁG</small>
-          <div style="font-size:20px;font-weight:800;color:var(--green);margin:4px 0">${metrics.avgPrep > 0 ? metrics.avgPrep + ' / 5.0' : '– / 5.0'}</div>
-          <div style="font-size:11px;color:var(--muted)">${metrics.t0Count > 0 ? `${metrics.t0Count} beavatkozó töltötte ki a feladat előtt.` : 'Még nincs T0 kitöltés.'}</div>
-        </div>
-        <div style="background:var(--bg);padding:14px;border-radius:10px">
-          <small style="color:var(--muted);font-weight:700">MEGÉLT ÁTLAGTERHELÉS</small>
-          <div style="font-size:20px;font-weight:800;color:#ef956c;margin:4px 0">${metrics.avgLoad > 0 ? metrics.avgLoad + ' / 10' : '– / 10'}</div>
-          <div style="font-size:11px;color:var(--muted)">${metrics.totalPart > 0 ? 'Pszichofizikai szint a kérdőívek alapján.' : 'Még nincs terhelési adat.'}</div>
-        </div>
-        <div style="background:var(--bg);padding:14px;border-radius:10px">
-          <small style="color:var(--muted);font-weight:700">GYAKORLAT REALIZMUSA</small>
-          <div style="font-size:20px;font-weight:800;color:var(--green);margin:4px 0">${metrics.avgRealism > 0 ? metrics.avgRealism + ' / 5.0' : '– / 5.0'}</div>
-          <div style="font-size:11px;color:var(--muted)">${metrics.t1Count > 0 ? `${metrics.t1Count} beavatkozói visszajelzés utána.` : 'Még nincs T1 kitöltés.'}</div>
-        </div>
-      </div>
-    </div>`;
+    <!-- Résztvevők (nem EXCON) T0 vs T1 Diagramok & Admin Kitöltöttségi Áttekintő -->
+    ${renderParticipantAnalysisPanel(selectedDashboardEventId)}`;
   }
 
   // 6. KÖVETKEZTETÉSEK LEVONÁSA ÉS ZÁRÓ ÉRTÉKELÉS FÜL
@@ -3306,7 +3514,7 @@ function calendarPage(){const year=month.getFullYear(),monthIndex=month.getMonth
 </script><script src="responsive.js?v=20261012-logistics-workflow-1"></script>
 <link rel="stylesheet" href="education/education.css"><script src="education/engine.js"></script><script src="/kiosk/admin/education-editor.js?v=20261028-quiz-online-1"></script><script src="/kiosk/member-result-client.js?v=20261028-quiz-online-1"></script><script src="/kiosk/remote-service.js?v=20261028-quiz-online-1"></script><link rel="stylesheet" href="/knowledge-library/style.css?v=20261029-knowledge-navigation-1"><script src="/knowledge-library/core.js?v=20261104-background-1"></script>
 <script src="/knowledge-library/background-core.js?v=20261104-background-1"></script>
-<script src="/knowledge-library/background-view.js?v=20261104-background-1"></script><script src="/knowledge-library/view.js?v=20261029-knowledge-navigation-1"></script><script src="auth-loader.js?v=20261119-excon-sync-1"></script><script src="/gdacs/vendor/leaflet.js" defer></script><script src="/gdacs/core.js?v=20261103-1" defer></script><script src="/gdacs/monitor.js?v=20261103-1" defer></script></body></html>
+<script src="/knowledge-library/background-view.js?v=20261104-background-1"></script><script src="/knowledge-library/view.js?v=20261029-knowledge-navigation-1"></script><script src="auth-loader.js?v=20261121-t0t1-participants-1"></script><script src="/gdacs/vendor/leaflet.js" defer></script><script src="/gdacs/core.js?v=20261103-1" defer></script><script src="/gdacs/monitor.js?v=20261103-1" defer></script></body></html>
 
 
 

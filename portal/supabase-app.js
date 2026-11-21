@@ -378,7 +378,7 @@
         event.registrationCount = rows.length;
         event.myResponse = participantRows.find(x => x.event_id === event.id && x.member_id === user.id)?.response || null;
         event.myParticipationRole=participantRows.find(x=>x.event_id===event.id&&x.member_id===user.id)?.participation_role||null;
-        event.registrants = rows.map(x => x.profiles?.name || 'Csapattag'); const exconNames = rows.filter(x => x.participation_role === 'excon').map(x => x.profiles?.name).filter(Boolean); event.exconRegistrants = exconNames; if (exconNames.length && window.syncExconApplicantsFromEvent) window.syncExconApplicantsFromEvent(event.id, exconNames);
+        event.registrants = rows.map(x => x.profiles?.name || 'Csapattag'); const exconNames = rows.filter(x => x.participation_role === 'excon').map(x => x.profiles?.name).filter(Boolean); event.exconRegistrants = exconNames; event.participantRegistrants = rows.filter(x => x.participation_role !== 'excon').map(x => x.profiles?.name).filter(Boolean); if (exconNames.length && window.syncExconApplicantsFromEvent) window.syncExconApplicantsFromEvent(event.id, exconNames);
       }
     }
     if (user?.membershipStatus === 'approved' && page === 'forum') {
@@ -2558,7 +2558,7 @@
         event.registrationCount = rows.length;
         event.myResponse = participantRows.find(x => x.event_id === event.id && x.member_id === user.id)?.response || null;
         event.myParticipationRole=participantRows.find(x=>x.event_id===event.id&&x.member_id===user.id)?.participation_role||null;
-        event.registrants = rows.map(x => x.profiles?.name || 'Csapattag'); const exconNames = rows.filter(x => x.participation_role === 'excon').map(x => x.profiles?.name).filter(Boolean); event.exconRegistrants = exconNames; if (exconNames.length && window.syncExconApplicantsFromEvent) window.syncExconApplicantsFromEvent(event.id, exconNames);
+        event.registrants = rows.map(x => x.profiles?.name || 'Csapattag'); const exconNames = rows.filter(x => x.participation_role === 'excon').map(x => x.profiles?.name).filter(Boolean); event.exconRegistrants = exconNames; event.participantRegistrants = rows.filter(x => x.participation_role !== 'excon').map(x => x.profiles?.name).filter(Boolean); if (exconNames.length && window.syncExconApplicantsFromEvent) window.syncExconApplicantsFromEvent(event.id, exconNames);
       }
     }
     if (user?.membershipStatus === 'approved' && page === 'forum') {
