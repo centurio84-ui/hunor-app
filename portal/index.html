@@ -1446,7 +1446,7 @@ function submitExternalPinLogin(e, preferredEvId) {
   // Ha a helyi tárolóban még nincs benne (mert az admin gépén lett generálva), de érvényes 4 jegyű PIN:
   if (!matchedExt && /^\d{4}$/.test(pin)) {
     const rawEv = preferredEvId ? events.find(x => x.id === preferredEvId) : (events.find(e => (e.kind || '').toLowerCase().includes('gyakorlat')) || events[0] || null);
-    matchedEvId = rawEv ? rawEv.id : (preferredEvId || 'default');
+    matchedEvId = rawEv ? rawEv.id : (preferredEvId && /^[0-9a-f-]{36}$/i.test(preferredEvId) ? preferredEvId : '57cc70be-38e0-41ab-a1c5-49b54d3062d2');
     matchedExt = {
       id: 'ext_auto_' + pin,
       name: (pin === '4841' ? 'Dr. Sáfár Brigitta' : `Külsős Értékelő (${pin})`),
@@ -1463,9 +1463,9 @@ function submitExternalPinLogin(e, preferredEvId) {
   const matchedEvObj = events.find(x => x.id === matchedEvId) || read('cached_exercises', []).find(x => x.id === matchedEvId) || null;
   setActiveExternalExcon({
     eventId: matchedEvId,
-    eventTitle: matchedEvObj?.title || 'EXCON Gyakorlat',
-    eventDate: matchedEvObj?.date || new Date().toISOString().slice(0, 10),
-    eventPlace: matchedEvObj?.place || 'Kárhelyszín',
+    eventTitle: matchedEvObj?.title || 'Rendszerbeállító gyakorlat',
+    eventDate: matchedEvObj?.date || '2026-11-17',
+    eventPlace: matchedEvObj?.place || 'Hajdúszoboszló HUNOR pálya',
     name: matchedExt.name,
     pin: matchedExt.pin,
     access: matchedExt.access || 'full',
@@ -2097,14 +2097,15 @@ async function submitExconForm(e) {
     setEvaluatorSheetLock(evId, evaluator, true, 'Minden ellenőrzőpont (55/55) kitöltve.');
   }
 
-  // Supabase mentés ha elérhető (a -1-es "Nem értékelem" értéket is küldjük)
+  // Supabase mentés ha elérhető (a -1-es "Nem értékelem" értéket is küldjük, a nem-UUID 'default'-ot átalakítjuk)
   try {
     const sbClient = window.hunorSb || (window.supabase?.from ? window.supabase : null);
     if (sbClient) {
+      const safeEventId = (evId && /^[0-9a-f-]{36}$/i.test(evId)) ? evId : '57cc70be-38e0-41ab-a1c5-49b54d3062d2';
       await sbClient.from("excon_evaluations").insert({
         evaluator_name: evaluator,
         checkpoint_code: cp,
-        event_id: evId || null,
+        event_id: safeEventId,
         score: Number(exconSelectedScore),
         comment: comment
       });
@@ -3738,7 +3739,7 @@ function calendarPage(){const year=month.getFullYear(),monthIndex=month.getMonth
 </script><script src="responsive.js?v=20261012-logistics-workflow-1"></script>
 <link rel="stylesheet" href="education/education.css"><script src="education/engine.js"></script><script src="/kiosk/admin/education-editor.js?v=20261028-quiz-online-1"></script><script src="/kiosk/member-result-client.js?v=20261028-quiz-online-1"></script><script src="/kiosk/remote-service.js?v=20261028-quiz-online-1"></script><link rel="stylesheet" href="/knowledge-library/style.css?v=20261029-knowledge-navigation-1"><script src="/knowledge-library/core.js?v=20261104-background-1"></script>
 <script src="/knowledge-library/background-core.js?v=20261104-background-1"></script>
-<script src="/knowledge-library/background-view.js?v=20261104-background-1"></script><script src="/knowledge-library/view.js?v=20261029-knowledge-navigation-1"></script><script src="auth-loader.js?v=20261121-feedback-files-1"></script><script src="/gdacs/vendor/leaflet.js" defer></script><script src="/gdacs/core.js?v=20261103-1" defer></script><script src="/gdacs/monitor.js?v=20261103-1" defer></script></body></html>
+<script src="/knowledge-library/background-view.js?v=20261104-background-1"></script><script src="/knowledge-library/view.js?v=20261029-knowledge-navigation-1"></script><script src="auth-loader.js?v=20261121-pin-uuid-fix-1"></script><script src="/gdacs/vendor/leaflet.js" defer></script><script src="/gdacs/core.js?v=20261103-1" defer></script><script src="/gdacs/monitor.js?v=20261103-1" defer></script></body></html>
 
 
 
