@@ -2354,7 +2354,7 @@ let improvementsText = '';
 function setDashboardTab(tab) {
   dashboardSubTab = tab;
   renderDashboard();
-  if (['analysis', 'excon', 't0', 't1'].includes(tab) && typeof window.syncExconFromSupabase === 'function') {
+  if (['analysis', 'excon', 't0', 't1', 'conclusion'].includes(tab) && typeof window.syncExconFromSupabase === 'function') {
     window.syncExconFromSupabase().then(() => { if (page === 'dashboard') renderDashboard(); });
   }
 }
@@ -2430,31 +2430,197 @@ function openCreateEventModal() {
   </form>`);
 }
 
+function getConclusionAttachments(evId) {
+  if (!evId) return [];
+  const saved = read('concl_' + evId, null);
+  return Array.isArray(saved?.attachments) ? saved.attachments : [];
+}
+
+async function persistConclusionRecord(evId, updated) {
+  save('concl_' + evId, updated);
+  try {
+    const sbClient = window.hunorSb || (window.supabase?.from ? window.supabase : null);
+    if (sbClient && evId && /^[0-9a-f-]{36}$/i.test(evId)) {
+      await sbClient.from('event_conclusions').upsert({
+        event_id: evId,
+        author_name: updated.author || displayName(),
+        conclusion_text: updated.conclusion || '(Csatolt visszajelzések)',
+        strengths: updated.strengths || '',
+        improvements: updated.improvements || '',
+        recommendations: JSON.stringify({ attachments: updated.attachments || [] }),
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'event_id' });
+    }
+  } catch (err) {
+    console.warn('Következtetés / csatolmány Supabase mentési hiba:', err);
+  }
+}
+
 async function submitEventConclusion(e) {
   e.preventDefault();
   const cText = document.getElementById('conclText').value.trim();
   const sText = document.getElementById('conclStrengths').value.trim();
   const iText = document.getElementById('conclImprovements').value.trim();
-  
+
   if (!cText) return notify('Kérlek, fogalmazd meg a záró következtetést!');
-  
-  try {
-    if (window.supabase && selectedDashboardEventId) {
-      await window.supabase.from('event_conclusions').upsert({
-        event_id: selectedDashboardEventId,
-        author_name: displayName(),
-        conclusion_text: cText,
-        strengths: sText,
-        improvements: iText
-      }, { onConflict: 'event_id' });
-    }
-  } catch (err) {
-    console.warn('Következtetés mentési hiba:', err);
-  }
-  
-  save('concl_' + selectedDashboardEventId, { conclusion: cText, strengths: sText, improvements: iText, author: displayName(), date: new Date().toLocaleDateString('hu-HU') });
+
+  const prev = read('concl_' + selectedDashboardEventId, null) || {};
+  const updated = {
+    conclusion: cText,
+    strengths: sText,
+    improvements: iText,
+    attachments: Array.isArray(prev.attachments) ? prev.attachments : [],
+    author: displayName(),
+    date: new Date().toLocaleDateString('hu-HU')
+  };
+  await persistConclusionRecord(selectedDashboardEventId, updated);
   notify('Vezetői értékelés és következtetések sikeresen elmentve!');
-  dashboardSubTab = 'analysis';
+  renderDashboard();
+}
+
+async function uploadConclusionAttachments(e) {
+  e.preventDefault();
+  const evId = selectedDashboardEventId;
+  if (!evId) return notify('Nincs kiválasztott gyakorlat!');
+  const input = document.getElementById('conclFileInput');
+  const noteInput = document.getElementById('conclFileNote');
+  const statusEl = document.getElementById('conclUploadStatus');
+  const btn = document.getElementById('conclUploadBtn');
+  const files = input?.files ? Array.from(input.files) : [];
+  if (!files.length) return notify('Kérlek, válassz ki legalább egy fájlt (kép, Word vagy PDF)!');
+
+  const maxBytes = 25 * 1024 * 1024;
+  for (const f of files) {
+    if (f.size > maxBytes) return notify(`A(z) "${f.name}" fájl túl nagy (maximum 25 MB lehet).`);
+  }
+
+  if (btn) { btn.disabled = true; btn.textContent = 'Feltöltés folyamatban...'; }
+  if (statusEl) { statusEl.style.display = 'block'; statusEl.textContent = `0 / ${files.length} fájl feltöltése...`; }
+
+  const sbClient = window.hunorSb || (window.supabase?.from ? window.supabase : null);
+  const prev = read('concl_' + evId, null) || {
+    conclusion: document.getElementById('conclText')?.value?.trim() || '',
+    strengths: document.getElementById('conclStrengths')?.value?.trim() || '',
+    improvements: document.getElementById('conclImprovements')?.value?.trim() || '',
+    author: displayName(),
+    date: new Date().toLocaleDateString('hu-HU'),
+    attachments: []
+  };
+  const attachments = Array.isArray(prev.attachments) ? [...prev.attachments] : [];
+  const note = (noteInput?.value || '').trim();
+  let uploadedCount = 0;
+
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    if (statusEl) statusEl.textContent = `Feltöltés (${i + 1}/${files.length}): ${file.name}...`;
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]+/g, '_');
+    const storagePath = `excon-feedback/${evId}/${Date.now()}_${i}_${safeName}`;
+    let uploadedPath = null;
+    let bucketUsed = 'hunor-education';
+    let dataUrlFallback = null;
+
+    if (sbClient && sbClient.storage) {
+      let res = await sbClient.storage.from('hunor-education').upload(storagePath, file, {
+        contentType: file.type || 'application/octet-stream',
+        cacheControl: '3600',
+        upsert: false
+      });
+      if (res.error) {
+        bucketUsed = 'hunor-public-media';
+        res = await sbClient.storage.from('hunor-public-media').upload(storagePath, file, {
+          contentType: file.type || 'application/octet-stream',
+          cacheControl: '3600',
+          upsert: false
+        });
+      }
+      if (!res.error) {
+        uploadedPath = storagePath;
+      } else {
+        console.warn('Storage feltöltési hiba:', res.error);
+      }
+    }
+
+    // Ha nem sikerült a Storage-ba feltölteni és kis méretű (<= 2 MB), helyi biztonsági mentés
+    if (!uploadedPath && file.size <= 2 * 1024 * 1024) {
+      dataUrlFallback = await new Promise(resolve => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => resolve(null);
+        reader.readAsDataURL(file);
+      });
+    }
+
+    if (uploadedPath || dataUrlFallback) {
+      attachments.unshift({
+        id: 'att_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+        name: file.name,
+        size: file.size,
+        type: file.type || '',
+        note: note,
+        bucket: uploadedPath ? bucketUsed : null,
+        path: uploadedPath,
+        dataUrl: dataUrlFallback,
+        uploaded_by: displayName(),
+        uploaded_at: new Date().toISOString()
+      });
+      uploadedCount++;
+    }
+  }
+
+  prev.attachments = attachments;
+  await persistConclusionRecord(evId, prev);
+
+  if (btn) { btn.disabled = false; btn.textContent = '📤 Fájlok feltöltése'; }
+  if (input) input.value = '';
+  if (noteInput) noteInput.value = '';
+  if (statusEl) statusEl.style.display = 'none';
+
+  if (uploadedCount > 0) {
+    notify(`${uploadedCount} db visszajelzés fájl sikeresen feltöltve!`);
+  } else {
+    notify('A feltöltés nem sikerült (ellenőrizd a bejelentkezést vagy a fájl méretét).');
+  }
+  renderDashboard();
+}
+
+async function openConclusionAttachment(attId) {
+  const list = getConclusionAttachments(selectedDashboardEventId);
+  const att = list.find(x => x.id === attId);
+  if (!att) return notify('A fájl nem található.');
+  if (att.dataUrl) {
+    const a = document.createElement('a');
+    a.href = att.dataUrl;
+    a.download = att.name;
+    a.target = '_blank';
+    a.click();
+    return;
+  }
+  const sbClient = window.hunorSb || (window.supabase?.from ? window.supabase : null);
+  if (!sbClient?.storage || !att.path) return notify('A fájl elérése nem lehetséges.');
+  try {
+    const { data, error } = await sbClient.storage.from(att.bucket || 'hunor-education').createSignedUrl(att.path, 3600);
+    if (error || !data?.signedUrl) throw error || new Error('Nincs letöltési link');
+    window.open(data.signedUrl, '_blank', 'noopener,noreferrer');
+  } catch (err) {
+    notify('Nem sikerült megnyitni a fájlt: ' + (err?.message || 'Hiba'));
+  }
+}
+
+async function deleteConclusionAttachment(attId) {
+  if (!confirm('Biztosan törlöd ezt a csatolt visszajelzést?')) return;
+  const evId = selectedDashboardEventId;
+  const prev = read('concl_' + evId, null);
+  if (!prev || !Array.isArray(prev.attachments)) return;
+  const att = prev.attachments.find(x => x.id === attId);
+  prev.attachments = prev.attachments.filter(x => x.id !== attId);
+  if (att?.path) {
+    try {
+      const sbClient = window.hunorSb || (window.supabase?.from ? window.supabase : null);
+      if (sbClient?.storage) await sbClient.storage.from(att.bucket || 'hunor-education').remove([att.path]);
+    } catch (_) {}
+  }
+  await persistConclusionRecord(evId, prev);
+  notify('Csatolt fájl törölve.');
   renderDashboard();
 }
 
@@ -3433,6 +3599,64 @@ function dashboardPage() {
           <button type="submit" class="pill-btn" style="width:100%;padding:16px;font-size:16px;font-weight:900;background:var(--green)">KÖVETKEZTETÉSEK MENTÉSE ÉS JELENTÉS ZÁRÁSA</button>
         </form>
       </div>
+
+      <!-- VISSZAJELZÉSEK: KÉPEK, WORD, PDF CSATOLMÁNYOK -->
+      ${(() => {
+        const atts = getConclusionAttachments(selectedDashboardEventId);
+        const fmtSize = b => b >= 1024 * 1024 ? (b / (1024 * 1024)).toFixed(1) + ' MB' : Math.max(1, Math.round(b / 1024)) + ' KB';
+        const iconFor = (name, type) => {
+          const n = (name || '').toLowerCase();
+          if ((type || '').startsWith('image/') || /\.(png|jpe?g|webp|gif|heic)$/.test(n)) return '🖼️';
+          if (n.endsWith('.pdf') || (type || '').includes('pdf')) return '📄';
+          if (/\.(docx?|odt|rtf)$/.test(n) || (type || '').includes('word')) return '📝';
+          return '📎';
+        };
+        return `<div class="panel" style="padding:24px;margin-top:20px;border-top:3px solid #74bbd8">
+          <div class="panel-head" style="margin-bottom:14px">
+            <div>
+              <div class="eyebrow" style="color:#74bbd8;letter-spacing:1px">📎 VISSZAJELZÉSEK & DOKUMENTUMOK</div>
+              <h3 style="margin:4px 0 2px">Csatolt Visszajelzések (Kép, Word, PDF)</h3>
+              <small style="color:var(--muted)">Tölts fel fotókat, Word dokumentumokat (.doc, .docx) vagy PDF fájlokat a gyakorlat záró visszajelzéseihez (max. 25 MB/fájl).</small>
+            </div>
+            <span class="badge" style="background:rgba(116,187,216,0.16);color:#74bbd8">${atts.length} db fájl</span>
+          </div>
+
+          <form onsubmit="uploadConclusionAttachments(event)" style="background:var(--bg);border:1px dashed #3b5271;border-radius:12px;padding:16px;margin-bottom:18px">
+            <div style="display:grid;gap:12px">
+              <div>
+                <label style="font-weight:700;font-size:12px;display:block;margin-bottom:6px">FÁJLOK KIVÁLASZTÁSA (KÉP, WORD, PDF · TÖBB IS KIJELÖLHETŐ)</label>
+                <input type="file" id="conclFileInput" multiple accept="image/*,.pdf,.doc,.docx,.odt,.xls,.xlsx,.ppt,.pptx,.txt" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--paper);font-size:13px">
+              </div>
+              <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+                <input type="text" id="conclFileNote" placeholder="Rövid megjegyzés a visszajelzéshez (pl. K9 szektor értékelés, helyszíni fotók)..." style="flex:1;min-width:220px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;font-size:13px">
+                <button type="submit" id="conclUploadBtn" class="pill-btn" style="padding:10px 18px;font-size:13px;font-weight:800;white-space:nowrap">📤 Fájlok feltöltése</button>
+              </div>
+              <div id="conclUploadStatus" style="display:none;font-size:12px;color:#74bbd8;font-weight:700"></div>
+            </div>
+          </form>
+
+          ${atts.length === 0 ? `
+            <div style="padding:18px;background:var(--bg);border-radius:10px;text-align:center;color:var(--muted);font-size:13px">
+              Még nincs feltöltött visszajelzés fájl ehhez a gyakorlathoz.
+            </div>` : `
+            <div style="display:grid;gap:10px">
+              ${atts.map(att => `<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px 14px;flex-wrap:wrap">
+                <div style="display:flex;align-items:center;gap:12px;min-width:0;flex:1">
+                  <span style="font-size:24px;flex-shrink:0">${iconFor(att.name, att.type)}</span>
+                  <div style="min-width:0">
+                    <b style="font-size:14px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(att.name)}</b>
+                    <small style="color:var(--muted);font-size:11px;display:block">${fmtSize(att.size || 0)} · Feltöltötte: ${esc(att.uploaded_by || 'Tag')} · ${att.uploaded_at ? new Date(att.uploaded_at).toLocaleString('hu-HU') : ''}</small>
+                    ${att.note ? `<div style="font-size:12px;color:#93c5fd;margin-top:3px">„${esc(att.note)}”</div>` : ''}
+                  </div>
+                </div>
+                <div style="display:flex;gap:8px;flex-shrink:0">
+                  <button type="button" class="secondary" style="font-size:12px;font-weight:700;padding:7px 12px;border-color:#74bbd8;color:#c2e9f5" onclick="openConclusionAttachment('${esc(att.id)}')">👁️ Megnyitás / Letöltés</button>
+                  ${(isAdmin || att.uploaded_by === displayName()) ? `<button type="button" class="secondary" style="font-size:12px;padding:7px 10px;border-color:#ef4444;color:#fca5a5" onclick="deleteConclusionAttachment('${esc(att.id)}')" title="Törlés">🗑️</button>` : ''}
+                </div>
+              </div>`).join('')}
+            </div>`}
+        </div>`;
+      })()}
     </div>`;
   }
 
@@ -3514,7 +3738,7 @@ function calendarPage(){const year=month.getFullYear(),monthIndex=month.getMonth
 </script><script src="responsive.js?v=20261012-logistics-workflow-1"></script>
 <link rel="stylesheet" href="education/education.css"><script src="education/engine.js"></script><script src="/kiosk/admin/education-editor.js?v=20261028-quiz-online-1"></script><script src="/kiosk/member-result-client.js?v=20261028-quiz-online-1"></script><script src="/kiosk/remote-service.js?v=20261028-quiz-online-1"></script><link rel="stylesheet" href="/knowledge-library/style.css?v=20261029-knowledge-navigation-1"><script src="/knowledge-library/core.js?v=20261104-background-1"></script>
 <script src="/knowledge-library/background-core.js?v=20261104-background-1"></script>
-<script src="/knowledge-library/background-view.js?v=20261104-background-1"></script><script src="/knowledge-library/view.js?v=20261029-knowledge-navigation-1"></script><script src="auth-loader.js?v=20261121-t0t1-participants-1"></script><script src="/gdacs/vendor/leaflet.js" defer></script><script src="/gdacs/core.js?v=20261103-1" defer></script><script src="/gdacs/monitor.js?v=20261103-1" defer></script></body></html>
+<script src="/knowledge-library/background-view.js?v=20261104-background-1"></script><script src="/knowledge-library/view.js?v=20261029-knowledge-navigation-1"></script><script src="auth-loader.js?v=20261121-feedback-files-1"></script><script src="/gdacs/vendor/leaflet.js" defer></script><script src="/gdacs/core.js?v=20261103-1" defer></script><script src="/gdacs/monitor.js?v=20261103-1" defer></script></body></html>
 
 
 

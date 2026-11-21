@@ -320,6 +320,36 @@
     } catch (e) {
       console.warn('participant_evaluations sync nem sikerült:', e);
     }
+    try {
+      const { data: conclRows, error: conclErr } = await sb.from('event_conclusions').select('*');
+      if (!conclErr && Array.isArray(conclRows)) {
+        for (const row of conclRows) {
+          if (!row?.event_id) continue;
+          let attachments = [];
+          if (row.recommendations) {
+            try {
+              const parsed = JSON.parse(row.recommendations);
+              if (Array.isArray(parsed?.attachments)) attachments = parsed.attachments;
+            } catch (_) {}
+          }
+          const localPrev = read('concl_' + row.event_id, null) || {};
+          const localAtts = Array.isArray(localPrev.attachments) ? localPrev.attachments : [];
+          const mergedAttMap = new Map();
+          attachments.forEach(a => { if (a?.id) mergedAttMap.set(a.id, a); });
+          localAtts.forEach(a => { if (a?.id && !mergedAttMap.has(a.id)) mergedAttMap.set(a.id, a); });
+          save('concl_' + row.event_id, {
+            conclusion: row.conclusion_text || localPrev.conclusion || '',
+            strengths: row.strengths || localPrev.strengths || '',
+            improvements: row.improvements || localPrev.improvements || '',
+            attachments: Array.from(mergedAttMap.values()),
+            author: row.author_name || localPrev.author || '',
+            date: row.updated_at ? new Date(row.updated_at).toLocaleDateString('hu-HU') : (localPrev.date || '')
+          });
+        }
+      }
+    } catch (e) {
+      console.warn('event_conclusions sync nem sikerült:', e);
+    }
   };
 
   async function loadPageData(page) {
