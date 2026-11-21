@@ -10,6 +10,7 @@ import 'api/staging_api.dart';
 import 'api/supabase_rescue_platform_api.dart';
 import 'api/rescue_platform_api.dart';
 import 'services/app_store.dart';
+import 'services/local_notification_service.dart';
 import 'services/theme_controller.dart';
 import 'services/theme_service.dart';
 import 'services/theme_vault.dart';
@@ -94,6 +95,7 @@ ThemeService createConfiguredThemeService({
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await LocalNotificationService.instance.initialize();
 
   try {
     await Supabase.initialize(

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:app_badge_plus/app_badge_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'local_notification_service.dart';
 import '../models/chat_message.dart';
 import '../api/mock_rescue_platform_api.dart';
 import '../api/staging_api.dart';
@@ -56,9 +57,13 @@ class AppStore extends ChangeNotifier {
   Future<void> _syncAppBadge() async {
     try {
       final count = totalNotificationCount;
-      try {
-        await AppBadgePlus.updateBadge(count);
-      } catch (_) {}
+      if (count <= 0) {
+        await LocalNotificationService.instance.clearChatNotifications();
+      } else {
+        try {
+          await AppBadgePlus.updateBadge(count);
+        } catch (_) {}
+      }
     } catch (_) {}
   }
 
@@ -72,6 +77,11 @@ class AppStore extends ChangeNotifier {
   Future<void> simulateTestNotification() async {
     unreadChatCount++;
     triggerNotificationChime();
+    await LocalNotificationService.instance.showUnreadChatNotification(
+      unreadCount: totalNotificationCount,
+      title: 'HUNOR Értesítés teszt',
+      body: 'Olvasatlan üzenetek száma: $unreadChatCount',
+    );
     await _syncAppBadge();
     notifyListeners();
   }
@@ -87,12 +97,18 @@ class AppStore extends ChangeNotifier {
     chatMessages.add(hqMessage);
     unreadChatCount++;
     triggerNotificationChime();
+    await LocalNotificationService.instance.showUnreadChatNotification(
+      unreadCount: totalNotificationCount,
+      title: hqMessage.authorName,
+      body: hqMessage.content,
+    );
     await _syncAppBadge();
     notifyListeners();
   }
 
   void markChatAsRead() {
     unreadChatCount = 0;
+    unawaited(LocalNotificationService.instance.clearChatNotifications());
     unawaited(_syncAppBadge());
     if (api is SupabaseRescuePlatformApi && chatMessages.isNotEmpty) {
       unawaited((api as SupabaseRescuePlatformApi).markChatRead(messageId: chatMessages.last.id));
@@ -386,8 +402,39 @@ class AppStore extends ChangeNotifier {
         final serverUnread = await sbApi.getUnreadChatCount();
         if (serverUnread > 0) {
           unreadChatCount = serverUnread;
+          final lastMsg = chatMessages.isNotEmpty ? chatMessages.last : null;
+          unawaited(LocalNotificationService.instance.showUnreadChatNotification(
+            unreadCount: totalNotificationCount,
+            title: 'HUNOR Csapat Chat ($unreadChatCount olvasatlan)',
+            body: lastMsg != null ? '${lastMsg.authorName}: ${lastMsg.content}' : 'Új olvasatlan üzenet érkezett.',
+          ));
         }
         unawaited(_syncAppBadge());
+
+        // FCM Push token regisztrálása háttér-értesítésekhez és ikon-jelvényhez
+        unawaited(() async {
+          final token = await LocalNotificationService.instance.initializeFirebaseAndGetToken(
+            onForegroundMessage: (title, body) {
+              unreadChatCount++;
+              triggerNotificationChime();
+              unawaited(LocalNotificationService.instance.showUnreadChatNotification(
+                unreadCount: totalNotificationCount,
+                title: title,
+                body: body,
+              ));
+              notifyListeners();
+            },
+          );
+          if (token != null && token.isNotEmpty) {
+            await sbApi.registerMyInstallation(
+              installationId: 'fcm-${profile.user.id}',
+              platform: defaultTargetPlatform == TargetPlatform.iOS ? 'ios' : 'android',
+              provider: 'fcm',
+              token: token,
+              environment: 'production',
+            );
+          }
+        }());
 
         if (!_isChatSubscribed) {
           _isChatSubscribed = true;
@@ -396,6 +443,11 @@ class AppStore extends ChangeNotifier {
             if (msg.authorId != myId) {
               unreadChatCount++;
               triggerNotificationChime();
+              unawaited(LocalNotificationService.instance.showUnreadChatNotification(
+                unreadCount: totalNotificationCount,
+                title: msg.authorName,
+                body: msg.content,
+              ));
               unawaited(_syncAppBadge());
             }
             if (!chatMessages.any((m) => m.id == msg.id)) {

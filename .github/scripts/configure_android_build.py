@@ -117,13 +117,28 @@ def configure_sdk_versions():
         gt = gt.replace("targetSdk = flutter.targetSdkVersion", "targetSdk = 36")
         gt = re.sub(r'compileSdk\s*=\s*\d+', 'compileSdk = 36', gt)
         gt = gt.replace("compileSdk = flutter.compileSdkVersion", "compileSdk = 36")
+        if "isCoreLibraryDesugaringEnabled" not in gt:
+            gt = gt.replace(
+                "compileOptions {",
+                "compileOptions {\n        isCoreLibraryDesugaringEnabled = true",
+                1,
+            )
+        if "desugar_jdk_libs" not in gt:
+            if "dependencies {" in gt:
+                gt = gt.replace(
+                    "dependencies {",
+                    'dependencies {\n    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")',
+                    1,
+                )
+            else:
+                gt += '\ndependencies {\n    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")\n}\n'
         if "lint {" not in gt:
             gt = gt.replace(
                 "buildTypes {",
                 "lint {\n        checkReleaseBuilds = false\n        abortOnError = false\n    }\n\n    buildTypes {"
             )
         gradle_kts.write_text(gt)
-        print("Configured build.gradle.kts SDK versions (minSdk=21, targetSdk=36, compileSdk=36) and disabled lintRelease.")
+        print("Configured build.gradle.kts SDK versions (minSdk=21, targetSdk=36, compileSdk=36), desugaring and disabled lintRelease.")
 
     gradle_groovy = Path("android/app/build.gradle")
     if gradle_groovy.exists():
