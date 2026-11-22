@@ -83,7 +83,7 @@
     logistics_officer: 10,
     unit_leader: 4,
     deputy_unit_leader: 4,
-    technical_rescuer: 40
+    technical_rescuer: 60
   };
   const alertUnits = ['Alfa', 'Bravo', 'Charlie', 'Delta'];
   let alertSlotCounts = {};
@@ -1177,9 +1177,18 @@
     const commander=alertRoles.find(r=>r.key==='commander'),deputy=alertRoles.find(r=>r.key==='deputy_commander');
     const staff=alertRoles.filter(r=>['liaison_officer','operations_officer','safety_officer','it_officer','logistics_officer'].includes(r.key));
     const leader=alertRoles.find(r=>r.key==='unit_leader'),unitDeputy=alertRoles.find(r=>r.key==='deputy_unit_leader'),rescuer=alertRoles.find(r=>r.key==='technical_rescuer');
-    const units=alertUnits.map((unit,i)=>`<section class="alert-unit-card"><strong>${unit}</strong>${alertSlot(leader,i+1,`${unit} · Alegységvezető`)}${alertSlot(unitDeputy,i+1,`${unit} · Helyettes`)}</section>`).join('');
-    const rescueCount=alertSlotCounts.technical_rescuer||1;
-    roster.innerHTML=`<div class="alert-roster-head"><div><b>Riasztási beosztás</b><small>${alertableMembers.length ? `${alertableMembers.length} riasztható tag közül választhatsz. Egy tag csak egy helyre osztható be.` : 'Jelenleg nincs riaszthatóra állított, jóváhagyott tag.'}</small></div></div>${alertableMembers.length?`<div class="alert-tree"><div class="alert-command-row">${alertSlot(commander,1,commander.label)}${alertSlot(deputy,1,deputy.label)}</div><div class="alert-branch"></div><div class="alert-role-grid">${staff.map(alertRoleCard).join('')}</div><div class="alert-branch"></div><div class="alert-unit-title">ALEGYSÉGEK · ALFA – DELTA</div><div class="alert-unit-grid">${units}</div><div class="alert-branch"></div><section class="alert-role-card alert-rescuer-card"><div class="alert-role-head"><strong>${esc(rescuer.label)}</strong><span class="alert-role-count"><span data-role-filled="technical_rescuer">0</span> / 40</span></div><div class="alert-rescuer-grid">${Array.from({length:rescueCount},(_,i)=>alertSlot(rescuer,i+1,`Műszaki mentő ${i+1}`,i>0)).join('')}</div>${rescueCount<40?`<div class="alert-add-row"><button class="secondary alert-small-btn" type="button" data-add-role="technical_rescuer">＋ Műszaki mentő hozzáadása</button><span class="alert-role-count">${rescueCount} / 40 hely</span></div>`:''}</section><div class="alert-roster-error" data-alert-validation></div></div>`:`<div class="alert-roster-empty">A beosztáshoz előbb a tagoknak riaszthatóra kell állítaniuk magukat. Az eseményt ettől függetlenül létrehozhatod.</div>`}`;
+    const UNIT_RESCUER_MAX = 15;
+    const units=alertUnits.map((unit,uIdx)=>{
+      const uKey=`technical_rescuer_${uIdx}`;
+      const uCount=alertSlotCounts[uKey]||1;
+      const offset=uIdx*UNIT_RESCUER_MAX;
+      const rescuerSlots=Array.from({length:uCount},(_,j)=>{
+        const slotNum=offset+j+1;
+        return `<div class="alert-slot"><label>${esc(unit)} · Műszaki mentő ${j+1}</label><select data-alert-role="technical_rescuer" data-alert-slot="${slotNum}" data-unit-idx="${uIdx}"><option value="">Nincs hozzárendelve</option></select>${j>0?`<button class="alert-remove-slot" type="button" data-remove-unit-rescuer="${uIdx}" data-remove-slot="${slotNum}">Eltávolítás</button>`:""}</div>`;
+      }).join('');
+      return `<section class="alert-unit-card"><strong>${unit}</strong>${alertSlot(leader,uIdx+1,`${unit} · Alegységvezető`)}${alertSlot(unitDeputy,uIdx+1,`${unit} · Helyettes`)}<div class="alert-role-head" style="margin-top:8px;padding-top:8px;border-top:1px solid #dce2d7"><strong style="font-size:11px;color:#bb3340">Műszaki mentő</strong><span class="alert-role-count"><span data-unit-rescuer-filled="${uIdx}">0</span> / ${UNIT_RESCUER_MAX}</span></div><div class="alert-slot-list">${rescuerSlots}</div>${uCount<UNIT_RESCUER_MAX?`<button class="secondary alert-small-btn" type="button" data-add-unit-rescuer="${uIdx}">＋ Műszaki mentő (${uCount}/${UNIT_RESCUER_MAX})</button>`:""}</section>`;
+    }).join('');
+    roster.innerHTML=`<div class="alert-roster-head"><div><b>Riasztási beosztás</b><small>${alertableMembers.length ? `${alertableMembers.length} riasztható tag közül választhatsz. Egy tag csak egy helyre osztható be.` : 'Jelenleg nincs riaszthatóra állított, jóváhagyott tag.'}</small></div></div>${alertableMembers.length?`<div class="alert-tree"><div class="alert-command-row">${alertSlot(commander,1,commander.label)}${alertSlot(deputy,1,deputy.label)}</div><div class="alert-branch"></div><div class="alert-role-grid">${staff.map(alertRoleCard).join('')}</div><div class="alert-branch"></div><div class="alert-unit-title">ALEGYSÉGEK · ALFA – DELTA (MINDEN ALEGYSÉGBEN MAX. 15 MŰSZAKI MENTŐ)</div><div class="alert-unit-grid">${units}</div><div class="alert-roster-error" data-alert-validation></div></div>`:`<div class="alert-roster-empty">A beosztáshoz előbb a tagoknak riaszthatóra kell állítaniuk magukat. Az eseményt ettől függetlenül létrehozhatod.</div>`}`;
     if (!alertableMembers.length) return;
     roster.querySelectorAll('select[data-alert-role]').forEach(select=>{
       for(const m of alertableMembers.filter(m=>rxRoleFits(m,select.dataset.alertRole))){const option=document.createElement('option');option.value=m.id;option.textContent=`${m.name||'Név nélkül'}${m.position?' · '+m.position:''}${m.workplace?' · '+m.workplace:''}`;select.append(option);}
@@ -1189,6 +1198,8 @@
     });
     roster.querySelectorAll('[data-add-role]').forEach(button=>button.addEventListener('click',()=>{const key=button.dataset.addRole;if((alertSlotCounts[key]||1)>=alertRoleCapacities[key])return;const previous=collectAlertAssignments(roster);alertSlotCounts[key]=(alertSlotCounts[key]||1)+1;renderAlertTree(roster,previous);}));
     roster.querySelectorAll('[data-remove-role]').forEach(button=>button.addEventListener('click',()=>{const key=button.dataset.removeRole,removedSlot=Number(button.dataset.removeSlot);const previous=collectAlertAssignments(roster).filter(a=>!(a.role_key===key&&a.slot_number===removedSlot));let next=0;for(const assignment of previous.filter(a=>a.role_key===key))assignment.slot_number=++next;alertSlotCounts[key]=Math.max(1,(alertSlotCounts[key]||1)-1);renderAlertTree(roster,previous);}));
+    roster.querySelectorAll('[data-add-unit-rescuer]').forEach(button=>button.addEventListener('click',()=>{const uIdx=Number(button.dataset.addUnitRescuer),uKey=`technical_rescuer_${uIdx}`;if((alertSlotCounts[uKey]||1)>=UNIT_RESCUER_MAX)return;const previous=collectAlertAssignments(roster);alertSlotCounts[uKey]=(alertSlotCounts[uKey]||1)+1;renderAlertTree(roster,previous);}));
+    roster.querySelectorAll('[data-remove-unit-rescuer]').forEach(button=>button.addEventListener('click',()=>{const uIdx=Number(button.dataset.removeUnitRescuer),uKey=`technical_rescuer_${uIdx}`,removedSlot=Number(button.dataset.removeSlot),minSlot=uIdx*UNIT_RESCUER_MAX+1,maxSlot=(uIdx+1)*UNIT_RESCUER_MAX;const previous=collectAlertAssignments(roster).filter(a=>!(a.role_key==='technical_rescuer'&&a.slot_number===removedSlot));let next=minSlot-1;for(const assignment of previous.filter(a=>a.role_key==='technical_rescuer'&&a.slot_number>=minSlot&&a.slot_number<=maxSlot))assignment.slot_number=++next;alertSlotCounts[uKey]=Math.max(1,(alertSlotCounts[uKey]||1)-1);renderAlertTree(roster,previous);}));
     syncAlertSelections();
     roster.querySelectorAll('[data-role-filled]').forEach(counter=>{counter.textContent=String(collectAlertAssignments(roster).filter(a=>a.role_key===counter.dataset.roleFilled).length);});
   }
@@ -1199,6 +1210,7 @@
     const chosen=selects.map(s=>s.value).filter(Boolean);
     for(const select of selects)for(const option of select.options)if(option.value)option.disabled=option.value!==select.value&&chosen.includes(option.value);
     roster.querySelectorAll('[data-role-filled]').forEach(counter=>{counter.textContent=String(selects.filter(s=>s.dataset.alertRole===counter.dataset.roleFilled&&s.value).length);});
+    roster.querySelectorAll('[data-unit-rescuer-filled]').forEach(counter=>{counter.textContent=String(selects.filter(s=>s.dataset.alertRole==='technical_rescuer'&&s.dataset.unitIdx===counter.dataset.unitRescuerFilled&&s.value).length);});
   }
 
   function collectAlertAssignments(container) {
