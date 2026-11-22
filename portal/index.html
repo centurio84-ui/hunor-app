@@ -3023,8 +3023,160 @@ function getDashboardMetrics(eventId, evaluatorFilter = selectedAnalysisEvaluato
     avgPrep,
     avgRealism,
     evaluatorsList,
-    activeFilter
+    activeFilter,
+    evExcon
   };
+}
+
+function renderRadarChartPanel(m) {
+  const rows = Array.isArray(m.evExcon) ? m.evExcon : [];
+  const defs = [
+    { label: 'I. Mobilizáció', fn: c => c.startsWith('1.') },
+    { label: 'II. Koordináció', fn: c => c.startsWith('2.') },
+    { label: 'III. Tervezés', fn: c => c.startsWith('3.') },
+    { label: 'IV. Biztonság', fn: c => c.startsWith('4.') },
+    { label: 'V. Demob', fn: c => c.startsWith('5.') },
+    { label: 'K9 Keresés', fn: c => c.startsWith('OP-K9') },
+    { label: 'Vágás (Cut)', fn: c => c.startsWith('OP-CUT') },
+    { label: 'Törés (Brk)', fn: c => c.startsWith('OP-BRK') },
+    { label: 'Alpin (Rop)', fn: c => c.startsWith('OP-ROP') },
+    { label: 'Dúcolás (Shr)', fn: c => c.startsWith('OP-SHR') }
+  ];
+  const stats = defs.map(d => {
+    const vals = rows.filter(r => d.fn(r.checkpoint_code || '') && Number(r.score) >= 0).map(r => Number(r.score));
+    const pct = vals.length ? Math.round((vals.reduce((a, b) => a + b, 0) / (vals.length * 2)) * 1000) / 10 : 0;
+    return { label: d.label, pct, n: vals.length };
+  });
+  const hasAny = stats.some(s => s.n > 0);
+  const titleFilter = m.activeFilter === 'ALL' ? 'Összesített' : esc(m.activeFilter);
+  if (!hasAny) {
+    return `<div class="panel" style="margin-bottom:18px;border-top:3px solid #38bdf8">
+      <div class="panel-head"><div><h3>🕸️ INSARAG Képességprofil · Pókháló-diagram (${titleFilter})</h3><small style="color:var(--muted)">A 10 szakági terület egyensúlya</small></div></div>
+      <div style="text-align:center;padding:24px;color:var(--muted);font-size:13px">Még nincs pontozott adat a pókháló-diagramhoz.</div>
+    </div>`;
+  }
+
+  const cx = 165, cy = 148, R = 102, N = stats.length;
+  const pt = (i, r) => {
+    const a = (Math.PI * 2 * i) / N - Math.PI / 2;
+    return [cx + r * Math.cos(a), cy + r * Math.sin(a)];
+  };
+  let rings = '';
+  [25, 50, 75, 100].forEach(p => {
+    const pts = stats.map((_, i) => pt(i, (p / 100) * R).map(v => v.toFixed(1)).join(',')).join(' ');
+    rings += `<polygon points="${pts}" fill="none" stroke="rgba(148,163,184,0.22)" stroke-width="1"/>`;
+  });
+  let axes = '', labels = '';
+  stats.forEach((s, i) => {
+    const [x, y] = pt(i, R);
+    const [lx, ly] = pt(i, R + 22);
+    axes += `<line x1="${cx}" y1="${cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="rgba(148,163,184,0.22)"/>`;
+    const anchor = lx < cx - 8 ? 'end' : lx > cx + 8 ? 'start' : 'middle';
+    labels += `<text x="${lx.toFixed(1)}" y="${(ly + 3).toFixed(1)}" text-anchor="${anchor}" font-size="10.5" fill="#cbd5e1" font-weight="700">${esc(s.label)}</text>`;
+  });
+  const polyPts = stats.map((s, i) => pt(i, (s.pct / 100) * R).map(v => v.toFixed(1)).join(',')).join(' ');
+  const dots = stats.map((s, i) => {
+    const [x, y] = pt(i, (s.pct / 100) * R);
+    const col = s.n === 0 ? '#64748b' : s.pct >= 80 ? '#10b981' : s.pct >= 70 ? '#f59e0b' : '#f43f5e';
+    return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4" fill="${col}" stroke="#0b162a" stroke-width="1.5"/>`;
+  }).join('');
+
+  const legendHtml = stats.map(s => {
+    const col = s.n === 0 ? 'var(--muted)' : s.pct >= 80 ? '#34d399' : s.pct >= 70 ? '#fbbf24' : '#fb7185';
+    const bar = s.n === 0 ? '#475569' : s.pct >= 80 ? '#10b981' : s.pct >= 70 ? '#f59e0b' : '#f43f5e';
+    return `<div style="display:flex;align-items:center;gap:10px;font-size:12px">
+      <span style="width:118px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600">${esc(s.label)}</span>
+      <div style="flex:1;height:8px;border-radius:999px;background:rgba(255,255,255,0.08);overflow:hidden"><div style="width:${s.pct}%;height:100%;background:${bar};border-radius:999px"></div></div>
+      <span style="width:46px;text-align:right;font-weight:800;color:${col}">${s.n ? s.pct + '%' : '–'}</span>
+      <span style="width:42px;text-align:right;color:var(--muted);font-size:11px">${s.n} db</span>
+    </div>`;
+  }).join('');
+
+  return `<div class="panel" style="margin-bottom:18px;border-top:3px solid #38bdf8">
+    <div class="panel-head" style="margin-bottom:14px">
+      <div>
+        <h3>🕸️ INSARAG Képességprofil · Pókháló-diagram (${titleFilter})</h3>
+        <small style="color:var(--muted)">A 10 műveleti és vezetési szakterület aránya egyetlen áttekinthető ábrán</small>
+      </div>
+      <span class="badge" style="background:rgba(56,189,248,0.16);color:#38bdf8">Radar Profil</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:20px;align-items:center">
+      <div style="display:flex;justify-content:center">
+        <svg viewBox="0 0 330 296" style="width:100%;max-width:340px;height:auto;overflow:visible">
+          ${rings}${axes}
+          <polygon points="${polyPts}" fill="#38bdf8" fill-opacity="0.22" stroke="#38bdf8" stroke-width="2.2"/>
+          ${dots}${labels}
+        </svg>
+      </div>
+      <div style="display:grid;gap:8px">${legendHtml}</div>
+    </div>
+  </div>`;
+}
+
+function renderTop5Panel(m) {
+  const rows = Array.isArray(m.evExcon) ? m.evExcon : [];
+  const scored = rows.filter(r => Number(r.score) >= 0);
+  const titleFilter = m.activeFilter === 'ALL' ? 'Összesített' : esc(m.activeFilter);
+  if (!scored.length) return '';
+
+  const cpTitles = {};
+  getAllCheckpointItems().forEach(it => { cpTitles[it.code] = it.text || it.title || ''; });
+
+  const grouped = {};
+  scored.forEach(r => {
+    const code = r.checkpoint_code || '';
+    if (!grouped[code]) grouped[code] = { cp: code, total: 0, n: 0, title: cpTitles[code] || '' };
+    grouped[code].total += Number(r.score);
+    grouped[code].n++;
+  });
+  const list = Object.values(grouped).map(g => ({
+    ...g,
+    pct: Math.round((g.total / (g.n * 2)) * 1000) / 10
+  }));
+
+  const minN = m.activeFilter === 'ALL' && list.filter(x => x.n >= 2).length >= 5 ? 2 : 1;
+  const eligible = list.filter(x => x.n >= minN);
+  const weakest = [...eligible].sort((a, b) => a.pct - b.pct || b.n - a.n).slice(0, 5);
+  const strongest = [...eligible].sort((a, b) => b.pct - a.pct || b.n - a.n).slice(0, 5);
+
+  const renderItem = (item, isWeak) => {
+    const bar = isWeak ? (item.pct < 50 ? '#f43f5e' : '#f59e0b') : '#10b981';
+    const col = isWeak ? (item.pct < 50 ? '#fb7185' : '#fbbf24') : '#34d399';
+    return `<div style="background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:5px">
+        <div style="min-width:0">
+          <span style="font-weight:900;font-size:13px;color:var(--ink)">${esc(item.cp)}</span>
+          ${item.title ? `<span style="font-size:11px;color:var(--muted);margin-left:6px">${esc(item.title.length > 52 ? item.title.slice(0, 52) + '…' : item.title)}</span>` : ''}
+        </div>
+        <div style="white-space:nowrap;flex-shrink:0">
+          <b style="font-size:13px;color:${col}">${item.pct}%</b>
+          <small style="color:var(--muted);margin-left:4px">(${item.n} fő)</small>
+        </div>
+      </div>
+      <div style="height:7px;border-radius:999px;background:rgba(255,255,255,0.08);overflow:hidden">
+        <div style="width:${item.pct}%;height:100%;background:${bar};border-radius:999px"></div>
+      </div>
+    </div>`;
+  };
+
+  return `<div class="panel" style="margin-bottom:18px">
+    <div class="panel-head" style="margin-bottom:14px">
+      <div>
+        <h3>⚠️ Top 5 Fejlesztendő vs. 🏆 Top 5 Erősség (${titleFilter})</h3>
+        <small style="color:var(--muted)">A legalacsonyabb és legmagasabb átlagú INSARAG ellenőrzőpontok rangsora</small>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(290px, 1fr));gap:16px">
+      <div style="border-top:3px solid #f43f5e;padding-top:12px">
+        <div style="font-size:12px;font-weight:800;color:#fb7185;text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px">⚠️ Top 5 Kritikus / Fejlesztendő Pont</div>
+        <div style="display:grid;gap:8px">${weakest.map(x => renderItem(x, true)).join('')}</div>
+      </div>
+      <div style="border-top:3px solid #10b981;padding-top:12px">
+        <div style="font-size:12px;font-weight:800;color:#34d399;text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px">🏆 Top 5 Kiemelkedő Erősség</div>
+        <div style="display:grid;gap:8px">${strongest.map(x => renderItem(x, false)).join('')}</div>
+      </div>
+    </div>
+  </div>`;
 }
 
 function renderPieChartSvg(m) {
@@ -3526,6 +3678,12 @@ function dashboardPage() {
       ${renderPieChartSvg(metrics)}
     </div>
 
+    <!-- PÓKHÁLÓ-DIAGRAM (RADAR CHART) -->
+    ${renderRadarChartPanel(metrics)}
+
+    <!-- TOP 5 KRITIKUS vs TOP 5 ERŐSSÉG -->
+    ${renderTop5Panel(metrics)}
+
     <!-- Elemzési beállítások és szűrők -->
     <div class="panel" style="margin-bottom:18px">
       <div class="panel-head">
@@ -3739,7 +3897,7 @@ function calendarPage(){const year=month.getFullYear(),monthIndex=month.getMonth
 </script><script src="responsive.js?v=20261012-logistics-workflow-1"></script>
 <link rel="stylesheet" href="education/education.css"><script src="education/engine.js"></script><script src="/kiosk/admin/education-editor.js?v=20261028-quiz-online-1"></script><script src="/kiosk/member-result-client.js?v=20261028-quiz-online-1"></script><script src="/kiosk/remote-service.js?v=20261028-quiz-online-1"></script><link rel="stylesheet" href="/knowledge-library/style.css?v=20261029-knowledge-navigation-1"><script src="/knowledge-library/core.js?v=20261104-background-1"></script>
 <script src="/knowledge-library/background-core.js?v=20261104-background-1"></script>
-<script src="/knowledge-library/background-view.js?v=20261104-background-1"></script><script src="/knowledge-library/view.js?v=20261029-knowledge-navigation-1"></script><script src="auth-loader.js?v=20261121-pin-uuid-fix-1"></script><script src="/gdacs/vendor/leaflet.js" defer></script><script src="/gdacs/core.js?v=20261103-1" defer></script><script src="/gdacs/monitor.js?v=20261103-1" defer></script></body></html>
+<script src="/knowledge-library/background-view.js?v=20261104-background-1"></script><script src="/knowledge-library/view.js?v=20261029-knowledge-navigation-1"></script><script src="auth-loader.js?v=20261122-radar-top5-1"></script><script src="/gdacs/vendor/leaflet.js" defer></script><script src="/gdacs/core.js?v=20261103-1" defer></script><script src="/gdacs/monitor.js?v=20261103-1" defer></script></body></html>
 
 
 
