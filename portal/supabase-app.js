@@ -3128,7 +3128,7 @@
     if(!body||!event||event.eventType!=='alert'||apDetail?.actor!==user?.id||apDetailBusy||document.visibilityState!=='visible')return;
     apDetailBusy=true;try{await apRender(event,body);}catch{const status=document.querySelector('#apDispatchStatus');if(status)status.textContent='Az állapot most nem frissíthető. Próbáld újra.';}finally{apDetailBusy=false;}
   }
-  window.apStart=async eventId=>{if(!apManage()||apSending.has(eventId))return;try{await apRpc('hunor_start_event_alert',{p_event:eventId});await apRefreshDetail();await apDispatch(eventId);}catch(e){notify(e.message);}};
+  window.apStart=async eventId=>{if(!apManage()||apSending.has(eventId))return;try{await apRpc('hunor_start_event_alert',{p_event:eventId});try{const ev=events.find(x=>x.id===eventId);await sb.functions.invoke('send-alert-push',{body:{type:'INSERT',table:'alerts',record:{id:eventId,title:ev?.title||'HUNOR Riasztás',message:ev?`${ev.title}${ev.place?' · '+ev.place:''}`:'Éles HUNOR riasztás érkezett! Nyisd meg az alkalmazást!',type:'alert',status:'active',expires_at:null}}});}catch(fcmErr){console.warn('Mobil FCM riasztás hiba:',fcmErr);}await apRefreshDetail();await apDispatch(eventId);}catch(e){notify(e.message);}};
   window.apDispatch=async eventId=>{
     if(!apManage()||apSending.has(eventId))return;const actor=user.id;apSending.add(eventId);let count=0;
     try{

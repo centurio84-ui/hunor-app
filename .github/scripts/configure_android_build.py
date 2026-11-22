@@ -62,6 +62,8 @@ def configure_manifest():
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
     <!-- Launcher icon badges for various Android OEMs -->
     <uses-permission android:name="com.sec.android.provider.badge.permission.READ" />
     <uses-permission android:name="com.sec.android.provider.badge.permission.WRITE" />
@@ -85,13 +87,26 @@ def configure_manifest():
                 badge_permissions + '\n    <application android:allowBackup="false" android:usesCleartextTraffic="false"',
                 1,
             )
+        if "com.google.firebase.messaging.default_notification_channel_id" not in text:
+            text = text.replace(
+                "</application>",
+                '    <meta-data android:name="com.google.firebase.messaging.default_notification_channel_id" android:value="hunor_alerts" />\n    </application>',
+                1,
+            )
         import re
         text = re.sub(r'android:label="[^"]*"', 'android:label="MAD Tech Rescue Platform"', text)
         manifest.write_text(text)
-        print("Configured AndroidManifest.xml permissions and label to MAD Tech Rescue Platform.")
+        print("Configured AndroidManifest.xml permissions, hunor_alerts default channel, and label to MAD Tech Rescue Platform.")
 
 def configure_launcher_icons():
     import shutil
+    # Sziréna hang bemásolása az Android raw erőforrások közé (vészriasztási hanghoz)
+    siren_src = Path("portal/hunor-siren.wav")
+    if siren_src.exists():
+        raw_dir = Path("android/app/src/main/res/raw")
+        raw_dir.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(siren_src, raw_dir / "hunor_siren.wav")
+        print(f"Installed {siren_src} -> {raw_dir}/hunor_siren.wav")
     mapping = {
         "mipmap-xxxhdpi": "assets/launcher_icons/icon_192.png",
         "mipmap-xxhdpi": "assets/launcher_icons/icon_144.png",
