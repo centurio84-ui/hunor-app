@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../theme/hunor_theme.dart';
 import 'planning_bubble_dialog.dart';
 import 'planning_catalog_panel.dart';
+import 'planning_discipline_badge.dart';
 import 'planning_models.dart';
 import 'planning_repository.dart';
 
@@ -29,6 +30,7 @@ class _PlanningBoardState extends State<PlanningBoard> {
   bool _loadFailed = false;
   bool _saving = false;
   String? _saveError;
+  BubbleDiscipline? _disciplineFilter;
 
   @override
   void initState() {
@@ -87,10 +89,16 @@ class _PlanningBoardState extends State<PlanningBoard> {
         'Az ellenőrzőpont hozzáadása nem sikerült.',
       );
 
-  Future<void> _editBubble([ExerciseBubble? bubble]) async {
+  Future<void> _editBubble({
+    ExerciseBubble? bubble,
+    BubbleDiscipline initialDiscipline = BubbleDiscipline.custom,
+  }) async {
     final edit = await showDialog<PlanningBubbleEdit>(
       context: context,
-      builder: (_) => PlanningBubbleDialog(bubble: bubble),
+      builder: (_) => PlanningBubbleDialog(
+        bubble: bubble,
+        initialDiscipline: initialDiscipline,
+      ),
     );
     if (!mounted || edit == null) return;
     await _save(
@@ -111,6 +119,7 @@ class _PlanningBoardState extends State<PlanningBoard> {
           final added = await widget.repository.addBubble(
             exerciseId: widget.exerciseId,
             title: edit.title,
+            discipline: edit.discipline,
             estimatedHours: edit.estimatedHours,
             specs: edit.specs,
           );
@@ -123,6 +132,7 @@ class _PlanningBoardState extends State<PlanningBoard> {
         final updated = await widget.repository.updateBubbleDetails(
           bubble: bubble,
           title: edit.title,
+          discipline: edit.discipline,
           estimatedHours: edit.estimatedHours,
           specs: edit.specs,
         );
@@ -268,6 +278,42 @@ class _PlanningBoardState extends State<PlanningBoard> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        Wrap(
+          spacing: 12,
+          runSpacing: 4,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            FilledButton.icon(
+              style: FilledButton.styleFrom(minimumSize: const Size(0, 48)),
+              onPressed: _saving
+                  ? null
+                  : () => _editBubble(
+                        initialDiscipline: BubbleDiscipline.medical,
+                      ),
+              icon: const Icon(Icons.add),
+              label: const Text('Új szakági buborék'),
+            ),
+            PopupMenuButton<String>(
+              tooltip: 'Szűrés szakág szerint',
+              initialValue: _disciplineFilter?.value ?? '',
+              onSelected: (value) => setState(() {
+                _disciplineFilter =
+                    value.isEmpty ? null : BubbleDiscipline.fromValue(value);
+              }),
+              itemBuilder: (_) => [
+                const PopupMenuItem(value: '', child: Text('Minden szakág')),
+                for (final discipline in BubbleDiscipline.values)
+                  PopupMenuItem(
+                      value: discipline.value, child: Text(discipline.label)),
+              ],
+              child: Padding(
+                padding: const EdgeInsets.all(8),
+                child: Text(_disciplineFilter?.label ?? 'Minden szakág'),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
         _zone(
             title: _sharedGoals,
             bubbles: bySector[null] ?? [],
@@ -323,6 +369,8 @@ class _PlanningBoardState extends State<PlanningBoard> {
   }) {
     final total = bubbles.fold<double>(
         0, (sum, item) => sum + (item.estimatedHours ?? 0));
+    final visible = bubbles.where((bubble) =>
+        _disciplineFilter == null || bubble.discipline == _disciplineFilter);
     return DragTarget<Object>(
       key: ValueKey(sectorId ?? 'shared-goals'),
       onWillAcceptWithDetails: (details) {
@@ -359,12 +407,14 @@ class _PlanningBoardState extends State<PlanningBoard> {
                 Text(
                     '${bubbles.length} buborék · ${planningHours(double.parse(total.toStringAsPrecision(12)))} óra'),
               const SizedBox(height: 8),
-              if (bubbles.isEmpty)
+              if (visible.isEmpty)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  child: Text(sectorId == null
-                      ? 'Húzz ide egy célt a katalógusból.'
-                      : 'Húzz ide egy buborékot.'),
+                  child: Text(_disciplineFilter != null
+                      ? 'Nincs ilyen szakágú buborék.'
+                      : sectorId == null
+                          ? 'Húzz ide egy célt a katalógusból.'
+                          : 'Húzz ide egy buborékot.'),
                 )
               else
                 LayoutBuilder(
@@ -372,7 +422,7 @@ class _PlanningBoardState extends State<PlanningBoard> {
                     spacing: 8,
                     runSpacing: 8,
                     children: [
-                      for (final bubble in bubbles)
+                      for (final bubble in visible)
                         SizedBox(
                           width: sectorId == null && constraints.maxWidth >= 500
                               ? (constraints.maxWidth - 8) / 2
@@ -396,10 +446,21 @@ class _PlanningBoardState extends State<PlanningBoard> {
       color: HunorColors.surface2,
       child: ListTile(
         title: Text(bubble.title),
-        subtitle: Text(bubble.estimatedHours == null
-            ? 'Nincs időbecslés'
-            : '${planningHours(bubble.estimatedHours!)} óra'),
-        onTap: _saving ? null : () => _editBubble(bubble),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              PlanningDisciplineBadge(bubble.discipline),
+              Text(bubble.estimatedHours == null
+                  ? 'Nincs időbecslés'
+                  : '${planningHours(bubble.estimatedHours!)} óra'),
+            ],
+          ),
+        ),
+        onTap: _saving ? null : () => _editBubble(bubble: bubble),
         trailing: PopupMenuButton<String>(
           tooltip: 'Buborék áthelyezése',
           enabled: !_saving,

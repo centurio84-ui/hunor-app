@@ -60,6 +60,7 @@ class PlanningRepository {
     required String exerciseId,
     required String title,
     String? checkpointId,
+    BubbleDiscipline discipline = BubbleDiscipline.custom,
     double? estimatedHours,
     Map<String, dynamic> specs = const {},
   }) async {
@@ -69,6 +70,9 @@ class PlanningRepository {
           'exercise_id': exerciseId,
           'sector_id': null,
           'checkpoint_id': checkpointId,
+          if (discipline != BubbleDiscipline.custom &&
+              discipline != BubbleDiscipline.checkpoint)
+            'bubble_type': discipline.value,
           'estimated_hours': estimatedHours,
           'title': title.trim(),
           'specs': specs,
@@ -95,11 +99,14 @@ class PlanningRepository {
 
   Future<ExerciseBubble> updateBubbleDetails({
     required ExerciseBubble bubble,
+    BubbleDiscipline? discipline,
     required double? estimatedHours,
     required String title,
     required Map<String, dynamic> specs,
   }) =>
       _updateBubble(bubble.exerciseId, bubble.id, {
+        if (discipline != null && discipline != bubble.discipline)
+          'bubble_type': discipline.value,
         'estimated_hours': estimatedHours,
         'title': title.trim(),
         'specs': specs,
@@ -144,4 +151,106 @@ class PlanningRepository {
         params: {'p_exercise_id': exerciseId}).single();
     return ExerciseSector.fromJson(row);
   }
+
+  Future<List<ExerciseTimelineBlock>> fetchTimeline(String exerciseId) async {
+    try {
+      final rows = await _client
+          .from('exercise_timeline_blocks')
+          .select()
+          .eq('exercise_id', exerciseId)
+          .order('planned_start_hour', ascending: true)
+          .order('id', ascending: true);
+      return rows.map(ExerciseTimelineBlock.fromJson).toList();
+    } on PostgrestException catch (error) {
+      if (error.code == '42P01' || error.code == 'PGRST205') {
+        throw const PlanningTimelineUnavailable();
+      }
+      rethrow;
+    }
+  }
+
+  Future<ExerciseTimelineBlock> addTimelineBlock({
+    required ExerciseBubble bubble,
+    required String? sectorId,
+    required TimelineTiming timing,
+    required String notes,
+  }) async {
+    final row = await _client
+        .from('exercise_timeline_blocks')
+        .insert({
+          'exercise_id': bubble.exerciseId,
+          'bubble_id': bubble.id,
+          'sector_id': sectorId,
+          'planned_start_hour': timing.start,
+          'planned_duration_hours': timing.duration,
+          'notes': notes,
+        })
+        .select()
+        .single();
+    return ExerciseTimelineBlock.fromJson(row);
+  }
+
+  Future<ExerciseTimelineBlock> updatePlannedTimeline({
+    required ExerciseTimelineBlock block,
+    required String? sectorId,
+    required TimelineTiming timing,
+    required String notes,
+  }) =>
+      _updateTimeline(block, {
+        'sector_id': sectorId,
+        'planned_start_hour': timing.start,
+        'planned_duration_hours': timing.duration,
+        'notes': notes,
+      });
+
+  Future<ExerciseTimelineBlock> updateActualTimeline({
+    required ExerciseTimelineBlock block,
+    required TimelineTiming timing,
+    required TimelineStatus status,
+  }) =>
+      _updateTimeline(block, {
+        'actual_start_hour': timing.start,
+        'actual_duration_hours': timing.duration,
+        'status': status.value,
+      });
+
+  Future<ExerciseTimelineBlock> copyTimelineToActual(
+    ExerciseTimelineBlock block, {
+    required bool overwrite,
+  }) async {
+    final row = await _client.rpc('copy_planning_block_to_actual', params: {
+      'p_exercise_id': block.exerciseId,
+      'p_block_id': block.id,
+      'p_overwrite': overwrite,
+    }).single();
+    return ExerciseTimelineBlock.fromJson(row);
+  }
+
+  Future<void> deleteTimelineBlock(ExerciseTimelineBlock block) async {
+    await _client
+        .from('exercise_timeline_blocks')
+        .delete()
+        .eq('exercise_id', block.exerciseId)
+        .eq('id', block.id)
+        .select('id')
+        .single();
+  }
+
+  Future<ExerciseTimelineBlock> _updateTimeline(
+    ExerciseTimelineBlock block,
+    Map<String, dynamic> changes,
+  ) async {
+    final row = await _client
+        .from('exercise_timeline_blocks')
+        .update(changes)
+        .eq('exercise_id', block.exerciseId)
+        .eq('id', block.id)
+        .select()
+        .single();
+    return ExerciseTimelineBlock.fromJson(row);
+  }
+}
+
+class PlanningTimelineUnavailable implements Exception {
+  const PlanningTimelineUnavailable();
 }

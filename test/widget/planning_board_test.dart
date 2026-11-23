@@ -126,6 +126,104 @@ void main() {
     expect(find.text('Módosított cél'), findsNothing);
   });
 
+  testWidgets('Creates, edits, filters and assigns discipline bubbles',
+      (tester) async {
+    final api = _PlanningApi(emptyCatalog: true);
+    await _showBoard(tester, api);
+    final editor = find.byType(AlertDialog);
+
+    Future<void> open() async {
+      await tester.tap(find.widgetWithText(FilledButton, 'Új szakági buborék'));
+      await tester.pumpAndSettle();
+    }
+
+    Future<void> choose(Finder field, String option) async {
+      await tester.ensureVisible(field);
+      await tester.tap(field);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(option).last);
+      await tester.pumpAndSettle();
+    }
+
+    Future<void> create() async {
+      await tester.tap(find.widgetWithText(FilledButton, 'Létrehozás'));
+      await tester.pumpAndSettle();
+    }
+
+    await open();
+    await _enter(tester, 'Cím', 'Ellátópont');
+    await _enter(tester, 'Sérülés vagy klinikai helyzet', 'Végtagsérülés');
+    await _enter(tester, 'Becsült betegszám', '3');
+    await _enter(
+        tester, 'Kimentés, ellátás és kiürítés', 'Átadás az ellátóponton');
+    await _enter(tester, 'Becsült idő (óra)', '2');
+    await create();
+    expect(api.bubbles.first['bubble_type'], 'medical');
+    expect(api.bubbles.first['specs'], {
+      'clinical_scenario': 'Végtagsérülés',
+      'patient_count': 3,
+      'medical_notes': 'Átadás az ellátóponton',
+    });
+
+    await open();
+    await choose(
+        find.descendant(
+            of: editor,
+            matching: find.byType(DropdownButtonFormField<BubbleDiscipline>)),
+        'UCC / törzs');
+    await _enter(tester, 'Cím', 'Törzsgyakorlat');
+    await _enter(tester, 'Koordinációs vagy törzsszerep / csapat', 'UCC');
+    await _enter(tester, 'Szituációindító esemény', 'Beérkező jelentés');
+    await create();
+    expect(api.bubbles[1]['bubble_type'], 'ucc');
+    expect(api.bubbles[1]['specs'], {
+      'coordination_role': 'UCC',
+      'inject_trigger': 'Beérkező jelentés',
+    });
+
+    await open();
+    await choose(
+        find.descendant(
+            of: editor,
+            matching: find.byType(DropdownButtonFormField<BubbleDiscipline>)),
+        'Sajtó / VIP / LEMA');
+    await _enter(tester, 'Cím', 'Tájékoztató');
+    await choose(find.byKey(const ValueKey('stakeholder_type')), 'LEMA');
+    await _enter(
+        tester, 'Tájékoztatás, kíséret, média és belépés', 'Belépés a főkapun');
+    await create();
+    expect(api.bubbles[2]['bubble_type'], 'press_vip');
+    expect(api.bubbles[2]['specs'], {
+      'stakeholder_type': 'LEMA',
+      'protocol_notes': 'Belépés a főkapun',
+    });
+
+    await tester.tap(find.text('Ellátópont'));
+    await tester.pumpAndSettle();
+    await _enter(tester, 'Becsült betegszám', '-2');
+    await tester.tap(find.widgetWithText(FilledButton, 'Mentés'));
+    await tester.pumpAndSettle();
+    expect(find.text('Adj meg egy nem negatív egész számot.'), findsOneWidget);
+    await _enter(tester, 'Becsült betegszám', '5');
+    await tester.tap(find.widgetWithText(FilledButton, 'Mentés'));
+    await tester.pumpAndSettle();
+    expect((api.bubbles.first['specs'] as Map)['patient_count'], 5);
+    expect(api.lastPatch!.containsKey('bubble_type'), isFalse);
+
+    await choose(find.byTooltip('Szűrés szakág szerint'), 'Egészségügy / EÜ');
+    expect(find.text('Törzsgyakorlat'), findsNothing);
+    expect(find.text('Tájékoztató'), findsNothing);
+    final card = find.byKey(const ValueKey('bubble-1'));
+    await _dragTo(tester, card, find.byKey(_sector));
+    expect(api.bubbles.first['sector_id'], 'sector-1');
+    expect(find.text('1 buborék · 2 óra'), findsOneWidget);
+
+    final assignment = find.descendant(
+        of: card, matching: find.byTooltip('Buborék áthelyezése'));
+    await choose(assignment, 'Közös Célok Asztala');
+    expect(api.bubbles.first['sector_id'], isNull);
+  });
+
   testWidgets('The catalog and board fit a narrow screen', (tester) async {
     await _showBoard(tester, _PlanningApi(), size: const Size(360, 640));
     expect(find.text('INSARAG ellenőrzőpontok'), findsOneWidget);
@@ -259,8 +357,8 @@ class _PlanningApi {
         final bubble = {
           ...body,
           'id': 'bubble-${bubbles.length + 1}',
-          'bubble_type':
-              body['checkpoint_id'] == null ? 'custom' : 'checkpoint',
+          'bubble_type': body['bubble_type'] ??
+              (body['checkpoint_id'] == null ? 'custom' : 'checkpoint'),
         };
         bubbles.add(bubble);
         return _json(bubble);
