@@ -1,6 +1,6 @@
 class AppConfig {
-  static const String version = '1.0.13';
-  static const String buildNumber = '10015';
+  static const String version = '1.0.15';
+  static const String buildNumber = '10016';
   static const String displayVersion = 'v$version ($buildNumber)';
 }
 

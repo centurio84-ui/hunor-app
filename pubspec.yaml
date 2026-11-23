@@ -1,7 +1,7 @@
 name: hunor_app
 description: HUNOR internal operations app
 publish_to: "none"
-version: 1.0.13+10015
+version: 1.0.15+10016
 
 environment:
   sdk: ">=3.4.0 <4.0.0"
