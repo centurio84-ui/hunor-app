@@ -22,4 +22,23 @@ void main() {
     expect(find.text('Nincs jogosultságod a tervezéshez.'), findsOneWidget);
     expect(find.text('Új gyakorlat'), findsNothing);
   });
+
+  testWidgets('Portal planning opens at root and returns users to portal login',
+      (tester) async {
+    final store = AppStore()..initialized = true;
+    addTearDown(store.dispose);
+
+    await tester.pumpWidget(
+      ChangeNotifierProvider.value(
+        value: store,
+        child: const HunorApp(portalPlanning: true),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Gyakorlat tervezés'), findsOneWidget);
+    expect(find.text('Bejelentkezés a csapatportálon'), findsOneWidget);
+    expect(find.byTooltip('Vissza a csapatportálra'), findsOneWidget);
+    expect(find.text('Új gyakorlat'), findsNothing);
+  });
 }

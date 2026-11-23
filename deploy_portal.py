@@ -8,8 +8,10 @@ import hashlib
 import json
 import os
 import ssl
+import subprocess
 import sys
 import time
+from tempfile import TemporaryDirectory
 import urllib.request
 from pathlib import Path
 
@@ -46,17 +48,34 @@ def main():
         sys.exit(1)
 
     token = get_token()
+    with TemporaryDirectory(prefix="hunor-planning-") as temporary_dir:
+        planning = Path(temporary_dir) / "planning"
+        subprocess.run(
+            [
+                "flutter", "build", "web", "--release",
+                "--base-href", "/planning/",
+                "--dart-define=HUNOR_PORTAL_PLANNING=true",
+                "--output", str(planning),
+            ],
+            cwd=ROOT_DIR,
+            check=True,
+        )
+        deploy_site(token, planning)
+
+
+def deploy_site(token: str, planning: Path):
     sha_map = {}
     file_objects = {}
 
-    for path in PORTAL_DIR.rglob("*"):
-        if path.is_file():
-            rel = "/" + path.relative_to(PORTAL_DIR).as_posix()
-            sha1 = hashlib.sha1(path.read_bytes()).hexdigest().lower()
-            sha_map[rel] = sha1
-            file_objects[sha1] = path
+    for directory, prefix in ((PORTAL_DIR, ""), (planning, "planning/")):
+        for path in directory.rglob("*"):
+            if path.is_file():
+                relative = "/" + prefix + path.relative_to(directory).as_posix()
+                sha1 = hashlib.sha1(path.read_bytes()).hexdigest().lower()
+                sha_map[relative] = sha1
+                file_objects[sha1] = path
 
-    print(f"Fájlok száma a portal/ mappában: {len(sha_map)}")
+    print(f"Feltöltendő portál- és tervezőfájlok: {len(sha_map)}")
 
     body = json.dumps({"files": sha_map}).encode("utf-8")
     deploy = api_request(
@@ -80,7 +99,7 @@ def main():
             data=raw_bytes,
             content_type="application/octet-stream",
         )
-        print(f"  ✓ Feltöltve: {fpath.relative_to(PORTAL_DIR)}")
+        print(f"  ✓ Feltöltve: {fpath.name}")
 
     for _ in range(15):
         time.sleep(2)

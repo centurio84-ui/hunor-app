@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'config.dart';
 import 'features/planning/exercise_planning_screen.dart';
@@ -146,7 +147,16 @@ Future<void> main() async {
 }
 
 class HunorApp extends StatelessWidget {
-  const HunorApp({super.key});
+  const HunorApp({
+    super.key,
+    this.portalPlanning = kIsWeb && const bool.fromEnvironment('HUNOR_PORTAL_PLANNING'),
+  });
+
+  final bool portalPlanning;
+
+  static void _returnToPortal() {
+    launchUrl(Uri.base.resolve('/#home'), webOnlyWindowName: '_self');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -172,6 +182,9 @@ class HunorApp extends StatelessWidget {
                 child: CircularProgressIndicator(color: HunorColors.red),
               ),
             );
+          }
+          if (portalPlanning) {
+            return const ExercisePlanningScreen(onReturnToPortal: _returnToPortal);
           }
           return store.isAuthenticated ? const AppShell() : const LoginPage();
         },
