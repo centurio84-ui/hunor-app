@@ -93,6 +93,7 @@ class ExerciseBubble {
   final String exerciseId;
   final String? checkpointId;
   final String bubbleType;
+  BubbleDiscipline get discipline => BubbleDiscipline.fromValue(bubbleType);
   final String? sectorId;
   final double? estimatedHours;
   final String title;
@@ -117,3 +118,98 @@ typedef ExerciseDetails = ({
   List<ExerciseSector> sectors,
   List<ExerciseBubble> bubbles,
 });
+
+enum BubbleDiscipline {
+  checkpoint('checkpoint', 'INSARAG / műszaki'),
+  custom('custom', 'Egyedi'),
+  medical('medical', 'Egészségügy / EÜ'),
+  ucc('ucc', 'UCC / törzs'),
+  pressVip('press_vip', 'Sajtó / VIP / LEMA');
+
+  const BubbleDiscipline(this.value, this.label);
+  final String value;
+  final String label;
+
+  static BubbleDiscipline fromValue(String value) =>
+      values.firstWhere((type) => type.value == value, orElse: () => custom);
+}
+
+enum TimelineStatus {
+  planned('planned', 'Tervezett'),
+  inProgress('in_progress', 'Folyamatban'),
+  delayed('delayed', 'Késik'),
+  completed('completed', 'Befejezett');
+
+  const TimelineStatus(this.value, this.label);
+  final String value;
+  final String label;
+}
+
+class TimelineTiming {
+  const TimelineTiming(this.start, this.duration);
+
+  final double start;
+  final double duration;
+
+  double get end => start + duration;
+
+  bool get isValid =>
+      start.isFinite &&
+      start >= 0 &&
+      duration.isFinite &&
+      duration > 0 &&
+      end.isFinite;
+}
+
+class ExerciseTimelineBlock {
+  const ExerciseTimelineBlock({
+    required this.id,
+    required this.exerciseId,
+    required this.bubbleId,
+    required this.sectorId,
+    required this.planned,
+    required this.actual,
+    required this.status,
+    required this.notes,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+
+  final String id;
+  final String exerciseId;
+  final String bubbleId;
+  final String? sectorId;
+  final TimelineTiming planned;
+  final TimelineTiming? actual;
+  final TimelineStatus status;
+  final String notes;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+
+  double? get endVariance => actual == null ? null : actual!.end - planned.end;
+
+  factory ExerciseTimelineBlock.fromJson(Map<String, dynamic> json) {
+    return ExerciseTimelineBlock(
+      id: json['id'] as String,
+      exerciseId: json['exercise_id'] as String,
+      bubbleId: json['bubble_id'] as String,
+      sectorId: json['sector_id'] as String?,
+      planned: TimelineTiming(
+        (json['planned_start_hour'] as num).toDouble(),
+        (json['planned_duration_hours'] as num).toDouble(),
+      ),
+      actual: json['is_copied_to_actual'] == true
+          ? TimelineTiming(
+              (json['actual_start_hour'] as num).toDouble(),
+              (json['actual_duration_hours'] as num).toDouble(),
+            )
+          : null,
+      status: TimelineStatus.values.firstWhere(
+        (status) => status.value == json['status'],
+      ),
+      notes: json['notes'] as String,
+      createdAt: DateTime.parse(json['created_at'] as String),
+      updatedAt: DateTime.parse(json['updated_at'] as String),
+    );
+  }
+}

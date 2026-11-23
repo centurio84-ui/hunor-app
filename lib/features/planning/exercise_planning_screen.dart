@@ -6,6 +6,7 @@ import '../../services/app_store.dart';
 import 'planning_board.dart';
 import 'planning_models.dart';
 import 'planning_repository.dart';
+import 'planning_timeline_wall.dart';
 
 class ExercisePlanningScreen extends StatelessWidget {
   const ExercisePlanningScreen({super.key});
@@ -53,6 +54,7 @@ class _PlanningWorkspaceState extends State<_PlanningWorkspace> {
   String? _selectedId;
   bool _creating = false;
   bool _savingBoard = false;
+  bool _showTimeline = false;
 
   @override
   void initState() {
@@ -134,6 +136,8 @@ class _PlanningWorkspaceState extends State<_PlanningWorkspace> {
                             },
                     );
                     final add = FilledButton.icon(
+                      style: FilledButton.styleFrom(
+                          minimumSize: const Size(0, 48)),
                       onPressed: _creating || _savingBoard
                           ? null
                           : () => _createExercise(exercises),
@@ -158,6 +162,30 @@ class _PlanningWorkspaceState extends State<_PlanningWorkspace> {
               ),
             ),
             if (_creating) const LinearProgressIndicator(),
+            if (_selectedId != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  children: [
+                    ChoiceChip(
+                      label: const Text('Tervezőasztal & Pályák'),
+                      selected: !_showTimeline,
+                      onSelected: _savingBoard || _creating
+                          ? null
+                          : (_) => setState(() => _showTimeline = false),
+                    ),
+                    ChoiceChip(
+                      label: const Text('5m fal · Tervezett / Real'),
+                      selected: _showTimeline,
+                      onSelected: _savingBoard || _creating
+                          ? null
+                          : (_) => setState(() => _showTimeline = true),
+                    ),
+                  ],
+                ),
+              ),
             Expanded(
               child: _selectedId == null
                   ? Center(
@@ -167,13 +195,21 @@ class _PlanningWorkspaceState extends State<_PlanningWorkspace> {
                             : 'Válassz egy gyakorlatot.',
                       ),
                     )
-                  : PlanningBoard(
-                      key: ValueKey(_selectedId),
-                      exerciseId: _selectedId!,
-                      repository: widget.repository,
-                      onSavingChanged: (saving) =>
-                          setState(() => _savingBoard = saving),
-                    ),
+                  : _showTimeline
+                      ? PlanningTimelineWall(
+                          key: ValueKey(_selectedId),
+                          exerciseId: _selectedId!,
+                          repository: widget.repository,
+                          onSavingChanged: (saving) =>
+                              setState(() => _savingBoard = saving),
+                        )
+                      : PlanningBoard(
+                          key: ValueKey(_selectedId),
+                          exerciseId: _selectedId!,
+                          repository: widget.repository,
+                          onSavingChanged: (saving) =>
+                              setState(() => _savingBoard = saving),
+                        ),
             ),
           ],
         );
