@@ -33,6 +33,16 @@ Future<void> hunorFirebaseBackgroundHandler(RemoteMessage message) async {
         title: title,
         body: body,
       );
+    } else if (message.notification == null &&
+        (message.data['title'] != null || message.data['body'] != null)) {
+      await LocalNotificationService.instance.initialize();
+      final badgeRaw = message.data['badge'] ?? message.data['unread_count'];
+      final badgeCount = int.tryParse(badgeRaw?.toString() ?? '') ?? 1;
+      await LocalNotificationService.instance.showUnreadChatNotification(
+        unreadCount: badgeCount > 0 ? badgeCount : 1,
+        title: message.data['title']?.toString() ?? 'HUNOR értesítés',
+        body: message.data['body']?.toString() ?? 'Új üzenet vagy esemény érkezett.',
+      );
     }
   } catch (_) {}
 }
@@ -46,9 +56,10 @@ class LocalNotificationService {
   LocalNotificationService._();
   static final LocalNotificationService instance = LocalNotificationService._();
 
-  static const String _chatChannelId = 'hunor_chat_messages_v1';
-  static const String _chatChannelName = 'Csapat üzenetek';
-  static const String _chatChannelDesc = 'Olvasatlan csapat chat üzenetek és piros ikon-jelvény';
+  static const String _chatChannelId = 'hunor_chat_messages_v2';
+  static const String _chatChannelName = 'Üzenetek és események';
+  static const String _chatChannelDesc =
+      'Chat üzenetek, új események és általános értesítések (egyedi hangjelzéssel)';
   static const int _chatNotificationId = 1001;
 
   static const String _alertChannelId = 'hunor_alerts';
@@ -83,7 +94,12 @@ class LocalNotificationService {
       final androidImpl = _plugin
           .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
 
-      // 1. Chat értesítési csatorna (piros ikon-jelvényhez)
+      // Régi v1 csatorna eltávolítása, hogy Android biztosan az új üzenethangot használja
+      try {
+        await androidImpl?.deleteNotificationChannel('hunor_chat_messages_v1');
+      } catch (_) {}
+
+      // 1. Chat & esemény értesítési csatorna (iPhone-stílusú üzenethang + piros ikon-jelvény)
       const chatChannel = AndroidNotificationChannel(
         _chatChannelId,
         _chatChannelName,
@@ -91,6 +107,8 @@ class LocalNotificationService {
         importance: Importance.high,
         showBadge: true,
         playSound: true,
+        sound: RawResourceAndroidNotificationSound('hunor_message_tone'),
+        audioAttributesUsage: AudioAttributesUsage.notification,
         enableVibration: true,
       );
       await androidImpl?.createNotificationChannel(chatChannel);
@@ -248,6 +266,8 @@ class LocalNotificationService {
         channelShowBadge: true,
         number: unreadCount,
         playSound: true,
+        sound: const RawResourceAndroidNotificationSound('hunor_message_tone'),
+        audioAttributesUsage: AudioAttributesUsage.notification,
         enableVibration: true,
         icon: '@mipmap/ic_launcher',
       );

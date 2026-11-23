@@ -100,13 +100,17 @@ def configure_manifest():
 
 def configure_launcher_icons():
     import shutil
-    # Sziréna hang bemásolása az Android raw erőforrások közé (vészriasztási hanghoz)
+    # Sziréna hang és üzenet-értesítés hang bemásolása az Android raw erőforrások közé
+    raw_dir = Path("android/app/src/main/res/raw")
+    raw_dir.mkdir(parents=True, exist_ok=True)
     siren_src = Path("portal/hunor-siren.wav")
     if siren_src.exists():
-        raw_dir = Path("android/app/src/main/res/raw")
-        raw_dir.mkdir(parents=True, exist_ok=True)
         shutil.copy2(siren_src, raw_dir / "hunor_siren.wav")
         print(f"Installed {siren_src} -> {raw_dir}/hunor_siren.wav")
+    msg_tone_src = Path("assets/sounds/hunor_message_tone.wav")
+    if msg_tone_src.exists():
+        shutil.copy2(msg_tone_src, raw_dir / "hunor_message_tone.wav")
+        print(f"Installed {msg_tone_src} -> {raw_dir}/hunor_message_tone.wav")
     mapping = {
         "mipmap-xxxhdpi": "assets/launcher_icons/icon_192.png",
         "mipmap-xxhdpi": "assets/launcher_icons/icon_144.png",

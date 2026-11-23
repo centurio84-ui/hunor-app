@@ -87,8 +87,6 @@ class _CalendarPageState extends State<CalendarPage> {
   @override
   Widget build(BuildContext context) {
     final store = context.watch<AppStore>();
-    final today = DateTime.now();
-    final todayShift = FirefighterShift.forDate(today);
 
     // Események szűrése a kiválasztott napra
     final selectedDayEvents = store.events.where((e) => _isSameDay(e.date, _selectedDate)).toList();
@@ -158,22 +156,6 @@ class _CalendarPageState extends State<CalendarPage> {
                 _buildShiftLegendChip('A', 'A csoport', const Color(0xFFE53935)),
                 _buildShiftLegendChip('B', 'B csoport', const Color(0xFF43A047)),
                 _buildShiftLegendChip('C', 'C csoport', const Color(0xFF1E88E5)),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: todayShift.color.withOpacity(0.18),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: todayShift.color),
-                  ),
-                  child: Text(
-                    'Ma: ${todayShift.code}',
-                    style: TextStyle(
-                      color: todayShift.color,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 11,
-                    ),
-                  ),
-                ),
               ],
             ),
           ),
