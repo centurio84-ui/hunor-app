@@ -36,8 +36,7 @@ class PlanningRepository {
     return Exercise.fromJson(row);
   }
 
-  Future<({List<ExerciseSector> sectors, List<ExerciseBubble> bubbles})>
-      fetchExerciseDetails(String exerciseId) async {
+  Future<ExerciseDetails> fetchExerciseDetails(String exerciseId) async {
     final results = await Future.wait([
       _client
           .from('exercise_sectors')
@@ -86,15 +85,40 @@ class PlanningRepository {
     required double? estimatedHours,
     required String title,
     required Map<String, dynamic> specs,
-  }) async {
+  }) =>
+      _updateBubble(exerciseId, bubbleId, {
+        'sector_id': sectorId,
+        'estimated_hours': estimatedHours,
+        'title': title.trim(),
+        'specs': specs,
+      });
+
+  Future<ExerciseBubble> updateBubbleDetails({
+    required ExerciseBubble bubble,
+    required double? estimatedHours,
+    required String title,
+    required Map<String, dynamic> specs,
+  }) =>
+      _updateBubble(bubble.exerciseId, bubble.id, {
+        'estimated_hours': estimatedHours,
+        'title': title.trim(),
+        'specs': specs,
+      });
+
+  Future<ExerciseBubble> moveBubble(
+    ExerciseBubble bubble,
+    String? sectorId,
+  ) =>
+      _updateBubble(bubble.exerciseId, bubble.id, {'sector_id': sectorId});
+
+  Future<ExerciseBubble> _updateBubble(
+    String exerciseId,
+    String bubbleId,
+    Map<String, dynamic> changes,
+  ) async {
     final row = await _client
         .from('exercise_bubbles')
-        .update({
-          'sector_id': sectorId,
-          'estimated_hours': estimatedHours,
-          'title': title.trim(),
-          'specs': specs,
-        })
+        .update(changes)
         .eq('exercise_id', exerciseId)
         .eq('id', bubbleId)
         .select()

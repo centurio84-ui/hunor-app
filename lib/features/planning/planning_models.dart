@@ -1,19 +1,32 @@
 class InsaragCheckpoint {
   const InsaragCheckpoint({
     required this.id,
-    required this.title,
+    required this.titleHu,
     required this.sortOrder,
+    this.code,
+    this.titleEn,
+    this.category,
+    this.defaultDurationHours,
   });
 
   final String id;
-  final String title;
+  final String titleHu;
   final int sortOrder;
+  final String? code;
+  final String? titleEn;
+  final String? category;
+  final double? defaultDurationHours;
 
   factory InsaragCheckpoint.fromJson(Map<String, dynamic> json) {
     return InsaragCheckpoint(
       id: json['id'] as String,
-      title: json['title'] as String,
+      titleHu: (json['title_hu'] ?? json['title']) as String,
       sortOrder: json['sort_order'] as int,
+      code: json['code'] as String?,
+      titleEn: json['title_en'] as String?,
+      category: json['category'] as String?,
+      defaultDurationHours:
+          (json['default_duration_hours'] as num?)?.toDouble(),
     );
   }
 }
@@ -69,6 +82,7 @@ class ExerciseBubble {
     required this.id,
     required this.exerciseId,
     required this.checkpointId,
+    required this.bubbleType,
     required this.sectorId,
     required this.estimatedHours,
     required this.title,
@@ -78,6 +92,7 @@ class ExerciseBubble {
   final String id;
   final String exerciseId;
   final String? checkpointId;
+  final String bubbleType;
   final String? sectorId;
   final double? estimatedHours;
   final String title;
@@ -88,6 +103,8 @@ class ExerciseBubble {
       id: json['id'] as String,
       exerciseId: json['exercise_id'] as String,
       checkpointId: json['checkpoint_id'] as String?,
+      bubbleType: json['bubble_type'] as String? ??
+          (json['checkpoint_id'] == null ? 'custom' : 'checkpoint'),
       sectorId: json['sector_id'] as String?,
       estimatedHours: (json['estimated_hours'] as num?)?.toDouble(),
       title: json['title'] as String,
@@ -95,3 +112,8 @@ class ExerciseBubble {
     );
   }
 }
+
+typedef ExerciseDetails = ({
+  List<ExerciseSector> sectors,
+  List<ExerciseBubble> bubbles,
+});

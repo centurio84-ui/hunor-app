@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../api/supabase_rescue_platform_api.dart';
 import '../../services/app_store.dart';
+import 'planning_board.dart';
 import 'planning_models.dart';
 import 'planning_repository.dart';
 
@@ -49,20 +50,14 @@ class _PlanningWorkspace extends StatefulWidget {
 
 class _PlanningWorkspaceState extends State<_PlanningWorkspace> {
   late Future<List<Exercise>> _exercises;
-  Future<({List<ExerciseSector> sectors, List<ExerciseBubble> bubbles})>?
-      _details;
   String? _selectedId;
   bool _creating = false;
+  bool _savingBoard = false;
 
   @override
   void initState() {
     super.initState();
     _exercises = widget.repository.listExercises();
-  }
-
-  void _selectExercise(String id) {
-    _selectedId = id;
-    _details = widget.repository.fetchExerciseDetails(id);
   }
 
   Future<void> _createExercise(List<Exercise> exercises) async {
@@ -78,7 +73,7 @@ class _PlanningWorkspaceState extends State<_PlanningWorkspace> {
       if (!mounted) return;
       setState(() {
         _exercises = Future.value([exercise, ...exercises]);
-        _selectExercise(exercise.id);
+        _selectedId = exercise.id;
       });
     } catch (_) {
       if (!mounted) return;
@@ -130,17 +125,18 @@ class _PlanningWorkspaceState extends State<_PlanningWorkspace> {
                             ),
                           ),
                       ],
-                      onChanged: _creating || exercises.isEmpty
+                      onChanged: _creating || _savingBoard || exercises.isEmpty
                           ? null
                           : (id) {
                               if (id != null) {
-                                setState(() => _selectExercise(id));
+                                setState(() => _selectedId = id);
                               }
                             },
                     );
                     final add = FilledButton.icon(
-                      onPressed:
-                          _creating ? null : () => _createExercise(exercises),
+                      onPressed: _creating || _savingBoard
+                          ? null
+                          : () => _createExercise(exercises),
                       icon: const Icon(Icons.add),
                       label: const Text('Új gyakorlat'),
                     );
@@ -171,34 +167,12 @@ class _PlanningWorkspaceState extends State<_PlanningWorkspace> {
                             : 'Válassz egy gyakorlatot.',
                       ),
                     )
-                  : FutureBuilder(
-                      future: _details,
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState != ConnectionState.done) {
-                          return const Center(
-                            child: CircularProgressIndicator(),
-                          );
-                        }
-                        if (snapshot.hasError) {
-                          return _LoadError(
-                            message:
-                                'A gyakorlat adatainak betöltése nem sikerült.',
-                            onRetry: () =>
-                                setState(() => _selectExercise(_selectedId!)),
-                          );
-                        }
-                        final details = snapshot.requireData;
-                        return ListView(
-                          padding: const EdgeInsets.all(16),
-                          children: [
-                            Text(
-                              '${details.sectors.length} szektor · '
-                              '${details.bubbles.length} feladat',
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
-                          ],
-                        );
-                      },
+                  : PlanningBoard(
+                      key: ValueKey(_selectedId),
+                      exerciseId: _selectedId!,
+                      repository: widget.repository,
+                      onSavingChanged: (saving) =>
+                          setState(() => _savingBoard = saving),
                     ),
             ),
           ],
