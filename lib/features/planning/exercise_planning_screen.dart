@@ -9,7 +9,9 @@ import 'planning_repository.dart';
 import 'planning_timeline_wall.dart';
 
 class ExercisePlanningScreen extends StatelessWidget {
-  const ExercisePlanningScreen({super.key});
+  const ExercisePlanningScreen({super.key, this.onReturnToPortal});
+
+  final VoidCallback? onReturnToPortal;
 
   @override
   Widget build(BuildContext context) {
@@ -19,6 +21,13 @@ class ExercisePlanningScreen extends StatelessWidget {
     final Widget body;
     if (!store.initialized) {
       body = const Center(child: CircularProgressIndicator());
+    } else if (!store.isAuthenticated && onReturnToPortal != null) {
+      body = Center(
+        child: TextButton(
+          onPressed: onReturnToPortal,
+          child: const Text('Bejelentkezés a csapatportálon'),
+        ),
+      );
     } else if (!store.isAuthenticated || !store.canAccessExcon) {
       body = const Center(child: Text('Nincs jogosultságod a tervezéshez.'));
     } else if (api is! SupabaseRescuePlatformApi || organizationId == null) {
@@ -34,7 +43,16 @@ class ExercisePlanningScreen extends StatelessWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Gyakorlat tervezés')),
+      appBar: AppBar(
+        title: const Text('Gyakorlat tervezés'),
+        leading: onReturnToPortal == null
+            ? null
+            : IconButton(
+                icon: const Icon(Icons.arrow_back),
+                tooltip: 'Vissza a csapatportálra',
+                onPressed: onReturnToPortal,
+              ),
+      ),
       body: body,
     );
   }

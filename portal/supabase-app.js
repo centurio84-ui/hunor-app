@@ -3755,11 +3755,29 @@
   const ntRow=route=>ntRows.find(r=>ntRoute(r)===route);
   const ntAllowed=route=>ntReady&&ntApproved&&(ntAdmin||Boolean(ntRow(route)?.is_visible&&(!ntParents[route]||ntAllowed(ntParents[route]))));
   const ntRequested=()=>{const route=(location.hash?location.hash.replace(/^#\/?/,''):location.pathname.replace(/^\/|\/$/g,''));return ntRoutes.has(route)||route==='navigation-settings'?route:null;};
-  function ntStop(){ntEpoch++;ntRows=[];ntReady=false;ntAdmin=false;ntApproved=false;ntActor=null;ntLoading=null;if(ntChannel){sb.removeChannel(ntChannel);ntChannel=null;}document.querySelector('#navMenuSettings')?.remove();}
+  function ntStop(){ntEpoch++;ntRows=[];ntReady=false;ntAdmin=false;ntApproved=false;ntActor=null;ntLoading=null;if(ntChannel){sb.removeChannel(ntChannel);ntChannel=null;}document.querySelector('#navMenuSettings')?.remove();document.querySelector('#navPlanning')?.remove();}
   function ntDeny(route,message='A funkció jelenleg fejlesztés alatt áll.'){ntBlocked=route;page='feature-unavailable';stopTeamChatRealtime();document.querySelector('#headerAction').style.display='none';document.querySelector('#crumb').textContent='A funkció nem elérhető';history.replaceState(null,'','#feature-unavailable');content.innerHTML=`<section class="panel nt-unavailable"><span aria-hidden="true">◈</span><h1>A funkció nem elérhető</h1><p role="status">${esc(message)}</p><button class="secondary" id="ntRetry">Újrapróbálás</button><button class="secondary" onclick="logoutHunor()">Kijelentkezés</button></section>`;document.querySelector('#ntRetry').onclick=()=>window.setPage(ntBlocked||'home');ntApply();}
   function ntRoleAllowed(route){if(!ntApproved)return false;if(['navigation-settings','approvals','quizadmin'].includes(route))return ntAdmin;if(route==='excon')return ntAdmin||Boolean(user?.canAccessExcon)||(events||[]).some(e=>e.myParticipationRole==='excon'||(Array.isArray(e.exconRegistrants)&&e.exconRegistrants.includes(user?.name)));return true;}
+  function ntCanOpenPlanning() {
+    return Boolean(user?.id && !guest && user.membershipStatus==='approved'
+      && ntReady && ntApproved && (ntAdmin || user.canAccessExcon));
+  }
+  function ntApplyPlanning(nav) {
+    let button=nav.querySelector('#navPlanning');
+    if(!ntCanOpenPlanning()){button?.remove();return;}
+    if(button)return;
+    button=document.createElement('button');
+    button.id='navPlanning';
+    button.type='button';
+    button.innerHTML='<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4m8-4v4M4 10h16m-11 5h6m-3-3v6"/></svg>Gyakorlat tervezés';
+    button.addEventListener('click',()=>{
+      if(ntCanOpenPlanning())location.assign('/planning/');
+    });
+    nav.append(button);
+  }
   function ntApply(){
     const nav=document.querySelector('#nav');if(!nav)return;
+    ntApplyPlanning(nav);
     const active=Boolean(user?.id&&!guest&&user.membershipStatus==='approved');
     let adminButton=document.querySelector('#navMenuSettings');
     if(active&&ntAdmin&&!adminButton){adminButton=document.createElement('button');adminButton.id='navMenuSettings';adminButton.dataset.page='navigation-settings';adminButton.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg><span class="nt-title">Menük kezelése</span>';adminButton.onclick=()=>window.setPage('navigation-settings');nav.insertBefore(adminButton,document.querySelector('#navLogout'));}
