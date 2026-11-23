@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'config.dart';
+import 'features/planning/exercise_planning_screen.dart';
 import 'api/mock_rescue_platform_api.dart';
 import 'api/staging_api.dart';
 import 'api/supabase_rescue_platform_api.dart';
@@ -157,6 +158,7 @@ class HunorApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: theme,
       routes: {
+        '/planning': (context) => const ExercisePlanningScreen(),
         '/excon': (context) => const Scaffold(body: ExconScreen()),
         '/dashboard': (context) => const Scaffold(body: ExconDashboardScreen()),
         '/t0': (context) => const Scaffold(body: T0Screen()),

@@ -294,6 +294,14 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
                 },
               ),
               ListTile(
+                leading: const Icon(Icons.edit_calendar_outlined, color: HunorColors.gold),
+                title: const Text('Gyakorlat tervezés'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.pushNamed(context, '/planning');
+                },
+              ),
+              ListTile(
                 leading: const Icon(Icons.insert_chart_rounded, color: HunorColors.blue),
                 title: const Text(
                   'Értékelő Műszerfal',

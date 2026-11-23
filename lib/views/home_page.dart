@@ -351,6 +351,22 @@ class HomePage extends StatelessWidget {
           ),
           const SizedBox(height: 16),
 
+          if (s.canAccessExcon) ...[
+            Card(
+              color: HunorColors.surface1,
+              child: ListTile(
+                leading: const Icon(
+                  Icons.edit_calendar_outlined,
+                  color: HunorColors.gold,
+                ),
+                title: const Text('Gyakorlat tervezés'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => Navigator.pushNamed(context, '/planning'),
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+
           // Következő esemény
           Text('Következő esemény ebben a szervezetben', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
