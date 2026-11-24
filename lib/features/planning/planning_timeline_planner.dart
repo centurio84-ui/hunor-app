@@ -8,13 +8,14 @@ import 'planning_models.dart';
 import 'planning_repository.dart';
 
 enum _TrackKind {
-  goals('Célok', Icons.flag_outlined, Color(0xFF38BDF8)),
-  obstacles('Akadályok', Icons.construction, Color(0xFFD97706)),
-  victims('Sérültek', Icons.medical_services_outlined, Color(0xFFDC2626)),
-  injects('Injektek', Icons.bolt, Color(0xFFC026D3));
+  goals('CÉLOK', 'Cél', Icons.flag_rounded, Color(0xFF38BDF8)),
+  obstacles('AKADÁLYOK', 'Akadály', Icons.construction_rounded, Color(0xFFF59E0B)),
+  victims('SÉRÜLTEK', 'Sérült', Icons.medical_services_rounded, Color(0xFFEF4444)),
+  injects('INJEKTEK', 'Injekt', Icons.bolt_rounded, Color(0xFFD946EF));
 
-  const _TrackKind(this.label, this.icon, this.color);
+  const _TrackKind(this.label, this.shortLabel, this.icon, this.color);
   final String label;
+  final String shortLabel;
   final IconData icon;
   final Color color;
 }
@@ -62,8 +63,9 @@ class PlanningTimelinePlanner extends StatefulWidget {
 class _PlanningTimelinePlannerState extends State<PlanningTimelinePlanner> {
   static const _allSectors = '__ALL__';
   static const _unassignedSector = '__NONE__';
-  static const _labelWidth = 128.0;
-  static const _laneHeight = 42.0;
+  static const _headerWidth = 176.0;
+  static const _laneHeight = 46.0;
+  static const _sectorBannerHeight = 38.0;
 
   final _hScroll = ScrollController();
   final _vScroll = ScrollController();
@@ -77,11 +79,15 @@ class _PlanningTimelinePlannerState extends State<PlanningTimelinePlanner> {
   List<ExerciseTimelineBlock> _blocks = [];
 
   String _sectorFilter = _allSectors;
+  _TrackKind? _paletteKindFilter;
   double _horizonHours = 36.0;
-  double _pixelsPerHour = 64.0;
+  double _pixelsPerHour = 68.0;
 
-  // Élő csúszka-előnézet (húzás közben, elengedéskor menti Supabase-be)
+  // Élő csúszka-előnézet húzás közben
   final Map<String, TimelineTiming> _dragOverrides = {};
+  // Élő DAW ejtési vonal (melyik sor felett és hányadik óránál tart az egér)
+  String? _hoverTrackKey;
+  double? _hoverHour;
 
   @override
   void initState() {
@@ -157,12 +163,16 @@ class _PlanningTimelinePlannerState extends State<PlanningTimelinePlanner> {
         setState(() {
           _blocks = saved;
           _dragOverrides.clear();
+          _hoverTrackKey = null;
+          _hoverHour = null;
         });
       }
     } catch (_) {
       if (mounted) {
         setState(() {
           _dragOverrides.clear();
+          _hoverTrackKey = null;
+          _hoverHour = null;
           _writeError =
               'Az idővonal mentése nem sikerült. Frissítsd a nézetet és próbáld újra.';
         });
@@ -188,7 +198,7 @@ class _PlanningTimelinePlannerState extends State<PlanningTimelinePlanner> {
     final start = _snapQuarterHour(startHour);
     final duration = (bubble.estimatedHours != null && bubble.estimatedHours! > 0)
         ? math.max(0.25, _snapQuarterHour(bubble.estimatedHours!))
-        : 1.0;
+        : 1.5;
 
     await _write(() async {
       final created = await widget.repository.addTimelineBlock(
@@ -223,23 +233,24 @@ class _PlanningTimelinePlannerState extends State<PlanningTimelinePlanner> {
     });
   }
 
+  Future<void> _removeBlock(ExerciseTimelineBlock block) async {
+    await _write(() async {
+      await widget.repository.deleteTimelineBlock(block);
+      return _blocks.where((b) => b.id != block.id).toList();
+    });
+  }
+
   Future<void> _editBlockDialog(
     ExerciseTimelineBlock block,
     ExerciseBubble bubble,
   ) async {
     final result = await showDialog<_PlannedBlockEdit>(
       context: context,
-      builder: (_) => _PlannedBlockDialog(
-        bubble: bubble,
-        block: block,
-      ),
+      builder: (_) => _PlannedBlockDialog(bubble: bubble, block: block),
     );
     if (!mounted || result == null) return;
     if (result.delete) {
-      await _write(() async {
-        await widget.repository.deleteTimelineBlock(block);
-        return _blocks.where((b) => b.id != block.id).toList();
-      });
+      await _removeBlock(block);
       return;
     }
     await _write(() async {
@@ -291,14 +302,13 @@ class _PlanningTimelinePlannerState extends State<PlanningTimelinePlanner> {
     final hasUnassigned = exercise.bubbles.any((b) => b.sectorId == null) ||
         _blocks.any((blk) => blk.sectorId == null);
 
-    // Megjelenítendő pálya-csoportok
     final groups = <({String? sectorId, String name, String icmsName})>[
       for (final s in exercise.sectors)
         if (_sectorFilter == _allSectors || _sectorFilter == s.id)
           (sectorId: s.id, name: s.name, icmsName: s.icmsName),
       if (hasUnassigned &&
           (_sectorFilter == _allSectors || _sectorFilter == _unassignedSector))
-        (sectorId: null, name: 'Közös / pálya nélküli elemek', icmsName: ''),
+        (sectorId: null, name: 'Közös / pálya nélküli', icmsName: ''),
     ];
 
     final endex = _plannedEndex;
@@ -322,7 +332,7 @@ class _PlanningTimelinePlannerState extends State<PlanningTimelinePlanner> {
             ),
           ),
 
-        // Felső vezérlősáv (Pályaszűrő, Időtartomány, Zoom, ENDEX)
+        // Felső DAW vezérlősáv
         Material(
           color: HunorColors.surface1,
           child: Padding(
@@ -333,7 +343,7 @@ class _PlanningTimelinePlannerState extends State<PlanningTimelinePlanner> {
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 SizedBox(
-                  width: 220,
+                  width: 210,
                   child: DropdownButtonFormField<String>(
                     isExpanded: true,
                     value: _sectorFilter,
@@ -367,7 +377,7 @@ class _PlanningTimelinePlannerState extends State<PlanningTimelinePlanner> {
                   ),
                 ),
                 SizedBox(
-                  width: 140,
+                  width: 130,
                   child: DropdownButtonFormField<double>(
                     value: [12.0, 24.0, 36.0, 48.0].contains(_horizonHours)
                         ? _horizonHours
@@ -398,8 +408,8 @@ class _PlanningTimelinePlannerState extends State<PlanningTimelinePlanner> {
                       tooltip: 'Kicsinyítés',
                       onPressed: _pixelsPerHour <= 36
                           ? null
-                          : () => setState(
-                              () => _pixelsPerHour = math.max(36, _pixelsPerHour - 12)),
+                          : () => setState(() => _pixelsPerHour =
+                              math.max(36, _pixelsPerHour - 12)),
                       icon: const Icon(Icons.zoom_out),
                     ),
                     Text(
@@ -413,8 +423,8 @@ class _PlanningTimelinePlannerState extends State<PlanningTimelinePlanner> {
                       tooltip: 'Nagyítás',
                       onPressed: _pixelsPerHour >= 140
                           ? null
-                          : () => setState(
-                              () => _pixelsPerHour = math.min(140, _pixelsPerHour + 12)),
+                          : () => setState(() => _pixelsPerHour =
+                              math.min(140, _pixelsPerHour + 12)),
                       icon: const Icon(Icons.zoom_in),
                     ),
                   ],
@@ -434,7 +444,7 @@ class _PlanningTimelinePlannerState extends State<PlanningTimelinePlanner> {
                   child: Text(
                     endex > 0
                         ? 'Tervezett ENDEX: +${planningHours(endex)} óra'
-                        : 'Tervezett ENDEX: még nincs elem',
+                        : 'Tervezett ENDEX: 0 óra',
                     style: const TextStyle(
                       fontWeight: FontWeight.w800,
                       color: HunorColors.gold,
@@ -453,7 +463,7 @@ class _PlanningTimelinePlannerState extends State<PlanningTimelinePlanner> {
         ),
         const Divider(height: 1),
 
-        // Fő tartalom: Bal oldalon a kiosztott (még be nem ütemezett) elemek, jobb oldalon a csúszkás Gantt idővonal
+        // Fő elrendezés: Bal oldali hangminta/elem-tár + Jobb oldali többsávos DAW idővonal
         Expanded(
           child: LayoutBuilder(
             builder: (context, constraints) {
@@ -466,12 +476,12 @@ class _PlanningTimelinePlannerState extends State<PlanningTimelinePlanner> {
                       child: Padding(
                         padding: EdgeInsets.all(24),
                         child: Text(
-                          'Még nincs felvett pálya. Hozz létre pályákat az „1. Tervezőasztal & Pályák” fülön, majd húzd be az elemeket az idővonalra!',
+                          'Még nincs felvett pálya. Hozz létre pályákat az „1. Tervezőasztal & Pályák” fülön, majd húzd be ide az elemeket!',
                           textAlign: TextAlign.center,
                         ),
                       ),
                     )
-                  : _buildTimelineCanvas(
+                  : _buildDawTimeline(
                       groups: groups,
                       bubbleMap: bubbleMap,
                     );
@@ -480,7 +490,7 @@ class _PlanningTimelinePlannerState extends State<PlanningTimelinePlanner> {
                 return Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    SizedBox(width: 300, child: leftPalette),
+                    SizedBox(width: 290, child: leftPalette),
                     const VerticalDivider(width: 1),
                     Expanded(child: timelineArea),
                   ],
@@ -506,13 +516,17 @@ class _PlanningTimelinePlannerState extends State<PlanningTimelinePlanner> {
   }) {
     final sectorById = {for (final s in exercise.sectors) s.id: s};
     final filtered = unscheduled.where((b) {
-      if (_sectorFilter == _allSectors) return true;
-      if (_sectorFilter == _unassignedSector) return b.sectorId == null;
-      return b.sectorId == _sectorFilter;
+      final matchesSector = _sectorFilter == _allSectors ||
+          (_sectorFilter == _unassignedSector
+              ? b.sectorId == null
+              : b.sectorId == _sectorFilter);
+      final matchesKind =
+          _paletteKindFilter == null || _trackKindOf(b) == _paletteKindFilter;
+      return matchesSector && matchesKind;
     }).toList();
 
     return Padding(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -522,15 +536,39 @@ class _PlanningTimelinePlannerState extends State<PlanningTimelinePlanner> {
           ),
           const SizedBox(height: 4),
           const Text(
-            'Húzd rá bármelyik elemet a jobb oldali idővonal megfelelő sorára (vagy kattints rá az azonnali felhelyezéshez).',
-            style: TextStyle(fontSize: 12, color: HunorColors.muted),
+            'Húzd rá bármelyik sávra jobbra, vagy nyomd meg a + gombot!',
+            style: TextStyle(fontSize: 11.5, color: HunorColors.muted),
+          ),
+          const SizedBox(height: 8),
+          // 4 szekció gyors-szűrő (Célok / Akadályok / Sérültek / Injektek)
+          Wrap(
+            spacing: 4,
+            runSpacing: 4,
+            children: [
+              ChoiceChip(
+                label: const Text('Mind', style: TextStyle(fontSize: 11)),
+                visualDensity: VisualDensity.compact,
+                selected: _paletteKindFilter == null,
+                onSelected: (_) => setState(() => _paletteKindFilter = null),
+              ),
+              for (final kind in _TrackKind.values)
+                ChoiceChip(
+                  avatar: Icon(kind.icon, size: 14, color: kind.color),
+                  label: Text(kind.shortLabel,
+                      style: const TextStyle(fontSize: 11)),
+                  visualDensity: VisualDensity.compact,
+                  selected: _paletteKindFilter == kind,
+                  onSelected: (_) => setState(() => _paletteKindFilter =
+                      _paletteKindFilter == kind ? null : kind),
+                ),
+            ],
           ),
           const SizedBox(height: 8),
           Expanded(
             child: filtered.isEmpty
                 ? const Center(
                     child: Text(
-                      'Minden elem felkerült az idővonalra (vagy még nincs felvett elem).',
+                      'Nincs több behúzható elem ebben a szűrésben.',
                       textAlign: TextAlign.center,
                       style: TextStyle(color: HunorColors.muted, fontSize: 12),
                     ),
@@ -551,110 +589,110 @@ class _PlanningTimelinePlannerState extends State<PlanningTimelinePlanner> {
                         margin: EdgeInsets.zero,
                         color: HunorColors.surface2,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(10),
                           side: BorderSide(
-                            color: accent.withValues(alpha: 0.55),
+                            color: accent.withValues(alpha: 0.6),
                             width: 1.2,
                           ),
                         ),
                         clipBehavior: Clip.antiAlias,
-                        child: InkWell(
-                          onTap: _saving
-                              ? null
-                              : () {
-                                  // Következő szabad kezdési pont a soron
-                                  double nextStart = 0;
-                                  for (final blk in _blocks) {
-                                    if (blk.sectorId == bubble.sectorId) {
-                                      final b = exercise.bubbles
-                                          .where((x) => x.id == blk.bubbleId)
-                                          .firstOrNull;
-                                      if (b != null &&
-                                          _trackKindOf(b) == kind &&
-                                          blk.planned.end > nextStart) {
-                                        nextStart = blk.planned.end;
-                                      }
-                                    }
-                                  }
-                                  _placeBubbleOnTrack(
-                                    bubble,
-                                    sectorId: bubble.sectorId,
-                                    startHour: nextStart,
-                                  );
-                                },
-                          child: Container(
-                            decoration: BoxDecoration(
-                              border: Border(
-                                left: BorderSide(color: accent, width: 5),
-                              ),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            border: Border(
+                              left: BorderSide(color: accent, width: 5),
                             ),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 8,
-                            ),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Wrap(
-                                        spacing: 6,
-                                        runSpacing: 4,
-                                        children: [
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 6,
-                                              vertical: 1,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color:
-                                                  accent.withValues(alpha: 0.2),
-                                              borderRadius:
-                                                  BorderRadius.circular(5),
-                                            ),
-                                            child: Text(
-                                              kind.label,
-                                              style: TextStyle(
-                                                fontSize: 10,
-                                                fontWeight: FontWeight.w800,
-                                                color: accent,
-                                              ),
+                          ),
+                          padding: const EdgeInsets.fromLTRB(8, 7, 4, 7),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Wrap(
+                                      spacing: 5,
+                                      runSpacing: 2,
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 5,
+                                            vertical: 1,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color:
+                                                accent.withValues(alpha: 0.2),
+                                            borderRadius:
+                                                BorderRadius.circular(4),
+                                          ),
+                                          child: Text(
+                                            kind.shortLabel,
+                                            style: TextStyle(
+                                              fontSize: 9.5,
+                                              fontWeight: FontWeight.w800,
+                                              color: accent,
                                             ),
                                           ),
-                                          Text(
-                                            sectorName,
-                                            style: const TextStyle(
-                                              fontSize: 10,
-                                              color: HunorColors.gold,
-                                              fontWeight: FontWeight.w700,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        bubble.title,
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          fontSize: 12.5,
-                                          fontWeight: FontWeight.w700,
                                         ),
+                                        Text(
+                                          sectorName,
+                                          style: const TextStyle(
+                                            fontSize: 10,
+                                            color: HunorColors.gold,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 3),
+                                    Text(
+                                      bubble.title,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
                                       ),
-                                    ],
-                                  ),
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(width: 4),
-                                Icon(
-                                  Icons.drag_indicator,
-                                  size: 18,
+                              ),
+                              IconButton(
+                                tooltip: 'Azonnali felhelyezés az idővonalra',
+                                visualDensity: VisualDensity.compact,
+                                onPressed: _saving
+                                    ? null
+                                    : () {
+                                        final targetSector = bubble.sectorId ??
+                                            (exercise.sectors.isNotEmpty
+                                                ? exercise.sectors.first.id
+                                                : null);
+                                        double nextStart = 0;
+                                        for (final blk in _blocks) {
+                                          if (blk.sectorId == targetSector) {
+                                            final b = exercise.bubbles
+                                                .where((x) =>
+                                                    x.id == blk.bubbleId)
+                                                .firstOrNull;
+                                            if (b != null &&
+                                                _trackKindOf(b) == kind &&
+                                                blk.planned.end > nextStart) {
+                                              nextStart = blk.planned.end;
+                                            }
+                                          }
+                                        }
+                                        _placeBubbleOnTrack(
+                                          bubble,
+                                          sectorId: targetSector,
+                                          startHour: nextStart,
+                                        );
+                                      },
+                                icon: Icon(
+                                  Icons.add_circle,
+                                  size: 20,
                                   color: accent,
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                         ),
                       );
@@ -663,7 +701,7 @@ class _PlanningTimelinePlannerState extends State<PlanningTimelinePlanner> {
                         data: bubble,
                         maxSimultaneousDrags: _saving ? 0 : 1,
                         feedback: planningDragFeedback(
-                          '${kind.label}: ${bubble.title}',
+                          '${kind.shortLabel}: ${bubble.title}',
                           accentColor: accent,
                         ),
                         childWhenDragging: Opacity(opacity: 0.35, child: card),
@@ -677,308 +715,471 @@ class _PlanningTimelinePlannerState extends State<PlanningTimelinePlanner> {
     );
   }
 
-  Widget _buildTimelineCanvas({
+  /// DAW-szerű többsávos elrendezés:
+  /// - Bal oldalon RÖGZÍTETT (nem görget el vízszintesen!) sáv-fejlécek (Pálya + 4 külön sáv: CÉLOK, AKADÁLYOK, SÉRÜLTEK, INJEKTEK)
+  /// - Jobb oldalon vízszintesen görgethető, 15 perces / órás rácsos idővonal
+  Widget _buildDawTimeline({
     required List<({String? sectorId, String name, String icmsName})> groups,
     required Map<String, ExerciseBubble> bubbleMap,
   }) {
-    final trackWidth = _horizonHours * _pixelsPerHour;
-    final totalWidth = _labelWidth + trackWidth + 40;
+    final trackWidth = _horizonHours * _pixelsPerHour + 40;
     final hourStep = _pixelsPerHour < 45 ? 2 : 1;
 
+    // Előre kiszámítjuk minden pálya és minden sáv sávszámát + magasságát, hogy a rögzített bal oszlop és a jobb rács pixelpontosan egyvonalban legyen!
+    final layouts = <({
+      String? sectorId,
+      String name,
+      String icmsName,
+      int totalCount,
+      List<({
+        _TrackKind kind,
+        double height,
+        List<({
+          ExerciseTimelineBlock block,
+          ExerciseBubble bubble,
+          TimelineTiming timing,
+          int lane,
+        })> placed,
+      })> tracks,
+    })>[];
+
+    for (final group in groups) {
+      final sectorBlocks =
+          _blocks.where((b) => b.sectorId == group.sectorId).toList();
+      final tracks = <({
+        _TrackKind kind,
+        double height,
+        List<({
+          ExerciseTimelineBlock block,
+          ExerciseBubble bubble,
+          TimelineTiming timing,
+          int lane,
+        })> placed,
+      })>[];
+
+      for (final kind in _TrackKind.values) {
+        final kindBlocks = sectorBlocks.where((blk) {
+          final b = bubbleMap[blk.bubbleId];
+          return b != null && _trackKindOf(b) == kind;
+        }).toList()
+          ..sort((a, b) {
+            final ta = _dragOverrides[a.id] ?? a.planned;
+            final tb = _dragOverrides[b.id] ?? b.planned;
+            return ta.start.compareTo(tb.start);
+          });
+
+        final laneEnds = <double>[];
+        final placed = <({
+          ExerciseTimelineBlock block,
+          ExerciseBubble bubble,
+          TimelineTiming timing,
+          int lane,
+        })>[];
+        for (final blk in kindBlocks) {
+          final bubble = bubbleMap[blk.bubbleId];
+          if (bubble == null) continue;
+          final timing = _dragOverrides[blk.id] ?? blk.planned;
+          var lane = laneEnds.indexWhere((end) => end <= timing.start + 0.001);
+          if (lane < 0) {
+            lane = laneEnds.length;
+            laneEnds.add(timing.end);
+          } else {
+            laneEnds[lane] = timing.end;
+          }
+          placed.add((block: blk, bubble: bubble, timing: timing, lane: lane));
+        }
+        final laneCount = math.max(1, laneEnds.length);
+        tracks.add((
+          kind: kind,
+          height: laneCount * _laneHeight + 10.0,
+          placed: placed,
+        ));
+      }
+
+      layouts.add((
+        sectorId: group.sectorId,
+        name: group.name,
+        icmsName: group.icmsName,
+        totalCount: sectorBlocks.length,
+        tracks: tracks,
+      ));
+    }
+
     return Scrollbar(
-      controller: _hScroll,
+      controller: _vScroll,
       thumbVisibility: true,
       child: SingleChildScrollView(
-        controller: _hScroll,
-        scrollDirection: Axis.horizontal,
-        child: SizedBox(
-          width: totalWidth,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Felső STARTEX időskála
-              Container(
-                height: 36,
-                color: HunorColors.surface1,
-                padding: const EdgeInsets.only(left: _labelWidth),
-                child: SizedBox(
-                  width: trackWidth + 40,
-                  child: Stack(
-                    children: [
-                      for (var h = 0; h <= _horizonHours; h += hourStep)
-                        Positioned(
-                          left: h * _pixelsPerHour,
-                          top: 8,
-                          child: Text(
-                            h == 0 ? 'STARTEX' : '+$h ó',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight:
-                                  h == 0 ? FontWeight.w900 : FontWeight.w600,
-                              color: h == 0
-                                  ? HunorColors.gold
-                                  : HunorColors.muted,
+        controller: _vScroll,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // BAL OLDALI RÖGZÍTETT DAW SÁV-FEJLÉC OSZLOP
+            SizedBox(
+              width: _headerWidth,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Bal felső sarok (STARTEX fejléc magassága)
+                  Container(
+                    height: 36,
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    decoration: const BoxDecoration(
+                      color: HunorColors.surface2,
+                      border: Border(
+                        right: BorderSide(color: HunorColors.border, width: 1.5),
+                        bottom: BorderSide(color: HunorColors.border),
+                      ),
+                    ),
+                    alignment: Alignment.centerLeft,
+                    child: const Text(
+                      'PÁLYÁK / SÁVOK',
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.7,
+                        color: HunorColors.gold,
+                      ),
+                    ),
+                  ),
+                  for (final group in layouts) ...[
+                    // Pálya elválasztó fejléc (bal oldal)
+                    Container(
+                      height: _sectorBannerHeight,
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF16253A),
+                        border: const Border(
+                          top: BorderSide(color: HunorColors.gold, width: 1.5),
+                          right:
+                              BorderSide(color: HunorColors.border, width: 1.5),
+                          bottom: BorderSide(color: HunorColors.border),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              group.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
+                              ),
                             ),
                           ),
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-              const Divider(height: 1),
-
-              // Pályák és a 4 külön vonal (Célok, Akadályok, Sérültek, Injektek)
-              Expanded(
-                child: Scrollbar(
-                  controller: _vScroll,
-                  child: ListView.builder(
-                    controller: _vScroll,
-                    padding: const EdgeInsets.fromLTRB(8, 12, 8, 28),
-                    itemCount: groups.length,
-                    itemBuilder: (context, index) {
-                      final group = groups[index];
-                      final sectorBlocks = _blocks
-                          .where((b) => b.sectorId == group.sectorId)
-                          .toList();
-
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 16),
-                        color: HunorColors.surface1,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          side: const BorderSide(color: HunorColors.border),
-                        ),
-                        clipBehavior: Clip.antiAlias,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            // Pálya fejléc
-                            Container(
-                              color: HunorColors.surface2,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 8,
-                              ),
-                              child: Row(
-                                children: [
-                                  Text(
-                                    group.name,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleMedium
-                                        ?.copyWith(fontWeight: FontWeight.w800),
-                                  ),
-                                  if (group.icmsName.isNotEmpty) ...[
-                                    const SizedBox(width: 8),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 7,
-                                        vertical: 2,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: HunorColors.gold
-                                            .withValues(alpha: 0.16),
-                                        borderRadius: BorderRadius.circular(6),
-                                      ),
-                                      child: Text(
-                                        'ICMS: ${group.icmsName}',
-                                        style: const TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w700,
-                                          color: HunorColors.gold,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                  const SizedBox(width: 12),
-                                  Text(
-                                    '${sectorBlocks.length} időzített elem',
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: HunorColors.muted,
-                                    ),
-                                  ),
-                                ],
+                          if (group.icmsName.isNotEmpty)
+                            Text(
+                              group.icmsName,
+                              style: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: HunorColors.gold,
                               ),
                             ),
-                            // 4 külön vonal: Célok, Akadályok, Sérültek, Injektek
-                            for (final kind in _TrackKind.values)
-                              _buildKindTrackRow(
-                                sectorId: group.sectorId,
-                                kind: kind,
-                                blocks: sectorBlocks.where((blk) {
-                                  final b = bubbleMap[blk.bubbleId];
-                                  return b != null && _trackKindOf(b) == kind;
-                                }).toList(),
-                                bubbleMap: bubbleMap,
-                                trackWidth: trackWidth,
+                        ],
+                      ),
+                    ),
+                    // A 4 külön DAW sáv-fejléc (CÉLOK, AKADÁLYOK, SÉRÜLTEK, INJEKTEK)
+                    for (final tr in group.tracks)
+                      Container(
+                        height: tr.height,
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        decoration: BoxDecoration(
+                          color: tr.kind.color.withValues(alpha: 0.12),
+                          border: Border(
+                            left: BorderSide(color: tr.kind.color, width: 5),
+                            right: const BorderSide(
+                                color: HunorColors.border, width: 1.5),
+                            bottom: const BorderSide(
+                                color: HunorColors.border, width: 0.8),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(tr.kind.icon, size: 16, color: tr.kind.color),
+                            const SizedBox(width: 7),
+                            Expanded(
+                              child: Text(
+                                tr.kind.label,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 0.4,
+                                  color: tr.kind.color,
+                                ),
+                                overflow: TextOverflow.ellipsis,
                               ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 5,
+                                vertical: 1,
+                              ),
+                              decoration: BoxDecoration(
+                                color: tr.kind.color.withValues(alpha: 0.22),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                '${tr.placed.length}',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  color: tr.kind.color,
+                                ),
+                              ),
+                            ),
                           ],
                         ),
-                      );
-                    },
+                      ),
+                    const SizedBox(height: 12),
+                  ],
+                ],
+              ),
+            ),
+
+            // JOBB OLDALI VÍZSZINTESEN GÖRGETHETŐ DAW IDŐVONAL RÁCS
+            Expanded(
+              child: Scrollbar(
+                controller: _hScroll,
+                thumbVisibility: true,
+                child: SingleChildScrollView(
+                  controller: _hScroll,
+                  scrollDirection: Axis.horizontal,
+                  child: SizedBox(
+                    width: trackWidth,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Felső STARTEX óra-vonalzó
+                        Container(
+                          height: 36,
+                          width: trackWidth,
+                          decoration: const BoxDecoration(
+                            color: HunorColors.surface2,
+                            border: Border(
+                              bottom: BorderSide(color: HunorColors.border),
+                            ),
+                          ),
+                          child: Stack(
+                            children: [
+                              for (var h = 0; h <= _horizonHours; h += hourStep)
+                                Positioned(
+                                  left: h * _pixelsPerHour + 4,
+                                  top: 9,
+                                  child: Text(
+                                    h == 0 ? 'STARTEX' : '+$h ó',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: h == 0
+                                          ? FontWeight.w900
+                                          : FontWeight.w700,
+                                      color: h == 0
+                                          ? HunorColors.gold
+                                          : HunorColors.muted,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                        for (final group in layouts) ...[
+                          // Pálya banner jobb oldali folytatása
+                          Container(
+                            height: _sectorBannerHeight,
+                            width: trackWidth,
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF16253A),
+                              border: Border(
+                                top: BorderSide(
+                                    color: HunorColors.gold, width: 1.5),
+                                bottom: BorderSide(color: HunorColors.border),
+                              ),
+                            ),
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              '${group.name} · ${group.totalCount} időzített sáv-elem',
+                              style: const TextStyle(
+                                fontSize: 11.5,
+                                color: HunorColors.muted,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          // A 4 külön DAW sáv (mindegyik külön DragTarget!)
+                          for (final tr in group.tracks)
+                            _buildDawTrackLane(
+                              sectorId: group.sectorId,
+                              kind: tr.kind,
+                              height: tr.height,
+                              placed: tr.placed,
+                              trackWidth: trackWidth,
+                            ),
+                          const SizedBox(height: 12),
+                        ],
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildKindTrackRow({
+  Widget _buildDawTrackLane({
     required String? sectorId,
     required _TrackKind kind,
-    required List<ExerciseTimelineBlock> blocks,
-    required Map<String, ExerciseBubble> bubbleMap,
+    required double height,
+    required List<({
+      ExerciseTimelineBlock block,
+      ExerciseBubble bubble,
+      TimelineTiming timing,
+      int lane,
+    })> placed,
     required double trackWidth,
   }) {
-    // Átfedő blokkok elrendezése al-sávokba
-    final sorted = [...blocks]..sort((a, b) {
-        final ta = _dragOverrides[a.id] ?? a.planned;
-        final tb = _dragOverrides[b.id] ?? b.planned;
-        return ta.start.compareTo(tb.start);
-      });
+    final trackKey = '${sectorId ?? 'none'}-${kind.name}';
+    final isHovering = _hoverTrackKey == trackKey;
 
-    final laneEnds = <double>[];
-    final placed =
-        <({ExerciseTimelineBlock block, ExerciseBubble bubble, TimelineTiming timing, int lane})>[];
-    for (final blk in sorted) {
-      final bubble = bubbleMap[blk.bubbleId];
-      if (bubble == null) continue;
-      final timing = _dragOverrides[blk.id] ?? blk.planned;
-      var lane = laneEnds.indexWhere((end) => end <= timing.start + 0.001);
-      if (lane < 0) {
-        lane = laneEnds.length;
-        laneEnds.add(timing.end);
-      } else {
-        laneEnds[lane] = timing.end;
-      }
-      placed.add((block: blk, bubble: bubble, timing: timing, lane: lane));
-    }
-
-    final laneCount = math.max(1, laneEnds.length);
-    final rowHeight = laneCount * _laneHeight + 12.0;
-
-    return Container(
-      decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: HunorColors.border, width: 0.7)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Sor címke (bal oldal)
-          Container(
-            width: _labelWidth,
-            height: rowHeight,
-            padding: const EdgeInsets.symmetric(horizontal: 10),
+    return Builder(
+      builder: (laneCtx) => DragTarget<ExerciseBubble>(
+        onWillAcceptWithDetails: (details) {
+          if (_saving) return false;
+          // Bármelyik elem behúzható (a saját sávja színnel kiemelkedik, de soha nem utasítja vissza csendben!)
+          return details.data.exerciseId == widget.exerciseId;
+        },
+        onMove: (details) {
+          final box = laneCtx.findRenderObject() as RenderBox?;
+          if (box == null) return;
+          final local = box.globalToLocal(details.offset);
+          final snapped = _snapQuarterHour(math.max(0, local.dx / _pixelsPerHour));
+          if (_hoverTrackKey != trackKey || _hoverHour != snapped) {
+            setState(() {
+              _hoverTrackKey = trackKey;
+              _hoverHour = snapped;
+            });
+          }
+        },
+        onLeave: (_) {
+          if (_hoverTrackKey == trackKey) {
+            setState(() {
+              _hoverTrackKey = null;
+              _hoverHour = null;
+            });
+          }
+        },
+        onAcceptWithDetails: (details) {
+          final box = laneCtx.findRenderObject() as RenderBox?;
+          double startHour = _hoverHour ?? 0;
+          if (box != null) {
+            final local = box.globalToLocal(details.offset);
+            startHour = math.max(0, local.dx / _pixelsPerHour);
+          }
+          _placeBubbleOnTrack(
+            details.data,
+            sectorId: sectorId,
+            startHour: startHour,
+          );
+        },
+        builder: (context, candidates, rejected) {
+          final active = candidates.isNotEmpty;
+          return Container(
+            width: trackWidth,
+            height: height,
             decoration: BoxDecoration(
-              color: kind.color.withValues(alpha: 0.08),
-              border: Border(
-                left: BorderSide(color: kind.color, width: 4),
-                right: const BorderSide(color: HunorColors.border),
+              color: active
+                  ? kind.color.withValues(alpha: 0.18)
+                  : kind.color.withValues(alpha: 0.04),
+              border: const Border(
+                bottom: BorderSide(color: HunorColors.border, width: 0.8),
               ),
             ),
-            child: Row(
+            child: Stack(
               children: [
-                Icon(kind.icon, size: 16, color: kind.color),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    kind.label,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                      color: kind.color,
+                // Függőleges DAW óra- és 6 órás ütem-rács
+                for (var h = 0; h <= _horizonHours; h++)
+                  Positioned(
+                    left: h * _pixelsPerHour,
+                    top: 0,
+                    bottom: 0,
+                    child: Container(
+                      width: h % 6 == 0 ? 1.4 : 0.6,
+                      color: h % 6 == 0
+                          ? HunorColors.border
+                          : HunorColors.border.withValues(alpha: 0.35),
                     ),
-                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-              ],
-            ),
-          ),
 
-          // Idővonal sáv (DragTarget + csúszka blokkok)
-          Builder(
-            builder: (trackCtx) => DragTarget<ExerciseBubble>(
-              onWillAcceptWithDetails: (details) {
-                if (_saving) return false;
-                final b = details.data;
-                return _trackKindOf(b) == kind && b.sectorId == sectorId;
-              },
-              onAcceptWithDetails: (details) {
-                final box = trackCtx.findRenderObject() as RenderBox?;
-                double startHour = 0;
-                if (box != null) {
-                  final local = box.globalToLocal(details.offset);
-                  startHour = math.max(0, local.dx / _pixelsPerHour);
-                }
-                _placeBubbleOnTrack(
-                  details.data,
-                  sectorId: sectorId,
-                  startHour: startHour,
-                );
-              },
-              builder: (context, candidates, rejected) => Container(
-                width: trackWidth + 24,
-                height: rowHeight,
-                color: candidates.isNotEmpty
-                    ? kind.color.withValues(alpha: 0.14)
-                    : Colors.transparent,
-                child: Stack(
-                  children: [
-                    // Függőleges órarácsok
-                    for (var h = 0; h <= _horizonHours; h++)
-                      Positioned(
-                        left: h * _pixelsPerHour,
-                        top: 0,
-                        bottom: 0,
+                // Élő DAW ejtési vonal (playhead) behúzás közben
+                if (isHovering && _hoverHour != null)
+                  Positioned(
+                    left: _hoverHour! * _pixelsPerHour,
+                    top: 0,
+                    bottom: 0,
+                    child: Container(
+                      width: 2.5,
+                      color: HunorColors.gold,
+                      child: Align(
+                        alignment: Alignment.topLeft,
                         child: Container(
-                          width: h % 6 == 0 ? 1.2 : 0.6,
-                          color: h % 6 == 0
-                              ? HunorColors.border
-                              : HunorColors.border.withValues(alpha: 0.4),
-                        ),
-                      ),
-
-                    if (placed.isEmpty)
-                      Positioned(
-                        left: 12,
-                        top: 14,
-                        child: Text(
-                          candidates.isNotEmpty
-                              ? 'Engedd el itt a felhelyezéshez!'
-                              : 'Húzz ide egy „${kind.label}” elemet balról...',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: candidates.isNotEmpty
-                                ? kind.color
-                                : HunorColors.muted.withValues(alpha: 0.7),
-                            fontStyle: FontStyle.italic,
+                          margin: const EdgeInsets.only(left: 4, top: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 5,
+                            vertical: 1,
+                          ),
+                          decoration: BoxDecoration(
+                            color: HunorColors.gold,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            '+${planningHours(_hoverHour!)} ó',
+                            style: const TextStyle(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.black,
+                            ),
                           ),
                         ),
                       ),
+                    ),
+                  ),
 
-                    // Csúszka blokkok (húzható kezdés + nyújtható hossz)
-                    for (final item in placed)
-                      _buildSliderBlock(
-                        block: item.block,
-                        bubble: item.bubble,
-                        timing: item.timing,
-                        lane: item.lane,
+                if (placed.isEmpty && !active)
+                  Positioned(
+                    left: 12,
+                    top: 16,
+                    child: Text(
+                      'Húzz ide egy „${kind.shortLabel}” elemet balról…',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: HunorColors.muted.withValues(alpha: 0.55),
+                        fontStyle: FontStyle.italic,
                       ),
-                  ],
-                ),
-              ),
+                    ),
+                  ),
+
+                // Felhelyezett DAW csúszka-klipek
+                for (final item in placed)
+                  _buildDawClip(
+                    block: item.block,
+                    bubble: item.bubble,
+                    timing: item.timing,
+                    lane: item.lane,
+                  ),
+              ],
             ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }
 
-  Widget _buildSliderBlock({
+  Widget _buildDawClip({
     required ExerciseTimelineBlock block,
     required ExerciseBubble bubble,
     required TimelineTiming timing,
@@ -986,24 +1187,28 @@ class _PlanningTimelinePlannerState extends State<PlanningTimelinePlanner> {
   }) {
     final accent = _bubbleAccentColor(bubble);
     final leftPx = timing.start * _pixelsPerHour;
-    final widthPx = math.max(54.0, timing.duration * _pixelsPerHour);
+    final widthPx = math.max(64.0, timing.duration * _pixelsPerHour);
+    final dispStart = _snapQuarterHour(timing.start);
+    final dispEnd = _snapQuarterHour(timing.end);
+    final dispDur = math.max(0.25, _snapQuarterHour(timing.duration));
 
     return Positioned(
       left: leftPx,
-      top: 6.0 + lane * _laneHeight,
+      top: 5.0 + lane * _laneHeight,
       width: widthPx,
       height: _laneHeight - 6,
       child: Material(
-        color: accent.withValues(alpha: 0.24),
-        borderRadius: BorderRadius.circular(8),
+        color: accent.withValues(alpha: 0.28),
+        borderRadius: BorderRadius.circular(7),
+        elevation: 2,
         child: Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: accent, width: 1.5),
+            borderRadius: BorderRadius.circular(7),
+            border: Border.all(color: accent, width: 1.6),
           ),
           child: Row(
             children: [
-              // Bal fogantyú (kezdés húzása, végpont megtartásával)
+              // Bal fogantyú (kezdés húzása)
               MouseRegion(
                 cursor: SystemMouseCursors.resizeLeftRight,
                 child: GestureDetector(
@@ -1011,16 +1216,16 @@ class _PlanningTimelinePlannerState extends State<PlanningTimelinePlanner> {
                   onHorizontalDragUpdate: _saving
                       ? null
                       : (d) {
-                          final current = _dragOverrides[block.id] ?? block.planned;
+                          final current =
+                              _dragOverrides[block.id] ?? block.planned;
                           final deltaH = d.delta.dx / _pixelsPerHour;
                           final newStart = math.max(
                             0.0,
                             math.min(current.end - 0.25, current.start + deltaH),
                           );
-                          final newDur = current.end - newStart;
                           setState(() {
                             _dragOverrides[block.id] =
-                                TimelineTiming(newStart, newDur);
+                                TimelineTiming(newStart, current.end - newStart);
                           });
                         },
                   onHorizontalDragEnd: _saving
@@ -1033,9 +1238,9 @@ class _PlanningTimelinePlannerState extends State<PlanningTimelinePlanner> {
                     width: 10,
                     height: double.infinity,
                     decoration: BoxDecoration(
-                      color: accent.withValues(alpha: 0.45),
+                      color: accent.withValues(alpha: 0.65),
                       borderRadius: const BorderRadius.horizontal(
-                        left: Radius.circular(6),
+                        left: Radius.circular(5),
                       ),
                     ),
                     child: const Center(
@@ -1043,7 +1248,7 @@ class _PlanningTimelinePlannerState extends State<PlanningTimelinePlanner> {
                         width: 2,
                         height: 14,
                         child: DecoratedBox(
-                          decoration: BoxDecoration(color: Colors.white70),
+                          decoration: BoxDecoration(color: Colors.white),
                         ),
                       ),
                     ),
@@ -1051,20 +1256,22 @@ class _PlanningTimelinePlannerState extends State<PlanningTimelinePlanner> {
                 ),
               ),
 
-              // Középső rész: teljes blokk csúsztatása balra-jobbra + kattintásra szerkesztés
+              // Középső klip-test: vízszintes csúsztatás + kattintásra szerkesztés
               Expanded(
                 child: MouseRegion(
                   cursor: SystemMouseCursors.grab,
                   child: GestureDetector(
                     behavior: HitTestBehavior.opaque,
-                    onTap: _saving ? null : () => _editBlockDialog(block, bubble),
+                    onTap:
+                        _saving ? null : () => _editBlockDialog(block, bubble),
                     onHorizontalDragUpdate: _saving
                         ? null
                         : (d) {
                             final current =
                                 _dragOverrides[block.id] ?? block.planned;
                             final deltaH = d.delta.dx / _pixelsPerHour;
-                            final newStart = math.max(0.0, current.start + deltaH);
+                            final newStart =
+                                math.max(0.0, current.start + deltaH);
                             setState(() {
                               _dragOverrides[block.id] =
                                   TimelineTiming(newStart, current.duration);
@@ -1080,7 +1287,7 @@ class _PlanningTimelinePlannerState extends State<PlanningTimelinePlanner> {
                       padding: const EdgeInsets.symmetric(horizontal: 6),
                       child: Tooltip(
                         message:
-                            '${bubble.title}\n+${planningHours(_snapQuarterHour(timing.start))} ó → +${planningHours(_snapQuarterHour(timing.end))} ó (${planningHours(math.max(0.25, _snapQuarterHour(timing.duration)))} óra)\nHúzd a mozgatáshoz, szélein nyújtsd, kattints a szerkesztéshez.',
+                            '${bubble.title}\n+${planningHours(dispStart)} ó → +${planningHours(dispEnd)} ó (${planningHours(dispDur)} óra)\nHúzd a mozgatáshoz, szélein nyújtsd, kattints a szerkesztéshez.',
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1096,12 +1303,12 @@ class _PlanningTimelinePlannerState extends State<PlanningTimelinePlanner> {
                               ),
                             ),
                             Text(
-                              '+${planningHours(_snapQuarterHour(timing.start))}ó – +${planningHours(_snapQuarterHour(timing.end))}ó (${planningHours(math.max(0.25, _snapQuarterHour(timing.duration)))}ó)',
+                              '+${planningHours(dispStart)}ó – +${planningHours(dispEnd)}ó (${planningHours(dispDur)}ó)',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 fontSize: 9.5,
-                                color: Colors.white.withValues(alpha: 0.8),
+                                color: Colors.white.withValues(alpha: 0.85),
                               ),
                             ),
                           ],
@@ -1112,7 +1319,7 @@ class _PlanningTimelinePlannerState extends State<PlanningTimelinePlanner> {
                 ),
               ),
 
-              // Jobb fogantyú (időtartam nyújtása / rövidítése)
+              // Jobb fogantyú (hossz nyújtása / rövidítése)
               MouseRegion(
                 cursor: SystemMouseCursors.resizeLeftRight,
                 child: GestureDetector(
@@ -1120,9 +1327,11 @@ class _PlanningTimelinePlannerState extends State<PlanningTimelinePlanner> {
                   onHorizontalDragUpdate: _saving
                       ? null
                       : (d) {
-                          final current = _dragOverrides[block.id] ?? block.planned;
+                          final current =
+                              _dragOverrides[block.id] ?? block.planned;
                           final deltaH = d.delta.dx / _pixelsPerHour;
-                          final newDur = math.max(0.25, current.duration + deltaH);
+                          final newDur =
+                              math.max(0.25, current.duration + deltaH);
                           setState(() {
                             _dragOverrides[block.id] =
                                 TimelineTiming(current.start, newDur);
@@ -1138,9 +1347,9 @@ class _PlanningTimelinePlannerState extends State<PlanningTimelinePlanner> {
                     width: 10,
                     height: double.infinity,
                     decoration: BoxDecoration(
-                      color: accent.withValues(alpha: 0.45),
+                      color: accent.withValues(alpha: 0.65),
                       borderRadius: const BorderRadius.horizontal(
-                        right: Radius.circular(6),
+                        right: Radius.circular(5),
                       ),
                     ),
                     child: const Center(
@@ -1148,7 +1357,7 @@ class _PlanningTimelinePlannerState extends State<PlanningTimelinePlanner> {
                         width: 2,
                         height: 14,
                         child: DecoratedBox(
-                          decoration: BoxDecoration(color: Colors.white70),
+                          decoration: BoxDecoration(color: Colors.white),
                         ),
                       ),
                     ),
