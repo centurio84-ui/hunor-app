@@ -351,7 +351,7 @@ class HomePage extends StatelessWidget {
           ),
           const SizedBox(height: 16),
 
-          if (s.canAccessExcon) ...[
+          if (s.isAuthenticated && !s.isGuest) ...[
             Card(
               color: HunorColors.surface1,
               child: ListTile(

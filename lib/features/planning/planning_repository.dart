@@ -39,6 +39,48 @@ class PlanningRepository {
     return Exercise.fromJson(row);
   }
 
+  Future<Set<String>> fetchExercisePlanners(String exerciseId) async {
+    try {
+      final rows = await _client
+          .from('exercise_planners')
+          .select('member_id')
+          .eq('exercise_id', exerciseId);
+      return {
+        for (final row in rows)
+          if (row['member_id'] != null) row['member_id'].toString(),
+      };
+    } catch (_) {
+      return {};
+    }
+  }
+
+  Future<void> setExercisePlanners({
+    required String exerciseId,
+    required Set<String> previousIds,
+    required Set<String> nextIds,
+    String? assignedBy,
+  }) async {
+    final toAdd = nextIds.difference(previousIds);
+    final toRemove = previousIds.difference(nextIds);
+    if (toRemove.isNotEmpty) {
+      await _client
+          .from('exercise_planners')
+          .delete()
+          .eq('exercise_id', exerciseId)
+          .inFilter('member_id', toRemove.toList());
+    }
+    if (toAdd.isNotEmpty) {
+      await _client.from('exercise_planners').insert([
+        for (final memberId in toAdd)
+          {
+            'exercise_id': exerciseId,
+            'member_id': memberId,
+            if (assignedBy != null) 'assigned_by': assignedBy,
+          },
+      ]);
+    }
+  }
+
   Future<ExerciseDetails> fetchExerciseDetails(String exerciseId) async {
     final results = await Future.wait([
       _client

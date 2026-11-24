@@ -3760,7 +3760,7 @@
   function ntRoleAllowed(route){if(!ntApproved)return false;if(['navigation-settings','approvals','quizadmin'].includes(route))return ntAdmin;if(route==='excon')return ntAdmin||Boolean(user?.canAccessExcon)||(events||[]).some(e=>e.myParticipationRole==='excon'||(Array.isArray(e.exconRegistrants)&&e.exconRegistrants.includes(user?.name)));return true;}
   function ntCanOpenPlanning() {
     return Boolean(user?.id && !guest && user.membershipStatus==='approved'
-      && ntReady && ntApproved && (ntAdmin || user.canAccessExcon));
+      && ntReady && ntApproved);
   }
   function ntApplyPlanning(nav) {
     let button=nav.querySelector('#navPlanning');
