@@ -8,11 +8,12 @@ import 'planning_board.dart';
 import 'planning_injects_board.dart';
 import 'planning_models.dart';
 import 'planning_obstacles_board.dart';
+import 'planning_real_timeline.dart';
 import 'planning_repository.dart';
 import 'planning_timeline_planner.dart';
 import 'planning_victims_board.dart';
 
-enum _PlanningTab { board, obstacles, victims, injects, timeline }
+enum _PlanningTab { board, obstacles, victims, injects, timeline, realTimeline }
 
 class ExercisePlanningScreen extends StatelessWidget {
   const ExercisePlanningScreen({super.key, this.onReturnToPortal});
@@ -353,6 +354,14 @@ class _PlanningWorkspaceState extends State<_PlanningWorkspace> {
                           : (_) => setState(
                               () => _activeTab = _PlanningTab.timeline),
                     ),
+                    ChoiceChip(
+                      label: const Text('6. Valós idővonal'),
+                      selected: _activeTab == _PlanningTab.realTimeline,
+                      onSelected: _savingBoard || _creating
+                          ? null
+                          : (_) => setState(
+                              () => _activeTab = _PlanningTab.realTimeline),
+                    ),
                   ],
                 ),
               ),
@@ -396,6 +405,13 @@ class _PlanningWorkspaceState extends State<_PlanningWorkspace> {
                         ),
                       _PlanningTab.timeline => PlanningTimelinePlanner(
                           key: ValueKey('timeline-${_selectedId!}'),
+                          exerciseId: _selectedId!,
+                          repository: widget.repository,
+                          onSavingChanged: (saving) =>
+                              setState(() => _savingBoard = saving),
+                        ),
+                      _PlanningTab.realTimeline => PlanningRealTimeline(
+                          key: ValueKey('real-${_selectedId!}'),
                           exerciseId: _selectedId!,
                           repository: widget.repository,
                           onSavingChanged: (saving) =>
