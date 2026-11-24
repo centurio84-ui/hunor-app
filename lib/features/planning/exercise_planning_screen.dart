@@ -7,6 +7,9 @@ import 'planning_board.dart';
 import 'planning_models.dart';
 import 'planning_repository.dart';
 import 'planning_timeline_wall.dart';
+import 'planning_victims_board.dart';
+
+enum _PlanningTab { board, victims, timeline }
 
 class ExercisePlanningScreen extends StatelessWidget {
   const ExercisePlanningScreen({super.key, this.onReturnToPortal});
@@ -72,7 +75,7 @@ class _PlanningWorkspaceState extends State<_PlanningWorkspace> {
   String? _selectedId;
   bool _creating = false;
   bool _savingBoard = false;
-  bool _showTimeline = false;
+  _PlanningTab _activeTab = _PlanningTab.board;
 
   @override
   void initState() {
@@ -188,18 +191,28 @@ class _PlanningWorkspaceState extends State<_PlanningWorkspace> {
                   runSpacing: 4,
                   children: [
                     ChoiceChip(
-                      label: const Text('Tervezőasztal & Pályák'),
-                      selected: !_showTimeline,
+                      label: const Text('1. Tervezőasztal & Pályák'),
+                      selected: _activeTab == _PlanningTab.board,
                       onSelected: _savingBoard || _creating
                           ? null
-                          : (_) => setState(() => _showTimeline = false),
+                          : (_) =>
+                              setState(() => _activeTab = _PlanningTab.board),
                     ),
                     ChoiceChip(
-                      label: const Text('5m fal · Tervezett / Real'),
-                      selected: _showTimeline,
+                      label: const Text('2. Sérültek felvétele'),
+                      selected: _activeTab == _PlanningTab.victims,
                       onSelected: _savingBoard || _creating
                           ? null
-                          : (_) => setState(() => _showTimeline = true),
+                          : (_) =>
+                              setState(() => _activeTab = _PlanningTab.victims),
+                    ),
+                    ChoiceChip(
+                      label: const Text('3. 5m fal · Tervezett / Real'),
+                      selected: _activeTab == _PlanningTab.timeline,
+                      onSelected: _savingBoard || _creating
+                          ? null
+                          : (_) => setState(
+                              () => _activeTab = _PlanningTab.timeline),
                     ),
                   ],
                 ),
@@ -213,21 +226,29 @@ class _PlanningWorkspaceState extends State<_PlanningWorkspace> {
                             : 'Válassz egy gyakorlatot.',
                       ),
                     )
-                  : _showTimeline
-                      ? PlanningTimelineWall(
-                          key: ValueKey(_selectedId),
-                          exerciseId: _selectedId!,
-                          repository: widget.repository,
-                          onSavingChanged: (saving) =>
-                              setState(() => _savingBoard = saving),
-                        )
-                      : PlanningBoard(
-                          key: ValueKey(_selectedId),
+                  : switch (_activeTab) {
+                      _PlanningTab.board => PlanningBoard(
+                          key: ValueKey('board-${_selectedId!}'),
                           exerciseId: _selectedId!,
                           repository: widget.repository,
                           onSavingChanged: (saving) =>
                               setState(() => _savingBoard = saving),
                         ),
+                      _PlanningTab.victims => PlanningVictimsBoard(
+                          key: ValueKey('victims-${_selectedId!}'),
+                          exerciseId: _selectedId!,
+                          repository: widget.repository,
+                          onSavingChanged: (saving) =>
+                              setState(() => _savingBoard = saving),
+                        ),
+                      _PlanningTab.timeline => PlanningTimelineWall(
+                          key: ValueKey('timeline-${_selectedId!}'),
+                          exerciseId: _selectedId!,
+                          repository: widget.repository,
+                          onSavingChanged: (saving) =>
+                              setState(() => _savingBoard = saving),
+                        ),
+                    },
             ),
           ],
         );
