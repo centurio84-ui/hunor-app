@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../theme/hunor_theme.dart';
 import 'planning_catalog_panel.dart' show planningDragFeedback, planningHours;
@@ -82,6 +83,7 @@ class _PlanningTimelinePlannerState extends State<PlanningTimelinePlanner> {
   _TrackKind? _paletteKindFilter;
   double _horizonHours = 36.0;
   double _pixelsPerHour = 68.0;
+  late DateTime _startexTime = _defaultStartex();
 
   // Élő csúszka-előnézet húzás közben
   final Map<String, TimelineTiming> _dragOverrides = {};
@@ -89,9 +91,89 @@ class _PlanningTimelinePlannerState extends State<PlanningTimelinePlanner> {
   String? _hoverTrackKey;
   double? _hoverHour;
 
+  static DateTime _defaultStartex() {
+    final now = DateTime.now();
+    return DateTime(now.year, now.month, now.day, 8, 0);
+  }
+
+  String get _startexPrefKey => 'planning_startex_${widget.exerciseId}';
+
+  String _pad2(int n) => n.toString().padLeft(2, '0');
+
+  DateTime _realTimeAt(double offsetHours) =>
+      _startexTime.add(Duration(minutes: (offsetHours * 60).round()));
+
+  String _formatClock(double offsetHours, {bool showDateIfNewDay = false}) {
+    final dt = _realTimeAt(offsetHours);
+    final hhmm = '${_pad2(dt.hour)}:${_pad2(dt.minute)}';
+    if (showDateIfNewDay &&
+        (dt.day != _startexTime.day ||
+            dt.month != _startexTime.month ||
+            dt.year != _startexTime.year) &&
+        dt.hour == 0 &&
+        dt.minute == 0) {
+      return '${_pad2(dt.month)}.${_pad2(dt.day)}. $hhmm';
+    }
+    return hhmm;
+  }
+
+  String _formatDateTime(DateTime dt) =>
+      '${dt.year}.${_pad2(dt.month)}.${_pad2(dt.day)}. ${_pad2(dt.hour)}:${_pad2(dt.minute)}';
+
+  String _formatShortDateTime(double offsetHours) {
+    final dt = _realTimeAt(offsetHours);
+    return '${_pad2(dt.month)}.${_pad2(dt.day)}. ${_pad2(dt.hour)}:${_pad2(dt.minute)}';
+  }
+
+  Future<void> _loadSavedStartex() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_startexPrefKey);
+      if (raw != null) {
+        final parsed = DateTime.tryParse(raw);
+        if (parsed != null && mounted) {
+          setState(() => _startexTime = parsed);
+        }
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _pickStartexTime() async {
+    final pickedDate = await showDatePicker(
+      context: context,
+      initialDate: _startexTime,
+      firstDate: DateTime(2024),
+      lastDate: DateTime(2035),
+      helpText: 'STARTEX dátum beállítása',
+    );
+    if (!mounted || pickedDate == null) return;
+    final pickedTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(
+        hour: _startexTime.hour,
+        minute: _startexTime.minute,
+      ),
+      helpText: 'STARTEX kezdési időpont',
+    );
+    if (!mounted || pickedTime == null) return;
+    final next = DateTime(
+      pickedDate.year,
+      pickedDate.month,
+      pickedDate.day,
+      pickedTime.hour,
+      pickedTime.minute,
+    );
+    setState(() => _startexTime = next);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_startexPrefKey, next.toIso8601String());
+    } catch (_) {}
+  }
+
   @override
   void initState() {
     super.initState();
+    _loadSavedStartex();
     _load();
   }
 
@@ -429,6 +511,21 @@ class _PlanningTimelinePlannerState extends State<PlanningTimelinePlanner> {
                     ),
                   ],
                 ),
+                OutlinedButton.icon(
+                  onPressed: _pickStartexTime,
+                  icon: const Icon(Icons.schedule, size: 18),
+                  label: Text('STARTEX: ${_formatDateTime(_startexTime)}'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: HunorColors.gold,
+                    side: BorderSide(
+                      color: HunorColors.gold.withValues(alpha: 0.6),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 11,
+                    ),
+                  ),
+                ),
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 12,
@@ -443,8 +540,8 @@ class _PlanningTimelinePlannerState extends State<PlanningTimelinePlanner> {
                   ),
                   child: Text(
                     endex > 0
-                        ? 'Tervezett ENDEX: +${planningHours(endex)} óra'
-                        : 'Tervezett ENDEX: 0 óra',
+                        ? 'Tervezett ENDEX: +${planningHours(endex)} ó (${_formatShortDateTime(endex)})'
+                        : 'Tervezett ENDEX: ${_formatShortDateTime(0)}',
                     style: const TextStyle(
                       fontWeight: FontWeight.w800,
                       color: HunorColors.gold,
@@ -821,7 +918,7 @@ class _PlanningTimelinePlannerState extends State<PlanningTimelinePlanner> {
                 children: [
                   // Bal felső sarok (STARTEX fejléc magassága)
                   Container(
-                    height: 36,
+                    height: 46,
                     padding: const EdgeInsets.symmetric(horizontal: 10),
                     decoration: const BoxDecoration(
                       color: HunorColors.surface2,
@@ -952,9 +1049,9 @@ class _PlanningTimelinePlannerState extends State<PlanningTimelinePlanner> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Felső STARTEX óra-vonalzó
+                        // Felső STARTEX óra-vonalzó (+óra felül, valós görgetett óra:perc alul)
                         Container(
-                          height: 36,
+                          height: 46,
                           width: trackWidth,
                           decoration: const BoxDecoration(
                             color: HunorColors.surface2,
@@ -967,18 +1064,40 @@ class _PlanningTimelinePlannerState extends State<PlanningTimelinePlanner> {
                               for (var h = 0; h <= _horizonHours; h += hourStep)
                                 Positioned(
                                   left: h * _pixelsPerHour + 4,
-                                  top: 9,
-                                  child: Text(
-                                    h == 0 ? 'STARTEX' : '+$h ó',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: h == 0
-                                          ? FontWeight.w900
-                                          : FontWeight.w700,
-                                      color: h == 0
-                                          ? HunorColors.gold
-                                          : HunorColors.muted,
-                                    ),
+                                  top: 5,
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        h == 0 ? 'STARTEX' : '+$h ó',
+                                        style: TextStyle(
+                                          fontSize: 10.5,
+                                          fontWeight: h == 0
+                                              ? FontWeight.w900
+                                              : FontWeight.w700,
+                                          color: h == 0
+                                              ? HunorColors.gold
+                                              : HunorColors.muted,
+                                        ),
+                                      ),
+                                      Text(
+                                        _formatClock(
+                                          h.toDouble(),
+                                          showDateIfNewDay: true,
+                                        ),
+                                        style: TextStyle(
+                                          fontSize: 10.5,
+                                          fontWeight: FontWeight.w800,
+                                          color: _realTimeAt(h.toDouble())
+                                                      .hour ==
+                                                  0
+                                              ? const Color(0xFF38BDF8)
+                                              : Colors.white
+                                                  .withValues(alpha: 0.85),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                             ],
@@ -1137,7 +1256,7 @@ class _PlanningTimelinePlannerState extends State<PlanningTimelinePlanner> {
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
-                            '+${planningHours(_hoverHour!)} ó',
+                            '+${planningHours(_hoverHour!)} ó · ${_formatClock(_hoverHour!)}',
                             style: const TextStyle(
                               fontSize: 9.5,
                               fontWeight: FontWeight.w900,
@@ -1303,7 +1422,7 @@ class _PlanningTimelinePlannerState extends State<PlanningTimelinePlanner> {
                               ),
                             ),
                             Text(
-                              '+${planningHours(dispStart)}ó – +${planningHours(dispEnd)}ó (${planningHours(dispDur)}ó)',
+                              '${_formatClock(dispStart)}–${_formatClock(dispEnd)} (+${planningHours(dispStart)}ó · ${planningHours(dispDur)}ó)',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
