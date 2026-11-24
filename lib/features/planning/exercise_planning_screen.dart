@@ -11,7 +11,7 @@ import 'planning_repository.dart';
 import 'planning_timeline_wall.dart';
 import 'planning_victims_board.dart';
 
-enum _PlanningTab { board, victims, injects, obstacles, timeline }
+enum _PlanningTab { board, obstacles, victims, injects, timeline }
 
 class ExercisePlanningScreen extends StatelessWidget {
   const ExercisePlanningScreen({super.key, this.onReturnToPortal});
@@ -201,7 +201,15 @@ class _PlanningWorkspaceState extends State<_PlanningWorkspace> {
                               setState(() => _activeTab = _PlanningTab.board),
                     ),
                     ChoiceChip(
-                      label: const Text('2. Sérültek felvétele'),
+                      label: const Text('2. Akadályok'),
+                      selected: _activeTab == _PlanningTab.obstacles,
+                      onSelected: _savingBoard || _creating
+                          ? null
+                          : (_) => setState(
+                              () => _activeTab = _PlanningTab.obstacles),
+                    ),
+                    ChoiceChip(
+                      label: const Text('3. Sérültek felvétele'),
                       selected: _activeTab == _PlanningTab.victims,
                       onSelected: _savingBoard || _creating
                           ? null
@@ -209,20 +217,12 @@ class _PlanningWorkspaceState extends State<_PlanningWorkspace> {
                               setState(() => _activeTab = _PlanningTab.victims),
                     ),
                     ChoiceChip(
-                      label: const Text('3. Injektek'),
+                      label: const Text('4. Injektek'),
                       selected: _activeTab == _PlanningTab.injects,
                       onSelected: _savingBoard || _creating
                           ? null
                           : (_) =>
                               setState(() => _activeTab = _PlanningTab.injects),
-                    ),
-                    ChoiceChip(
-                      label: const Text('4. Akadályok'),
-                      selected: _activeTab == _PlanningTab.obstacles,
-                      onSelected: _savingBoard || _creating
-                          ? null
-                          : (_) => setState(
-                              () => _activeTab = _PlanningTab.obstacles),
                     ),
                     ChoiceChip(
                       label: const Text('5. 5m fal · Tervezett / Real'),
