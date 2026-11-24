@@ -290,6 +290,21 @@ class _PlanningVictimsBoardState extends State<PlanningVictimsBoard> {
     );
   }
 
+  Future<void> _deleteVictim(ExerciseBubble bubble) => _save(
+        (details) async {
+          await widget.repository.deleteBubble(
+            exerciseId: widget.exerciseId,
+            bubbleId: bubble.id,
+          );
+          return (
+            sectors: details.sectors,
+            bubbles:
+                details.bubbles.where((item) => item.id != bubble.id).toList(),
+          );
+        },
+        'A sérült buborék törlése nem sikerült.',
+      );
+
   Future<void> _duplicateVictim(ExerciseBubble bubble) => _save(
         (details) async {
           final copy = await widget.repository.addBubble(
@@ -823,6 +838,16 @@ class _PlanningVictimsBoardState extends State<PlanningVictimsBoard> {
                 visualDensity: VisualDensity.compact,
                 onPressed: _saving ? null : () => _duplicateVictim(bubble),
                 icon: const Icon(Icons.copy_outlined, size: 18),
+              ),
+              IconButton(
+                tooltip: 'Sérült buborék törlése',
+                visualDensity: VisualDensity.compact,
+                onPressed: _saving ? null : () => _deleteVictim(bubble),
+                icon: Icon(
+                  Icons.delete_outline,
+                  size: 18,
+                  color: Theme.of(context).colorScheme.error,
+                ),
               ),
               PopupMenuButton<String>(
                 tooltip: 'Sérült áthelyezése',
