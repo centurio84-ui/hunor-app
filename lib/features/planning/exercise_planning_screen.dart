@@ -6,11 +6,12 @@ import '../../services/app_store.dart';
 import 'planning_board.dart';
 import 'planning_injects_board.dart';
 import 'planning_models.dart';
+import 'planning_obstacles_board.dart';
 import 'planning_repository.dart';
 import 'planning_timeline_wall.dart';
 import 'planning_victims_board.dart';
 
-enum _PlanningTab { board, victims, injects, timeline }
+enum _PlanningTab { board, victims, injects, obstacles, timeline }
 
 class ExercisePlanningScreen extends StatelessWidget {
   const ExercisePlanningScreen({super.key, this.onReturnToPortal});
@@ -216,7 +217,15 @@ class _PlanningWorkspaceState extends State<_PlanningWorkspace> {
                               setState(() => _activeTab = _PlanningTab.injects),
                     ),
                     ChoiceChip(
-                      label: const Text('4. 5m fal · Tervezett / Real'),
+                      label: const Text('4. Akadályok'),
+                      selected: _activeTab == _PlanningTab.obstacles,
+                      onSelected: _savingBoard || _creating
+                          ? null
+                          : (_) => setState(
+                              () => _activeTab = _PlanningTab.obstacles),
+                    ),
+                    ChoiceChip(
+                      label: const Text('5. 5m fal · Tervezett / Real'),
                       selected: _activeTab == _PlanningTab.timeline,
                       onSelected: _savingBoard || _creating
                           ? null
@@ -252,6 +261,13 @@ class _PlanningWorkspaceState extends State<_PlanningWorkspace> {
                         ),
                       _PlanningTab.injects => PlanningInjectsBoard(
                           key: ValueKey('injects-${_selectedId!}'),
+                          exerciseId: _selectedId!,
+                          repository: widget.repository,
+                          onSavingChanged: (saving) =>
+                              setState(() => _savingBoard = saving),
+                        ),
+                      _PlanningTab.obstacles => PlanningObstaclesBoard(
+                          key: ValueKey('obstacles-${_selectedId!}'),
                           exerciseId: _selectedId!,
                           repository: widget.repository,
                           onSavingChanged: (saving) =>
