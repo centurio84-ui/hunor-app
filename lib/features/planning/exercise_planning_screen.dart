@@ -8,7 +8,7 @@ import 'planning_injects_board.dart';
 import 'planning_models.dart';
 import 'planning_obstacles_board.dart';
 import 'planning_repository.dart';
-import 'planning_timeline_wall.dart';
+import 'planning_timeline_planner.dart';
 import 'planning_victims_board.dart';
 
 enum _PlanningTab { board, obstacles, victims, injects, timeline }
@@ -225,7 +225,7 @@ class _PlanningWorkspaceState extends State<_PlanningWorkspace> {
                               setState(() => _activeTab = _PlanningTab.injects),
                     ),
                     ChoiceChip(
-                      label: const Text('5. 5m fal · Tervezett / Real'),
+                      label: const Text('5. Idővonal tervezés'),
                       selected: _activeTab == _PlanningTab.timeline,
                       onSelected: _savingBoard || _creating
                           ? null
@@ -273,7 +273,7 @@ class _PlanningWorkspaceState extends State<_PlanningWorkspace> {
                           onSavingChanged: (saving) =>
                               setState(() => _savingBoard = saving),
                         ),
-                      _PlanningTab.timeline => PlanningTimelineWall(
+                      _PlanningTab.timeline => PlanningTimelinePlanner(
                           key: ValueKey('timeline-${_selectedId!}'),
                           exerciseId: _selectedId!,
                           repository: widget.repository,
