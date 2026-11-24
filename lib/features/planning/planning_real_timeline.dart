@@ -129,9 +129,44 @@ class _PlanningRealTimelineState extends State<PlanningRealTimeline> {
     return hhmm;
   }
 
+  String _formatDateTime(DateTime dt) =>
+      '${dt.year}.${_pad2(dt.month)}.${_pad2(dt.day)}. ${_pad2(dt.hour)}:${_pad2(dt.minute)}';
+
   String _formatShortDateTime(double offsetHours) {
     final dt = _realTimeAt(offsetHours);
     return '${_pad2(dt.month)}.${_pad2(dt.day)}. ${_pad2(dt.hour)}:${_pad2(dt.minute)}';
+  }
+
+  Future<void> _pickStartexTime() async {
+    final pickedDate = await showDatePicker(
+      context: context,
+      initialDate: _startexTime,
+      firstDate: DateTime(2024),
+      lastDate: DateTime(2035),
+      helpText: 'STARTEX dátum beállítása',
+    );
+    if (!mounted || pickedDate == null) return;
+    final pickedTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(
+        hour: _startexTime.hour,
+        minute: _startexTime.minute,
+      ),
+      helpText: 'STARTEX kezdési időpont',
+    );
+    if (!mounted || pickedTime == null) return;
+    final next = DateTime(
+      pickedDate.year,
+      pickedDate.month,
+      pickedDate.day,
+      pickedTime.hour,
+      pickedTime.minute,
+    );
+    setState(() => _startexTime = next);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_startexPrefKey, next.toIso8601String());
+    } catch (_) {}
   }
 
   Future<void> _loadSavedStartex() async {
@@ -471,6 +506,21 @@ class _PlanningRealTimelineState extends State<PlanningRealTimeline> {
                           icon: const Icon(Icons.zoom_in),
                         ),
                       ],
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: _pickStartexTime,
+                      icon: const Icon(Icons.schedule, size: 18),
+                      label: Text('STARTEX: ${_formatDateTime(_startexTime)}'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: HunorColors.gold,
+                        side: BorderSide(
+                          color: HunorColors.gold.withValues(alpha: 0.6),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 11,
+                        ),
+                      ),
                     ),
                     Container(
                       padding: const EdgeInsets.symmetric(
