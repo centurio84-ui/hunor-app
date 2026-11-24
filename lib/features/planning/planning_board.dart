@@ -6,6 +6,7 @@ import 'planning_catalog_panel.dart';
 import 'planning_discipline_badge.dart';
 import 'planning_models.dart';
 import 'planning_repository.dart';
+import 'planning_sector_dialog.dart';
 
 const _sharedGoals = 'Közös Célok Asztala';
 
@@ -73,13 +74,23 @@ class _PlanningBoardState extends State<PlanningBoard> {
     }
   }
 
-  Future<void> _addCheckpoint(InsaragCheckpoint checkpoint) => _save(
+  Future<void> _addCheckpoint(
+    InsaragCheckpoint checkpoint, {
+    String? sectorId,
+  }) =>
+      _save(
         (details) async {
+          final specs = <String, dynamic>{
+            if (checkpoint.category != null) 'section': checkpoint.category,
+            if (checkpoint.code != null) 'code': checkpoint.code,
+          };
           final bubble = await widget.repository.addBubble(
             exerciseId: widget.exerciseId,
+            sectorId: sectorId,
             title: checkpoint.titleHu,
             checkpointId: checkpoint.id,
-            estimatedHours: checkpoint.defaultDurationHours,
+            estimatedHours: null,
+            specs: specs,
           );
           return (
             sectors: details.sectors,
@@ -87,6 +98,25 @@ class _PlanningBoardState extends State<PlanningBoard> {
           );
         },
         'Az ellenőrzőpont hozzáadása nem sikerült.',
+      );
+
+  Future<void> _duplicateBubble(ExerciseBubble bubble) => _save(
+        (details) async {
+          final copy = await widget.repository.addBubble(
+            exerciseId: widget.exerciseId,
+            sectorId: bubble.sectorId,
+            title: bubble.title,
+            checkpointId: bubble.checkpointId,
+            discipline: bubble.discipline,
+            estimatedHours: null,
+            specs: Map<String, dynamic>.from(bubble.specs),
+          );
+          return (
+            sectors: details.sectors,
+            bubbles: [...details.bubbles, copy]
+          );
+        },
+        'A buborék duplikálása nem sikerült.',
       );
 
   Future<void> _editBubble({
@@ -167,33 +197,80 @@ class _PlanningBoardState extends State<PlanningBoard> {
       );
 
   Future<void> _addSector() async {
-    final confirmed = await showDialog<bool>(
+    final edit = await showDialog<PlanningSectorEdit>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Új pálya'),
-        content: const Text('Létrehozod a következő sorszámú ROM pályát?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Mégse'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Létrehozás'),
-          ),
-        ],
-      ),
+      builder: (_) => const PlanningSectorDialog(),
     );
-    if (!mounted || confirmed != true) return;
+    if (!mounted || edit == null || edit.delete) return;
     await _save(
       (details) async {
-        final sector = await widget.repository.createSector(widget.exerciseId);
+        final sector = await widget.repository.createSector(
+          widget.exerciseId,
+          name: edit.name,
+          icmsName: edit.icmsName,
+          description: edit.description,
+        );
         return (
           sectors: [...details.sectors, sector],
           bubbles: details.bubbles
         );
       },
       'A pálya létrehozása nem sikerült.',
+    );
+  }
+
+  Future<void> _editSector(ExerciseSector sector) async {
+    final edit = await showDialog<PlanningSectorEdit>(
+      context: context,
+      builder: (_) => PlanningSectorDialog(sector: sector),
+    );
+    if (!mounted || edit == null) return;
+    await _save(
+      (details) async {
+        if (edit.delete) {
+          await widget.repository.deleteSector(
+            exerciseId: widget.exerciseId,
+            sectorId: sector.id,
+          );
+          return (
+            sectors:
+                details.sectors.where((item) => item.id != sector.id).toList(),
+            bubbles: [
+              for (final b in details.bubbles)
+                if (b.sectorId == sector.id)
+                  ExerciseBubble(
+                    id: b.id,
+                    exerciseId: b.exerciseId,
+                    checkpointId: b.checkpointId,
+                    bubbleType: b.bubbleType,
+                    sectorId: null,
+                    estimatedHours: b.estimatedHours,
+                    title: b.title,
+                    specs: b.specs,
+                  )
+                else
+                  b,
+            ],
+          );
+        }
+        final updated = await widget.repository.updateSector(
+          exerciseId: widget.exerciseId,
+          sectorId: sector.id,
+          name: edit.name,
+          icmsName: edit.icmsName,
+          description: edit.description,
+        );
+        return (
+          sectors: [
+            for (final item in details.sectors)
+              if (item.id == updated.id) updated else item,
+          ],
+          bubbles: details.bubbles,
+        );
+      },
+      edit.delete
+          ? 'A pálya törlése nem sikerült.'
+          : 'A pálya mentése nem sikerült.',
     );
   }
 
@@ -335,28 +412,63 @@ class _PlanningBoardState extends State<PlanningBoard> {
           ],
         ),
         const SizedBox(height: 8),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final columns = ((constraints.maxWidth + 12) ~/ 260).clamp(1, 3);
-            final width = (constraints.maxWidth - (columns - 1) * 12) / columns;
-            return Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: [
-                for (final sector in details.sectors)
-                  SizedBox(
-                    width: width,
-                    child: _zone(
-                      title: sector.name,
-                      sectorId: sector.id,
-                      bubbles: bySector[sector.id] ?? [],
-                      sectors: details.sectors,
-                    ),
+        if (details.sectors.isEmpty)
+          Card(
+            margin: EdgeInsets.zero,
+            color: HunorColors.surface1,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+              side: const BorderSide(color: HunorColors.border),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Még nincs felvett pálya ehhez a gyakorlathoz.',
+                    style: TextStyle(fontWeight: FontWeight.w700),
                   ),
-              ],
-            );
-          },
-        ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Kattints az „Új pálya” gombra a pálya nevének, ICMS elnevezésének és leírásának megadásához.',
+                    style: TextStyle(color: HunorColors.muted, fontSize: 13),
+                  ),
+                  const SizedBox(height: 12),
+                  FilledButton.icon(
+                    onPressed: _saving ? null : _addSector,
+                    icon: const Icon(Icons.add),
+                    label: const Text('Új pálya felvétele'),
+                  ),
+                ],
+              ),
+            ),
+          )
+        else
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final columns = ((constraints.maxWidth + 12) ~/ 280).clamp(1, 3);
+              final width =
+                  (constraints.maxWidth - (columns - 1) * 12) / columns;
+              return Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  for (final sector in details.sectors)
+                    SizedBox(
+                      width: width,
+                      child: _zone(
+                        title: sector.name,
+                        sector: sector,
+                        sectorId: sector.id,
+                        bubbles: bySector[sector.id] ?? [],
+                        sectors: details.sectors,
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
       ],
     );
   }
@@ -365,6 +477,7 @@ class _PlanningBoardState extends State<PlanningBoard> {
     required String title,
     required List<ExerciseBubble> bubbles,
     required List<ExerciseSector> sectors,
+    ExerciseSector? sector,
     String? sectorId,
   }) {
     final total = bubbles.fold<double>(
@@ -379,14 +492,16 @@ class _PlanningBoardState extends State<PlanningBoard> {
         return switch (data) {
           ExerciseBubble() =>
             data.exerciseId == widget.exerciseId && data.sectorId != sectorId,
-          InsaragCheckpoint() => sectorId == null,
+          InsaragCheckpoint() => true,
           _ => false,
         };
       },
       onAcceptWithDetails: (details) {
         final data = details.data;
         if (data is ExerciseBubble) _moveBubble(data, sectorId);
-        if (data is InsaragCheckpoint) _addCheckpoint(data);
+        if (data is InsaragCheckpoint) {
+          _addCheckpoint(data, sectorId: sectorId);
+        }
       },
       builder: (context, candidates, rejected) => Card(
         margin: EdgeInsets.zero,
@@ -402,10 +517,77 @@ class _PlanningBoardState extends State<PlanningBoard> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(title, style: Theme.of(context).textTheme.titleMedium),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(title,
+                            style: Theme.of(context).textTheme.titleMedium),
+                        if (sector != null && sector.icmsName.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 7,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: HunorColors.gold.withValues(alpha: 0.16),
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(
+                                  color:
+                                      HunorColors.gold.withValues(alpha: 0.45),
+                                ),
+                              ),
+                              child: Text(
+                                'ICMS: ${sector.icmsName}',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: HunorColors.gold,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  if (sector != null)
+                    IconButton(
+                      tooltip: 'Pálya szerkesztése',
+                      visualDensity: VisualDensity.compact,
+                      onPressed: _saving ? null : () => _editSector(sector),
+                      icon: const Icon(Icons.edit_outlined, size: 18),
+                    ),
+                ],
+              ),
+              if (sector != null && sector.description.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Text(
+                    sector.description,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: HunorColors.muted,
+                    ),
+                  ),
+                ),
               if (sectorId != null)
-                Text(
-                    '${bubbles.length} buborék · ${planningHours(double.parse(total.toStringAsPrecision(12)))} óra'),
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    total > 0
+                        ? '${bubbles.length} buborék · ${planningHours(double.parse(total.toStringAsPrecision(12)))} óra'
+                        : '${bubbles.length} buborék',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: HunorColors.muted,
+                    ),
+                  ),
+                ),
               const SizedBox(height: 8),
               if (visible.isEmpty)
                 Padding(
@@ -414,7 +596,7 @@ class _PlanningBoardState extends State<PlanningBoard> {
                       ? 'Nincs ilyen szakágú buborék.'
                       : sectorId == null
                           ? 'Húzz ide egy célt a katalógusból.'
-                          : 'Húzz ide egy buborékot.'),
+                          : 'Húzz ide egy buborékot a katalógusból vagy a tábláról.'),
                 )
               else
                 LayoutBuilder(
@@ -440,39 +622,91 @@ class _PlanningBoardState extends State<PlanningBoard> {
   }
 
   Widget _bubbleCard(ExerciseBubble bubble, List<ExerciseSector> sectors) {
+    final section =
+        InsaragSection.byKey(bubble.specs['section']?.toString());
+    final accent = section?.color;
+
     final card = Card(
       key: ValueKey(bubble.id),
       margin: EdgeInsets.zero,
       color: HunorColors.surface2,
-      child: ListTile(
-        title: Text(bubble.title),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 4),
-          child: Wrap(
-            spacing: 8,
-            runSpacing: 4,
-            crossAxisAlignment: WrapCrossAlignment.center,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: accent != null
+            ? BorderSide(color: accent.withValues(alpha: 0.55), width: 1.2)
+            : BorderSide.none,
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Container(
+        decoration: accent != null
+            ? BoxDecoration(
+                border: Border(left: BorderSide(color: accent, width: 5)),
+              )
+            : null,
+        child: ListTile(
+          title: Text(bubble.title),
+          subtitle: Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                if (section != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: section.color.withValues(alpha: 0.18),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      section.label,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: section.color,
+                      ),
+                    ),
+                  )
+                else
+                  PlanningDisciplineBadge(bubble.discipline),
+                Text(
+                  bubble.estimatedHours == null || bubble.estimatedHours == 0
+                      ? 'Nincs időbecslés'
+                      : '${planningHours(bubble.estimatedHours!)} óra',
+                ),
+              ],
+            ),
+          ),
+          onTap: _saving ? null : () => _editBubble(bubble: bubble),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              PlanningDisciplineBadge(bubble.discipline),
-              Text(bubble.estimatedHours == null
-                  ? 'Nincs időbecslés'
-                  : '${planningHours(bubble.estimatedHours!)} óra'),
+              IconButton(
+                tooltip: 'Buborék duplikálása (idő nélkül)',
+                visualDensity: VisualDensity.compact,
+                onPressed: _saving ? null : () => _duplicateBubble(bubble),
+                icon: const Icon(Icons.copy_outlined, size: 18),
+              ),
+              PopupMenuButton<String>(
+                tooltip: 'Buborék áthelyezése',
+                enabled: !_saving,
+                icon: const Icon(Icons.swap_horiz),
+                onSelected: (id) =>
+                    _moveBubble(bubble, id.isEmpty ? null : id),
+                itemBuilder: (context) => [
+                  if (bubble.sectorId != null)
+                    const PopupMenuItem(value: '', child: Text(_sharedGoals)),
+                  for (final s in sectors)
+                    if (s.id != bubble.sectorId)
+                      PopupMenuItem(value: s.id, child: Text(s.name)),
+                ],
+              ),
             ],
           ),
-        ),
-        onTap: _saving ? null : () => _editBubble(bubble: bubble),
-        trailing: PopupMenuButton<String>(
-          tooltip: 'Buborék áthelyezése',
-          enabled: !_saving,
-          icon: const Icon(Icons.swap_horiz),
-          onSelected: (id) => _moveBubble(bubble, id.isEmpty ? null : id),
-          itemBuilder: (context) => [
-            if (bubble.sectorId != null)
-              const PopupMenuItem(value: '', child: Text(_sharedGoals)),
-            for (final sector in sectors)
-              if (sector.id != bubble.sectorId)
-                PopupMenuItem(value: sector.id, child: Text(sector.name)),
-          ],
         ),
       ),
     );
@@ -480,7 +714,7 @@ class _PlanningBoardState extends State<PlanningBoard> {
     return Draggable<ExerciseBubble>(
       data: bubble,
       maxSimultaneousDrags: _saving ? 0 : 1,
-      feedback: planningDragFeedback(bubble.title),
+      feedback: planningDragFeedback(bubble.title, accentColor: accent),
       childWhenDragging: Opacity(opacity: 0.4, child: card),
       child: card,
     );

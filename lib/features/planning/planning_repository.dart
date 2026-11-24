@@ -14,7 +14,10 @@ class PlanningRepository {
         .select()
         .order('sort_order', ascending: true)
         .order('id', ascending: true);
-    return rows.map(InsaragCheckpoint.fromJson).toList();
+    return rows
+        .where((row) => row['is_active'] != false)
+        .map(InsaragCheckpoint.fromJson)
+        .toList();
   }
 
   Future<List<Exercise>> listExercises() async {
@@ -59,6 +62,7 @@ class PlanningRepository {
   Future<ExerciseBubble> addBubble({
     required String exerciseId,
     required String title,
+    String? sectorId,
     String? checkpointId,
     BubbleDiscipline discipline = BubbleDiscipline.custom,
     double? estimatedHours,
@@ -68,7 +72,7 @@ class PlanningRepository {
         .from('exercise_bubbles')
         .insert({
           'exercise_id': exerciseId,
-          'sector_id': null,
+          'sector_id': sectorId,
           'checkpoint_id': checkpointId,
           if (discipline != BubbleDiscipline.custom &&
               discipline != BubbleDiscipline.checkpoint)
@@ -146,10 +150,56 @@ class PlanningRepository {
         .single();
   }
 
-  Future<ExerciseSector> createSector(String exerciseId) async {
-    final row = await _client.rpc('create_planning_sector',
-        params: {'p_exercise_id': exerciseId}).single();
+  Future<ExerciseSector> createSector(
+    String exerciseId, {
+    String? name,
+    String icmsName = '',
+    String description = '',
+  }) async {
+    final params = <String, dynamic>{
+      'p_exercise_id': exerciseId,
+      if (name != null && name.trim().isNotEmpty) 'p_name': name.trim(),
+      if (icmsName.trim().isNotEmpty) 'p_icms_name': icmsName.trim(),
+      if (description.trim().isNotEmpty) 'p_description': description.trim(),
+    };
+    final row = await _client
+        .rpc('create_planning_sector', params: params)
+        .single();
     return ExerciseSector.fromJson(row);
+  }
+
+  Future<ExerciseSector> updateSector({
+    required String exerciseId,
+    required String sectorId,
+    required String name,
+    required String icmsName,
+    required String description,
+  }) async {
+    final row = await _client
+        .from('exercise_sectors')
+        .update({
+          'name': name.trim(),
+          'icms_name': icmsName.trim(),
+          'description': description.trim(),
+        })
+        .eq('exercise_id', exerciseId)
+        .eq('id', sectorId)
+        .select()
+        .single();
+    return ExerciseSector.fromJson(row);
+  }
+
+  Future<void> deleteSector({
+    required String exerciseId,
+    required String sectorId,
+  }) async {
+    await _client
+        .from('exercise_sectors')
+        .delete()
+        .eq('exercise_id', exerciseId)
+        .eq('id', sectorId)
+        .select('id')
+        .single();
   }
 
   Future<List<ExerciseTimelineBlock>> fetchTimeline(String exerciseId) async {

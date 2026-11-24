@@ -1,3 +1,41 @@
+import 'package:flutter/material.dart';
+
+class InsaragSection {
+  const InsaragSection({
+    required this.key,
+    required this.label,
+    required this.color,
+  });
+
+  final String key;
+  final String label;
+  final Color color;
+
+  static const List<InsaragSection> all = [
+    InsaragSection(key: '4', label: '4. USAR csapat felépítése', color: Color(0xFF6366F1)),
+    InsaragSection(key: '5', label: '5. Logisztika', color: Color(0xFFD97706)),
+    InsaragSection(key: '6', label: '6. Képzés', color: Color(0xFF0D9488)),
+    InsaragSection(key: '7', label: '7. Kommunikáció és technológia', color: Color(0xFF0284C7)),
+    InsaragSection(key: '8', label: '8. Dokumentáció', color: Color(0xFF64748B)),
+    InsaragSection(key: '9', label: '9. Riasztás és mobilizáció', color: Color(0xFFEA580C)),
+    InsaragSection(key: '10', label: '10. Műveleti bázis (BoO)', color: Color(0xFF059669)),
+    InsaragSection(key: '11', label: '11. Tervezés', color: Color(0xFF7C3AED)),
+    InsaragSection(key: '12', label: '12. USAR koordináció', color: Color(0xFF2563EB)),
+    InsaragSection(key: '13', label: '13. Felmérés, kutatás és mentés', color: Color(0xFF0891B2)),
+    InsaragSection(key: '14', label: '14. Műveletek', color: Color(0xFFE11D48)),
+    InsaragSection(key: '15', label: '15. Demobilizáció és kivonulás', color: Color(0xFF65A30D)),
+    InsaragSection(key: '16', label: '16. Gyakorlatirányítás (EXCON)', color: Color(0xFFC026D3)),
+  ];
+
+  static InsaragSection? byKey(String? key) {
+    if (key == null || key.isEmpty) return null;
+    for (final s in all) {
+      if (s.key == key) return s;
+    }
+    return null;
+  }
+}
+
 class InsaragCheckpoint {
   const InsaragCheckpoint({
     required this.id,
@@ -7,6 +45,7 @@ class InsaragCheckpoint {
     this.titleEn,
     this.category,
     this.defaultDurationHours,
+    this.clarificationHu,
   });
 
   final String id;
@@ -16,6 +55,9 @@ class InsaragCheckpoint {
   final String? titleEn;
   final String? category;
   final double? defaultDurationHours;
+  final String? clarificationHu;
+
+  InsaragSection? get section => InsaragSection.byKey(category);
 
   factory InsaragCheckpoint.fromJson(Map<String, dynamic> json) {
     return InsaragCheckpoint(
@@ -27,6 +69,7 @@ class InsaragCheckpoint {
       category: json['category'] as String?,
       defaultDurationHours:
           (json['default_duration_hours'] as num?)?.toDouble(),
+      clarificationHu: json['clarification_hu'] as String?,
     );
   }
 }
@@ -60,12 +103,16 @@ class ExerciseSector {
     required this.exerciseId,
     required this.name,
     required this.number,
+    this.icmsName = '',
+    this.description = '',
   });
 
   final String id;
   final String exerciseId;
   final String name;
   final int number;
+  final String icmsName;
+  final String description;
 
   factory ExerciseSector.fromJson(Map<String, dynamic> json) {
     return ExerciseSector(
@@ -73,6 +120,8 @@ class ExerciseSector {
       exerciseId: json['exercise_id'] as String,
       name: json['name'] as String,
       number: json['number'] as int,
+      icmsName: (json['icms_name'] as String?) ?? '',
+      description: (json['description'] as String?) ?? '',
     );
   }
 }
