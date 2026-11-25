@@ -811,6 +811,28 @@ class _PlanningVictimsBoardState extends State<PlanningVictimsBoard> {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
+                    if (bubble.specs['placed_3d'] == true)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0EA5E9).withValues(alpha: 0.18),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: const Color(0xFF38BDF8).withValues(alpha: 0.6),
+                          ),
+                        ),
+                        child: Text(
+                          '3D: ${bubble.specs['container_3d_label'] ?? 'Elhelyezve'}',
+                          style: const TextStyle(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF38BDF8),
+                          ),
+                        ),
+                      ),
                   ],
                 ),
                 if (notes.isNotEmpty)

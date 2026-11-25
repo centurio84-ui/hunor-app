@@ -386,7 +386,14 @@ class _PlanningWorkspaceState extends State<_PlanningWorkspace> {
             ),
             Expanded(
               child: _activeTab == _PlanningTab.container3d
-                  ? const Container3DPlannerTab()
+                  ? Container3DPlannerTab(
+                      key: ValueKey('container3d-${_selectedId ?? "standalone"}'),
+                      exerciseId: _selectedId,
+                      exerciseTitle: selectedExercise?.title,
+                      repository: widget.repository,
+                      onSavingChanged: (saving) =>
+                          setState(() => _savingBoard = saving),
+                    )
                   : _selectedId == null
                       ? Center(
                           child: Text(
@@ -438,8 +445,15 @@ class _PlanningWorkspaceState extends State<_PlanningWorkspace> {
                               onSavingChanged: (saving) =>
                                   setState(() => _savingBoard = saving),
                             ),
-                          _PlanningTab.container3d =>
-                            const Container3DPlannerTab(),
+                          _PlanningTab.container3d => Container3DPlannerTab(
+                              key: ValueKey(
+                                  'container3d-${_selectedId ?? "standalone"}'),
+                              exerciseId: _selectedId,
+                              exerciseTitle: selectedExercise?.title,
+                              repository: widget.repository,
+                              onSavingChanged: (saving) =>
+                                  setState(() => _savingBoard = saving),
+                            ),
                         },
             ),
           ],

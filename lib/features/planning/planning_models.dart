@@ -72,6 +72,282 @@ class InsaragCheckpoint {
       clarificationHu: json['clarification_hu'] as String?,
     );
   }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'code': code,
+        'titleHu': titleHu,
+        'titleEn': titleEn,
+        'category': category,
+        'sortOrder': sortOrder,
+      };
+}
+
+class ContainerWindow3D {
+  const ContainerWindow3D({
+    required this.id,
+    required this.side,
+    required this.offsetAlongWall,
+    required this.fillType,
+    this.insaragCheckpointId,
+  });
+
+  final String id;
+  final String side; // 'left' | 'right' | 'front' | 'back'
+  final double offsetAlongWall;
+  final String fillType; // 'open_window' | 'concrete_panel'
+  final String? insaragCheckpointId;
+
+  factory ContainerWindow3D.fromJson(Map<String, dynamic> json) {
+    return ContainerWindow3D(
+      id: (json['id'] ?? '').toString(),
+      side: (json['side'] ?? 'right').toString(),
+      offsetAlongWall: (json['offsetAlongWall'] as num?)?.toDouble() ?? 0.0,
+      fillType: (json['fillType'] ?? 'open_window').toString(),
+      insaragCheckpointId: json['insaragCheckpointId'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'side': side,
+        'offsetAlongWall': offsetAlongWall,
+        'fillType': fillType,
+        'insaragCheckpointId': insaragCheckpointId,
+      };
+}
+
+class Container3D {
+  const Container3D({
+    required this.id,
+    required this.label,
+    required this.position,
+    required this.rotationY,
+    this.color = '#8b261d',
+    this.windows = const [],
+  });
+
+  final String id;
+  final String label;
+  final List<double> position;
+  final double rotationY;
+  final String color;
+  final List<ContainerWindow3D> windows;
+
+  factory Container3D.fromJson(Map<String, dynamic> json) {
+    final rawPos = json['position'];
+    final pos = rawPos is List && rawPos.length >= 3
+        ? [
+            (rawPos[0] as num?)?.toDouble() ?? 0.0,
+            (rawPos[1] as num?)?.toDouble() ?? 0.0,
+            (rawPos[2] as num?)?.toDouble() ?? 0.0,
+          ]
+        : <double>[0.0, 0.0, 0.0];
+    final rawWin = json['windows'];
+    return Container3D(
+      id: (json['id'] ?? '').toString(),
+      label: (json['label'] ?? 'WS-1 Konténer').toString(),
+      position: pos,
+      rotationY: (json['rotationY'] as num?)?.toDouble() ?? 0.0,
+      color: (json['color'] ?? '#8b261d').toString(),
+      windows: rawWin is List
+          ? rawWin
+              .whereType<Map>()
+              .map((w) =>
+                  ContainerWindow3D.fromJson(Map<String, dynamic>.from(w)))
+              .toList()
+          : const [],
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'label': label,
+        'position': position,
+        'rotationY': rotationY,
+        'color': color,
+        'windows': [for (final w in windows) w.toJson()],
+      };
+}
+
+class Obstacle3D {
+  const Obstacle3D({
+    required this.id,
+    required this.containerId,
+    required this.type,
+    required this.localPosition,
+    required this.rotationY,
+    this.dimensions,
+    this.insaragCheckpointId,
+    this.linkedTimelineEventId,
+    this.linkedBubbleId,
+    this.slots,
+    this.extra,
+  });
+
+  final String id;
+  final String containerId;
+  final String type;
+  final List<double> localPosition;
+  final double rotationY;
+  final List<double>? dimensions;
+  final String? insaragCheckpointId;
+  final String? linkedTimelineEventId;
+  final String? linkedBubbleId;
+  final List<String>? slots;
+  final Map<String, dynamic>? extra;
+
+  factory Obstacle3D.fromJson(Map<String, dynamic> json) {
+    final rawPos = json['localPosition'];
+    final pos = rawPos is List && rawPos.length >= 3
+        ? [
+            (rawPos[0] as num?)?.toDouble() ?? 0.0,
+            (rawPos[1] as num?)?.toDouble() ?? 0.0,
+            (rawPos[2] as num?)?.toDouble() ?? 0.0,
+          ]
+        : <double>[0.0, 0.0, 0.0];
+    final rawDim = json['dimensions'];
+    final dims = rawDim is List && rawDim.length >= 3
+        ? [
+            (rawDim[0] as num?)?.toDouble() ?? 1.0,
+            (rawDim[1] as num?)?.toDouble() ?? 1.0,
+            (rawDim[2] as num?)?.toDouble() ?? 1.0,
+          ]
+        : null;
+    final rawSlots = json['slots'];
+    return Obstacle3D(
+      id: (json['id'] ?? '').toString(),
+      containerId: (json['containerId'] ?? '').toString(),
+      type: (json['type'] ?? 'lifting_concrete').toString(),
+      localPosition: pos,
+      rotationY: (json['rotationY'] as num?)?.toDouble() ?? 0.0,
+      dimensions: dims,
+      insaragCheckpointId: json['insaragCheckpointId'] as String?,
+      linkedTimelineEventId: json['linkedTimelineEventId'] as String?,
+      linkedBubbleId: json['linkedBubbleId'] as String?,
+      slots: rawSlots is List
+          ? [for (final s in rawSlots) s.toString()]
+          : null,
+      extra: json['extra'] is Map
+          ? Map<String, dynamic>.from(json['extra'] as Map)
+          : null,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'containerId': containerId,
+        'type': type,
+        'localPosition': localPosition,
+        'rotationY': rotationY,
+        if (dimensions != null) 'dimensions': dimensions,
+        'insaragCheckpointId': insaragCheckpointId,
+        if (linkedTimelineEventId != null)
+          'linkedTimelineEventId': linkedTimelineEventId,
+        if (linkedBubbleId != null) 'linkedBubbleId': linkedBubbleId,
+        if (slots != null) 'slots': slots,
+        if (extra != null) 'extra': extra,
+      };
+}
+
+class CasualtyPlacement3D {
+  const CasualtyPlacement3D({
+    required this.casualtyId,
+    required this.placed,
+    this.containerId,
+    this.localPosition,
+    this.rotationY = 0.0,
+    this.pose = 'lying',
+  });
+
+  final String casualtyId;
+  final bool placed;
+  final String? containerId;
+  final List<double>? localPosition;
+  final double rotationY;
+  final String pose;
+
+  factory CasualtyPlacement3D.fromJson(Map<String, dynamic> json) {
+    final rawPos = json['localPosition'];
+    final pos = rawPos is List && rawPos.length >= 3
+        ? [
+            (rawPos[0] as num?)?.toDouble() ?? 0.0,
+            (rawPos[1] as num?)?.toDouble() ?? 0.0,
+            (rawPos[2] as num?)?.toDouble() ?? 0.0,
+          ]
+        : null;
+    return CasualtyPlacement3D(
+      casualtyId: (json['casualtyId'] ?? '').toString(),
+      placed: json['placed'] == true,
+      containerId: json['containerId'] as String?,
+      localPosition: pos,
+      rotationY: (json['rotationY'] as num?)?.toDouble() ?? 0.0,
+      pose: (json['pose'] ?? 'lying').toString(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'casualtyId': casualtyId,
+        'placed': placed,
+        if (containerId != null) 'containerId': containerId,
+        if (localPosition != null) 'localPosition': localPosition,
+        'rotationY': rotationY,
+        'pose': pose,
+      };
+}
+
+class ExerciseScene3D {
+  const ExerciseScene3D({
+    this.containers = const [],
+    this.obstacles = const [],
+    this.casualtyPlacements = const [],
+    this.labelsVisible = true,
+  });
+
+  final List<Container3D> containers;
+  final List<Obstacle3D> obstacles;
+  final List<CasualtyPlacement3D> casualtyPlacements;
+  final bool labelsVisible;
+
+  bool get isEmpty =>
+      containers.isEmpty && obstacles.isEmpty && casualtyPlacements.isEmpty;
+
+  factory ExerciseScene3D.fromJson(Map<String, dynamic>? json) {
+    if (json == null || json.isEmpty) return const ExerciseScene3D();
+    final rawC = json['containers'];
+    final rawO = json['obstacles'];
+    final rawP = json['casualtyPlacements'];
+    return ExerciseScene3D(
+      containers: rawC is List
+          ? rawC
+              .whereType<Map>()
+              .map((c) => Container3D.fromJson(Map<String, dynamic>.from(c)))
+              .toList()
+          : const [],
+      obstacles: rawO is List
+          ? rawO
+              .whereType<Map>()
+              .map((o) => Obstacle3D.fromJson(Map<String, dynamic>.from(o)))
+              .toList()
+          : const [],
+      casualtyPlacements: rawP is List
+          ? rawP
+              .whereType<Map>()
+              .map((p) =>
+                  CasualtyPlacement3D.fromJson(Map<String, dynamic>.from(p)))
+              .toList()
+          : const [],
+      labelsVisible: json['labelsVisible'] != false,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'version': 3,
+        'labelsVisible': labelsVisible,
+        'containers': [for (final c in containers) c.toJson()],
+        'obstacles': [for (final o in obstacles) o.toJson()],
+        'casualtyPlacements': [for (final p in casualtyPlacements) p.toJson()],
+      };
 }
 
 class Exercise {
@@ -80,19 +356,25 @@ class Exercise {
     required this.organizationId,
     required this.title,
     required this.createdAt,
+    this.scene3d = const ExerciseScene3D(),
   });
 
   final String id;
   final String organizationId;
   final String title;
   final DateTime createdAt;
+  final ExerciseScene3D scene3d;
 
   factory Exercise.fromJson(Map<String, dynamic> json) {
+    final rawScene = json['scene_3d'];
     return Exercise(
       id: json['id'] as String,
       organizationId: json['organization_id'] as String,
       title: json['title'] as String,
       createdAt: DateTime.parse(json['created_at'] as String),
+      scene3d: rawScene is Map
+          ? ExerciseScene3D.fromJson(Map<String, dynamic>.from(rawScene))
+          : const ExerciseScene3D(),
     );
   }
 }

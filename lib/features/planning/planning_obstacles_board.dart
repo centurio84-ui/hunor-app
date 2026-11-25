@@ -1038,6 +1038,28 @@ class _PlanningObstaclesBoardState extends State<PlanningObstaclesBoard> {
                           ),
                         ),
                       ),
+                    if (bubble.specs['from_3d_planner'] == true)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0EA5E9).withValues(alpha: 0.18),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: const Color(0xFF38BDF8).withValues(alpha: 0.6),
+                          ),
+                        ),
+                        child: const Text(
+                          '3D Terv',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF38BDF8),
+                          ),
+                        ),
+                      ),
                     if (spec.isNotEmpty)
                       Text(
                         spec,

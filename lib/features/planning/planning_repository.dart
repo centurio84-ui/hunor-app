@@ -8,16 +8,106 @@ class PlanningRepository {
   final SupabaseClient _client;
   final String organizationId;
 
-  Future<List<InsaragCheckpoint>> fetchCheckpointCatalog() async {
+  Future<List<InsaragCheckpoint>> fetchCheckpointCatalog({
+    bool includeInactive = false,
+  }) async {
     final rows = await _client
         .from('insarag_checkpoint_catalog')
         .select()
         .order('sort_order', ascending: true)
         .order('id', ascending: true);
     return rows
-        .where((row) => row['is_active'] != false)
+        .where((row) => includeInactive || row['is_active'] != false)
         .map(InsaragCheckpoint.fromJson)
         .toList();
+  }
+
+  /// Fetches the 21 HUNOR-* summary INSARAG checkpoints (and active section 13/14 operational checkpoints).
+  Future<List<InsaragCheckpoint>> fetchAllCheckpointsFor3D() async {
+    return fetchCheckpointCatalog(includeInactive: true);
+  }
+
+  Future<ExerciseScene3D> fetchExerciseScene3D(String exerciseId) async {
+    try {
+      final row = await _client
+          .from('exercises')
+          .select('scene_3d')
+          .eq('id', exerciseId)
+          .single();
+      final raw = row['scene_3d'];
+      if (raw is Map && raw.isNotEmpty) {
+        return ExerciseScene3D.fromJson(Map<String, dynamic>.from(raw));
+      }
+    } catch (_) {
+      // Fallback: ha a scene_3d oszlop még nincs migrációval létrehozva, keressük a rejtett scene_3d_state buborékot
+    }
+
+    try {
+      final bubbles = await _client
+          .from('exercise_bubbles')
+          .select()
+          .eq('exercise_id', exerciseId)
+          .order('created_at', ascending: false);
+      for (final b in bubbles) {
+        final specs = b['specs'];
+        if (specs is Map && specs['is_scene_3d_state'] == true) {
+          final payload = specs['scene_3d'];
+          if (payload is Map) {
+            return ExerciseScene3D.fromJson(Map<String, dynamic>.from(payload));
+          }
+        }
+      }
+    } catch (_) {}
+    return const ExerciseScene3D();
+  }
+
+  Future<void> saveExerciseScene3D({
+    required String exerciseId,
+    required ExerciseScene3D scene,
+  }) async {
+    final jsonMap = scene.toJson();
+    try {
+      await _client
+          .from('exercises')
+          .update({'scene_3d': jsonMap})
+          .eq('id', exerciseId)
+          .select('id')
+          .single();
+      return;
+    } catch (_) {
+      // Ha az exercises.scene_3d oszlop még nem írható / nem létezik az adatbázisban,
+      // mentsük el biztonságos tartalékként az exercise_bubbles specs JSONB mezőbe!
+    }
+
+    final existing = await _client
+        .from('exercise_bubbles')
+        .select('id, specs')
+        .eq('exercise_id', exerciseId);
+    String? stateBubbleId;
+    for (final row in existing) {
+      final specs = row['specs'];
+      if (specs is Map && specs['is_scene_3d_state'] == true) {
+        stateBubbleId = row['id']?.toString();
+        break;
+      }
+    }
+    final stateSpecs = <String, dynamic>{
+      'is_scene_3d_state': true,
+      'scene_3d': jsonMap,
+    };
+    if (stateBubbleId != null) {
+      await _client
+          .from('exercise_bubbles')
+          .update({'specs': stateSpecs})
+          .eq('exercise_id', exerciseId)
+          .eq('id', stateBubbleId);
+    } else {
+      await _client.from('exercise_bubbles').insert({
+        'exercise_id': exerciseId,
+        'title': '[3D Konténer Pályaterv Állapot]',
+        'specs': stateSpecs,
+      });
+    }
   }
 
   Future<List<Exercise>> listExercises() async {
@@ -97,7 +187,13 @@ class PlanningRepository {
     ]);
     return (
       sectors: results[0].map(ExerciseSector.fromJson).toList(),
-      bubbles: results[1].map(ExerciseBubble.fromJson).toList(),
+      bubbles: results[1]
+          .where((row) {
+            final specs = row['specs'];
+            return !(specs is Map && specs['is_scene_3d_state'] == true);
+          })
+          .map(ExerciseBubble.fromJson)
+          .toList(),
     );
   }
 
@@ -146,6 +242,8 @@ class PlanningRepository {
   Future<ExerciseBubble> updateBubbleDetails({
     required ExerciseBubble bubble,
     BubbleDiscipline? discipline,
+    String? checkpointId,
+    bool updateCheckpointId = false,
     required double? estimatedHours,
     required String title,
     required Map<String, dynamic> specs,
@@ -153,6 +251,7 @@ class PlanningRepository {
       _updateBubble(bubble.exerciseId, bubble.id, {
         if (discipline != null && discipline != bubble.discipline)
           'bubble_type': discipline.value,
+        if (updateCheckpointId) 'checkpoint_id': checkpointId,
         'estimated_hours': estimatedHours,
         'title': title.trim(),
         'specs': specs,

@@ -1,7 +1,20 @@
 import 'package:flutter/material.dart';
 
+import 'planning_repository.dart';
+
 class Container3DPlannerTabImpl extends StatelessWidget {
-  const Container3DPlannerTabImpl({super.key});
+  const Container3DPlannerTabImpl({
+    super.key,
+    this.exerciseId,
+    this.exerciseTitle,
+    this.repository,
+    this.onSavingChanged,
+  });
+
+  final String? exerciseId;
+  final String? exerciseTitle;
+  final PlanningRepository? repository;
+  final ValueChanged<bool>? onSavingChanged;
 
   @override
   Widget build(BuildContext context) {
