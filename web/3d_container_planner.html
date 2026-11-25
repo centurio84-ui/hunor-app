@@ -111,6 +111,51 @@
                 <button onclick="resetCamera()" class="p-2 rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white transition" title="Kamera alaphelyzetbe">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                 </button>
+
+                <div class="w-px h-6 bg-slate-700/70 mx-0.5"></div>
+
+                <button onclick="openProjectModal()" class="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-amber-500 hover:bg-amber-400 active:scale-95 text-slate-950 transition whitespace-nowrap shadow-md shadow-amber-900/30" title="Projekt mentése, betöltése vagy exportálása">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+                    Projektek / Mentés
+                </button>
+            </div>
+        </div>
+
+        <!-- PROJEKT MENTÉS / BETÖLTÉS MODAL -->
+        <div id="project-modal" class="hidden absolute inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4">
+            <div class="glass-panel rounded-2xl w-full max-w-md p-5 flex flex-col gap-4 max-h-[88%] overflow-hidden border border-slate-700/80">
+                <div class="flex items-center justify-between border-b border-slate-700/70 pb-3">
+                    <div>
+                        <h2 class="text-sm font-bold text-white">3D Konténer Projektek</h2>
+                        <p id="active-project-label" class="text-[11px] text-emerald-400 font-medium">✓ Automatikus mentés aktív</p>
+                    </div>
+                    <button onclick="closeProjectModal()" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition">✕</button>
+                </div>
+
+                <!-- Mentés névvel -->
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1.5">Jelenlegi elrendezés mentése névvel</label>
+                    <div class="flex gap-2">
+                        <input id="project-name-input" type="text" placeholder="pl. 1-es konténer alap / 8 konténeres pálya" class="flex-1 bg-slate-900/90 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-400" style="user-select:text;-webkit-user-select:text">
+                        <button onclick="saveNamedProject()" class="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white transition whitespace-nowrap">Mentés</button>
+                    </div>
+                </div>
+
+                <!-- Mentett projektek listája -->
+                <div class="flex-1 overflow-y-auto min-h-[120px]">
+                    <label class="block text-xs font-medium text-slate-300 mb-1.5">Mentett projektek ezen az eszközön</label>
+                    <div id="saved-projects-list" class="flex flex-col gap-2"></div>
+                </div>
+
+                <!-- Fájl export / import / új üres -->
+                <div class="border-t border-slate-700/70 pt-3 flex flex-wrap items-center justify-between gap-2">
+                    <div class="flex gap-2">
+                        <button onclick="exportProjectJson()" class="px-3 py-2 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-sky-300 border border-slate-700 transition">📥 Fájlba (.json)</button>
+                        <button onclick="document.getElementById('import-json-input').click()" class="px-3 py-2 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 transition">📤 Betöltés (.json)</button>
+                        <input id="import-json-input" type="file" accept=".json,application/json" class="hidden" onchange="importProjectJson(event)">
+                    </div>
+                    <button onclick="resetToNewProject()" class="px-3 py-2 rounded-xl text-xs font-semibold bg-rose-950/70 hover:bg-rose-900 text-rose-300 border border-rose-800/60 transition">🆕 Új üres</button>
+                </div>
             </div>
         </div>
 
@@ -388,7 +433,7 @@
             });
         }
 
-        window.addContainerFrame = function(pos = null, rot = null, customColor = null) {
+        window.addContainerFrame = function(pos = null, rot = null, customColor = null, customName = null, silent = false) {
             const id = nextFrameId++;
             const color = customColor || DEFAULT_COLORS[(id - 1) % DEFAULT_COLORS.length];
             const { group, material } = create40ftFrameGroup(id, color);
@@ -405,12 +450,15 @@
             if (rot) group.rotation.copy(rot);
             scene.add(group);
 
-            const frameObj = { id, name: `40' Váz #${id}`, group, material, color };
+            const frameObj = { id, name: customName || `40' Váz #${id}`, group, material, color, items: [] };
             containerFrames.push(frameObj);
 
             selectFrame(frameObj);
             updateFrameSelectorUI();
-            if (id > 1) showToast(`${frameObj.name} hozzáadva`);
+            if (!silent) {
+                if (id > 1) showToast(`${frameObj.name} hozzáadva`);
+                scheduleAutosave();
+            }
             return frameObj;
         };
 
@@ -451,6 +499,7 @@
                 const nextSelect = containerFrames[Math.max(0, idx - 1)] || null;
                 selectFrame(nextSelect);
                 updateFrameSelectorUI();
+                scheduleAutosave();
                 showToast(`${removed.name} törölve`);
             }
         };
@@ -521,30 +570,292 @@
             if (!isNaN(rx)) selectedFrame.group.rotation.x = THREE.MathUtils.degToRad(rx);
             if (!isNaN(ry)) selectedFrame.group.rotation.y = THREE.MathUtils.degToRad(ry);
             if (!isNaN(rz)) selectedFrame.group.rotation.z = THREE.MathUtils.degToRad(rz);
+            scheduleAutosave();
         };
 
         window.snapToGround = function() {
             if (!selectedFrame) return;
             selectedFrame.group.position.y = 0;
             syncInputsFromSelected();
+            scheduleAutosave();
         };
 
         window.rotateSelectedY = function(deg) {
             if (!selectedFrame) return;
             selectedFrame.group.rotation.y += THREE.MathUtils.degToRad(deg);
             syncInputsFromSelected();
+            scheduleAutosave();
         };
 
         window.resetSelectedRotation = function() {
             if (!selectedFrame) return;
             selectedFrame.group.rotation.set(0, 0, 0);
             syncInputsFromSelected();
+            scheduleAutosave();
         };
 
         window.setSelectedColor = function(hexColor) {
             if (!selectedFrame) return;
             selectedFrame.color = hexColor;
             selectedFrame.material.color.set(hexColor);
+            scheduleAutosave();
+        };
+
+        // --- MENTÉS / BETÖLTÉS / AUTOSAVE RENDSZER ---
+        const AUTOSAVE_KEY = 'hunor_3d_container_autosave_v1';
+        const PROJECTS_KEY = 'hunor_3d_container_projects_v1';
+        let currentProjectName = '';
+        let autosaveTimer = null;
+
+        function serializeScene(name = '') {
+            return {
+                version: 1,
+                name: name || currentProjectName || 'Névtelen projekt',
+                savedAt: new Date().toISOString(),
+                snapEnabled: snapEnabled,
+                frames: containerFrames.map(f => ({
+                    id: f.id,
+                    name: f.name,
+                    color: f.color,
+                    pos: [
+                        Number(f.group.position.x.toFixed(3)),
+                        Number(f.group.position.y.toFixed(3)),
+                        Number(f.group.position.z.toFixed(3))
+                    ],
+                    rotDeg: [
+                        Math.round(THREE.MathUtils.radToDeg(f.group.rotation.x) * 10) / 10,
+                        Math.round(THREE.MathUtils.radToDeg(f.group.rotation.y) * 10) / 10,
+                        Math.round(THREE.MathUtils.radToDeg(f.group.rotation.z) * 10) / 10
+                    ],
+                    items: Array.isArray(f.items) ? f.items : []
+                }))
+            };
+        }
+
+        function scheduleAutosave() {
+            clearTimeout(autosaveTimer);
+            autosaveTimer = setTimeout(() => {
+                try {
+                    localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(serializeScene(currentProjectName)));
+                } catch (e) {
+                    console.warn('Autosave hiba:', e);
+                }
+            }, 250);
+        }
+
+        function clearAllFrames() {
+            if (transformControls) transformControls.detach();
+            containerFrames.forEach(f => {
+                scene.remove(f.group);
+                disposeGroupGeometries(f.group);
+                f.material.dispose();
+            });
+            containerFrames = [];
+            selectedFrame = null;
+            nextFrameId = 1;
+        }
+
+        function loadSceneData(data, toastMsg = null) {
+            if (!data || !Array.isArray(data.frames) || data.frames.length === 0) return false;
+            clearAllFrames();
+            currentProjectName = data.name || '';
+            const label = document.getElementById('active-project-label');
+            if (label) {
+                label.textContent = currentProjectName
+                    ? `Aktív: ${currentProjectName} (automatikus mentés)`
+                    : '✓ Automatikus mentés aktív';
+            }
+            data.frames.forEach(fd => {
+                const p = Array.isArray(fd.pos) ? fd.pos : [0, 0, 0];
+                const r = Array.isArray(fd.rotDeg) ? fd.rotDeg : [0, 0, 0];
+                const euler = new THREE.Euler(
+                    THREE.MathUtils.degToRad(r[0] || 0),
+                    THREE.MathUtils.degToRad(r[1] || 0),
+                    THREE.MathUtils.degToRad(r[2] || 0)
+                );
+                const created = window.addContainerFrame(
+                    new THREE.Vector3(p[0] || 0, p[1] || 0, p[2] || 0),
+                    euler,
+                    fd.color || '#8b261d',
+                    fd.name || null,
+                    true
+                );
+                if (Array.isArray(fd.items)) created.items = fd.items;
+            });
+            if (typeof data.snapEnabled === 'boolean' && data.snapEnabled !== snapEnabled) {
+                window.toggleSnap();
+            }
+            scheduleAutosave();
+            if (toastMsg) showToast(toastMsg);
+            return true;
+        }
+
+        function readSavedProjects() {
+            try {
+                const raw = localStorage.getItem(PROJECTS_KEY);
+                const parsed = raw ? JSON.parse(raw) : [];
+                return Array.isArray(parsed) ? parsed : [];
+            } catch (_) {
+                return [];
+            }
+        }
+
+        function writeSavedProjects(list) {
+            try {
+                localStorage.setItem(PROJECTS_KEY, JSON.stringify(list));
+            } catch (e) {
+                showToast('Mentési hiba (tárhely megtelt)!');
+            }
+        }
+
+        function formatHuDate(iso) {
+            try {
+                const d = new Date(iso);
+                const pad = n => String(n).padStart(2, '0');
+                return `${d.getFullYear()}.${pad(d.getMonth() + 1)}.${pad(d.getDate())}. ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+            } catch (_) {
+                return '';
+            }
+        }
+
+        function renderSavedProjectsList() {
+            const listEl = document.getElementById('saved-projects-list');
+            if (!listEl) return;
+            const list = readSavedProjects();
+            if (list.length === 0) {
+                listEl.innerHTML = '<div class="text-xs text-slate-400 py-4 text-center bg-slate-900/50 rounded-xl border border-slate-800">Még nincs névvel mentett projekt.</div>';
+                return;
+            }
+            listEl.innerHTML = '';
+            list.forEach((proj, idx) => {
+                const row = document.createElement('div');
+                row.className = 'flex items-center justify-between gap-2 bg-slate-900/80 border border-slate-700/80 rounded-xl px-3 py-2';
+                const info = document.createElement('div');
+                info.className = 'min-w-0 flex-1';
+                const title = document.createElement('div');
+                title.className = 'text-xs font-bold text-white truncate';
+                title.textContent = proj.name || 'Névtelen projekt';
+                const sub = document.createElement('div');
+                sub.className = 'text-[10px] text-slate-400';
+                sub.textContent = `${(proj.frames || []).length} db konténer • ${formatHuDate(proj.savedAt)}`;
+                info.appendChild(title);
+                info.appendChild(sub);
+
+                const actions = document.createElement('div');
+                actions.className = 'flex items-center gap-1.5';
+
+                const loadBtn = document.createElement('button');
+                loadBtn.className = 'px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-sky-600 hover:bg-sky-500 text-white transition';
+                loadBtn.textContent = 'Betöltés';
+                loadBtn.onclick = () => {
+                    loadSceneData(proj, `„${proj.name}” betöltve!`);
+                    closeProjectModal();
+                };
+
+                const delBtn = document.createElement('button');
+                delBtn.className = 'px-2 py-1 rounded-lg text-[11px] font-semibold bg-slate-800 hover:bg-rose-900 text-rose-400 transition';
+                delBtn.textContent = '🗑️';
+                delBtn.title = 'Projekt törlése';
+                delBtn.onclick = () => {
+                    const updated = readSavedProjects().filter((_, i) => i !== idx);
+                    writeSavedProjects(updated);
+                    renderSavedProjectsList();
+                    showToast('Projekt törölve');
+                };
+
+                actions.appendChild(loadBtn);
+                actions.appendChild(delBtn);
+                row.appendChild(info);
+                row.appendChild(actions);
+                listEl.appendChild(row);
+            });
+        }
+
+        window.openProjectModal = function() {
+            const modal = document.getElementById('project-modal');
+            const input = document.getElementById('project-name-input');
+            if (input && currentProjectName) input.value = currentProjectName;
+            renderSavedProjectsList();
+            if (modal) modal.classList.remove('hidden');
+        };
+
+        window.closeProjectModal = function() {
+            const modal = document.getElementById('project-modal');
+            if (modal) modal.classList.add('hidden');
+        };
+
+        window.saveNamedProject = function() {
+            const input = document.getElementById('project-name-input');
+            const name = (input ? input.value : '').trim();
+            if (!name) {
+                showToast('Adj meg egy projektnevet a mentéshez!');
+                if (input) input.focus();
+                return;
+            }
+            currentProjectName = name;
+            const snapshot = serializeScene(name);
+            const list = readSavedProjects();
+            const existingIdx = list.findIndex(p => (p.name || '').toLowerCase() === name.toLowerCase());
+            if (existingIdx >= 0) {
+                list[existingIdx] = snapshot;
+            } else {
+                list.unshift(snapshot);
+            }
+            writeSavedProjects(list);
+            scheduleAutosave();
+            const label = document.getElementById('active-project-label');
+            if (label) label.textContent = `Aktív: ${currentProjectName} (mentve)`;
+            renderSavedProjectsList();
+            showToast(`„${name}” elmentve!`);
+        };
+
+        window.exportProjectJson = function() {
+            const input = document.getElementById('project-name-input');
+            const name = ((input && input.value.trim()) || currentProjectName || 'hunor-kontener-terv').trim();
+            const data = serializeScene(name);
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${name.replace(/[^a-zA-Z0-9_-]+/g, '_')}.json`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+            showToast('Projekt letöltve (.json)');
+        };
+
+        window.importProjectJson = function(event) {
+            const file = event.target.files && event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                try {
+                    const parsed = JSON.parse(String(ev.target.result || '{}'));
+                    if (loadSceneData(parsed, `„${parsed.name || file.name}” sikeresen betöltve!`)) {
+                        closeProjectModal();
+                    } else {
+                        showToast('Érvénytelen konténer-projekt fájl!');
+                    }
+                } catch (_) {
+                    showToast('Nem sikerült beolvasni a JSON fájlt!');
+                }
+                event.target.value = '';
+            };
+            reader.readAsText(file);
+        };
+
+        window.resetToNewProject = function() {
+            clearAllFrames();
+            currentProjectName = '';
+            window.addContainerFrame(new THREE.Vector3(0, 0, 0), new THREE.Euler(0, 0, 0), '#8b261d', null, true);
+            scheduleAutosave();
+            const input = document.getElementById('project-name-input');
+            if (input) input.value = '';
+            const label = document.getElementById('active-project-label');
+            if (label) label.textContent = '✓ Automatikus mentés aktív';
+            closeProjectModal();
+            showToast('Új üres projekt indítva');
         };
 
         window.setGizmoMode = function(mode) {
@@ -771,7 +1082,10 @@
                     isDraggingGizmo = event.value;
                     orbitControls.enabled = !event.value;
                 });
-                transformControls.addEventListener('objectChange', () => { syncInputsFromSelected(); });
+                transformControls.addEventListener('objectChange', () => {
+                    syncInputsFromSelected();
+                    scheduleAutosave();
+                });
                 scene.add(transformControls);
             } catch (err) {
                 console.error('TransformControls betöltési hiba:', err);
@@ -786,7 +1100,17 @@
             setupRaycasting();
             setupKeyboardShortcuts();
 
-            addContainerFrame(new THREE.Vector3(0, 0, 0), new THREE.Euler(0, 0, 0), '#8b261d');
+            let restored = false;
+            try {
+                const rawAuto = localStorage.getItem(AUTOSAVE_KEY);
+                if (rawAuto) {
+                    const parsedAuto = JSON.parse(rawAuto);
+                    restored = loadSceneData(parsedAuto);
+                }
+            } catch (_) {}
+            if (!restored) {
+                addContainerFrame(new THREE.Vector3(0, 0, 0), new THREE.Euler(0, 0, 0), '#8b261d', null, true);
+            }
 
             resizeObserver = new ResizeObserver(() => updateSize(container));
             resizeObserver.observe(container);
