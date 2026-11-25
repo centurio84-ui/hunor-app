@@ -65,19 +65,39 @@
             <div id="toast-text" class="glass-panel px-4 py-2 rounded-xl text-xs sm:text-sm font-medium text-sky-200 border-sky-500/40"></div>
         </div>
 
-        <div class="absolute top-4 left-4 z-10 pointer-events-none max-w-xs hidden md:block">
-            <div class="glass-panel rounded-2xl p-4 pointer-events-auto">
+        <div class="absolute top-4 left-4 z-10 pointer-events-none max-w-xs flex flex-col gap-3">
+            <div class="glass-panel rounded-2xl p-3.5 pointer-events-auto hidden md:block">
                 <div class="flex items-center gap-2.5 mb-1">
                     <div class="w-2.5 h-2.5 rounded-full bg-sky-400 animate-pulse"></div>
-                    <h1 class="text-base font-bold tracking-tight text-white">40' ISO Konténerváz</h1>
+                    <h1 class="text-sm font-bold tracking-tight text-white">40' ISO Konténerváz</h1>
                 </div>
-                <p class="text-xs text-slate-300 font-medium">
-                    Csak acélváz • 12.19m × 2.44m × 2.59m
+                <p class="text-[11px] text-slate-300 font-medium">
+                    12.19m × 2.44m × 2.59m • 1:1 méretarány
                 </p>
-                <div class="mt-2.5 pt-2.5 border-t border-slate-700/60 flex flex-col gap-1 text-[11px] text-slate-400">
-                    <span>• Kattints egy vázra a kijelöléshez</span>
-                    <span>• Húzd a 3D nyilakat / gyűrűket a mozgatáshoz</span>
-                    <span>• Gombok: <kbd class="px-1 py-0.5 bg-slate-800 rounded text-slate-300">W</kbd> Mozgatás, <kbd class="px-1 py-0.5 bg-slate-800 rounded text-slate-300">E</kbd> Forgatás</span>
+                <div class="mt-2 pt-2 border-t border-slate-700/60 flex flex-col gap-0.5 text-[10.5px] text-slate-400">
+                    <span>• Kattints vázra vagy belső elemre a kijelöléshez</span>
+                    <span>• <kbd class="px-1 py-0.5 bg-slate-800 rounded text-slate-300">W</kbd> Mozgatás, <kbd class="px-1 py-0.5 bg-slate-800 rounded text-slate-300">E</kbd> Forgatás, <kbd class="px-1 py-0.5 bg-slate-800 rounded text-slate-300">Del</kbd> Törlés</span>
+                </div>
+            </div>
+
+            <!-- BELSŐ ELEMEK HOZZÁADÁSA PANEL -->
+            <div class="glass-panel rounded-2xl p-3.5 pointer-events-auto">
+                <div class="text-[11px] font-bold uppercase tracking-wider text-amber-400 mb-2">
+                    + Belső elemek berakása
+                </div>
+                <div class="flex flex-col gap-1.5">
+                    <button onclick="addInteriorItem('concrete_block')" class="flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-xs font-semibold bg-slate-800/90 hover:bg-slate-700 text-slate-100 border border-slate-600/70 transition text-left">
+                        <span>🧱 Betontömb</span>
+                        <span class="text-[10px] text-slate-400 font-mono">50×50×200cm</span>
+                    </button>
+                    <button onclick="addInteriorItem('steel_plate')" class="flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-xs font-semibold bg-slate-800/90 hover:bg-slate-700 text-slate-100 border border-slate-600/70 transition text-left">
+                        <span>🔩 Vaslap</span>
+                        <span class="text-[10px] text-slate-400 font-mono">50×50×2cm</span>
+                    </button>
+                    <button onclick="addInteriorItem('frame_2x2')" class="flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-xs font-semibold bg-slate-800/90 hover:bg-slate-700 text-amber-200 border border-amber-500/40 transition text-left">
+                        <span>🪟 4-részes keret</span>
+                        <span class="text-[10px] text-amber-300/80 font-mono">2×2m • 20cm</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -159,46 +179,78 @@
             </div>
         </div>
 
-        <div class="absolute bottom-4 right-4 left-4 sm:left-auto z-20 sm:w-80">
-            <div class="glass-panel rounded-2xl p-4 flex flex-col gap-3 max-h-[65%] overflow-y-auto">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Kijelölt váz</span>
-                        <span id="frame-count-badge" class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-sky-400 border border-slate-700">1 db</span>
+        <div class="absolute bottom-4 right-4 left-4 sm:left-auto z-20 sm:w-84" style="width: 21rem;">
+            <div class="glass-panel rounded-2xl p-4 flex flex-col gap-3 max-h-[78vh] overflow-y-auto">
+                <div class="flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-1.5 flex-1 bg-slate-900/80 p-1 rounded-xl border border-slate-700/70">
+                        <button id="tab-btn-frame" onclick="switchInspectorTab('frame')" class="flex-1 py-1 px-2 rounded-lg text-[11px] font-bold bg-sky-600 text-white transition">
+                            Konténer (<span id="frame-count-badge">1</span>)
+                        </button>
+                        <button id="tab-btn-item" onclick="switchInspectorTab('item')" class="flex-1 py-1 px-2 rounded-lg text-[11px] font-bold text-slate-300 hover:bg-slate-800 transition">
+                            Elemek (<span id="item-count-badge">0</span>)
+                        </button>
                     </div>
                     <button id="toggle-panel-btn" class="sm:hidden text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded-lg transition">
                         Elrejtés
                     </button>
                 </div>
 
-                <div id="panel-content" class="flex flex-col gap-3.5">
-                    <div class="flex items-center gap-2">
+                <div id="panel-content" class="flex flex-col gap-3">
+                    <!-- KONTÉNERVÁZ VÁLASZTÓ SOR -->
+                    <div id="frame-controls-header" class="flex items-center gap-2">
                         <select id="frame-selector" onchange="selectFrameById(Number(this.value))" class="flex-1 bg-slate-900/90 border border-slate-700 rounded-xl px-3 py-2 text-xs font-medium text-white focus:outline-none focus:border-sky-500"></select>
-                        <button onclick="duplicateSelectedFrame()" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-sky-400 border border-slate-700 transition" title="Kijelölt váz duplikálása">
+                        <button onclick="duplicateSelectedFrame()" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-sky-400 border border-slate-700 transition" title="Kijelölt konténer (belső elemekkel együtt) duplikálása">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
                         </button>
-                        <button onclick="deleteSelectedFrame()" class="p-2 rounded-xl bg-slate-800 hover:bg-rose-900/70 text-rose-400 border border-slate-700 transition" title="Kijelölt váz törlése">
+                        <button onclick="deleteSelectedFrame()" class="p-2 rounded-xl bg-slate-800 hover:bg-rose-900/70 text-rose-400 border border-slate-700 transition" title="Kijelölt konténer törlése">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                         </button>
                     </div>
 
+                    <!-- BELSŐ ELEM VÁLASZTÓ SOR (ha elem szerkesztő módban vagyunk) -->
+                    <div id="item-controls-header" class="hidden flex-col gap-2">
+                        <div class="flex items-center gap-2">
+                            <select id="item-selector" onchange="selectItemByUid(this.value)" class="flex-1 bg-slate-900/90 border border-amber-500/60 rounded-xl px-3 py-2 text-xs font-medium text-amber-100 focus:outline-none focus:border-amber-400"></select>
+                            <button onclick="duplicateSelectedItem()" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700 transition" title="Kijelölt elem sokszorozása">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                            </button>
+                            <button onclick="deleteSelectedItem()" class="p-2 rounded-xl bg-slate-800 hover:bg-rose-900/70 text-rose-400 border border-slate-700 transition" title="Kijelölt elem törlése">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 4-RÉSZES (2x2m) KERET SZEKTOR BEÁLLÍTÓ -->
+                    <div id="frame2x2-slots-editor" class="hidden bg-slate-900/80 border border-amber-500/40 rounded-xl p-2.5">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[11px] font-bold text-amber-300">2×2m Keret – 4 rész beállítása</span>
+                            <span class="text-[10px] text-slate-400">Kattints a váltáshoz</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button id="slot-btn-0" onclick="cycleFrame2x2Slot(0)" class="py-2.5 px-2 rounded-lg text-[11px] font-bold border transition text-center"></button>
+                            <button id="slot-btn-1" onclick="cycleFrame2x2Slot(1)" class="py-2.5 px-2 rounded-lg text-[11px] font-bold border transition text-center"></button>
+                            <button id="slot-btn-2" onclick="cycleFrame2x2Slot(2)" class="py-2.5 px-2 rounded-lg text-[11px] font-bold border transition text-center"></button>
+                            <button id="slot-btn-3" onclick="cycleFrame2x2Slot(3)" class="py-2.5 px-2 rounded-lg text-[11px] font-bold border transition text-center"></button>
+                        </div>
+                    </div>
+
                     <div>
                         <div class="flex items-center justify-between mb-1.5">
-                            <label class="text-xs font-medium text-slate-300">Pozíció (méter)</label>
-                            <button onclick="snapToGround()" class="text-[11px] text-sky-400 hover:text-sky-300 transition">Talajra (Y=0)</button>
+                            <label id="pos-label" class="text-xs font-medium text-slate-300">Pozíció (méter)</label>
+                            <button onclick="snapToGround()" class="text-[11px] text-sky-400 hover:text-sky-300 transition">Padlóra / Talajra</button>
                         </div>
                         <div class="grid grid-cols-3 gap-2">
                             <div class="relative">
                                 <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] font-bold text-rose-400">X</span>
-                                <input id="pos-x" type="number" step="0.1" oninput="updateTransformFromInputs()" class="w-full bg-slate-900/90 border border-slate-700 rounded-xl pl-6 pr-2 py-1.5 text-xs text-white focus:outline-none focus:border-sky-500">
+                                <input id="pos-x" type="number" step="0.05" oninput="updateTransformFromInputs()" class="w-full bg-slate-900/90 border border-slate-700 rounded-xl pl-6 pr-2 py-1.5 text-xs text-white focus:outline-none focus:border-sky-500">
                             </div>
                             <div class="relative">
                                 <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] font-bold text-emerald-400">Y</span>
-                                <input id="pos-y" type="number" step="0.1" oninput="updateTransformFromInputs()" class="w-full bg-slate-900/90 border border-slate-700 rounded-xl pl-6 pr-2 py-1.5 text-xs text-white focus:outline-none focus:border-sky-500">
+                                <input id="pos-y" type="number" step="0.05" oninput="updateTransformFromInputs()" class="w-full bg-slate-900/90 border border-slate-700 rounded-xl pl-6 pr-2 py-1.5 text-xs text-white focus:outline-none focus:border-sky-500">
                             </div>
                             <div class="relative">
                                 <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] font-bold text-sky-400">Z</span>
-                                <input id="pos-z" type="number" step="0.1" oninput="updateTransformFromInputs()" class="w-full bg-slate-900/90 border border-slate-700 rounded-xl pl-6 pr-2 py-1.5 text-xs text-white focus:outline-none focus:border-sky-500">
+                                <input id="pos-z" type="number" step="0.05" oninput="updateTransformFromInputs()" class="w-full bg-slate-900/90 border border-slate-700 rounded-xl pl-6 pr-2 py-1.5 text-xs text-white focus:outline-none focus:border-sky-500">
                             </div>
                         </div>
                     </div>
@@ -206,9 +258,11 @@
                     <div>
                         <div class="flex items-center justify-between mb-1.5">
                             <label class="text-xs font-medium text-slate-300">Forgatás (fok)</label>
-                            <div class="flex gap-2">
-                                <button onclick="rotateSelectedY(90)" class="text-[11px] text-amber-400 hover:text-amber-300 transition">+90°</button>
-                                <button onclick="resetSelectedRotation()" class="text-[11px] text-slate-400 hover:text-slate-200 transition">0°</button>
+                            <div class="flex gap-1.5">
+                                <button onclick="rotateSelectedAxis('x', 90)" class="text-[10.5px] px-1.5 py-0.5 rounded bg-slate-800 text-rose-300 hover:bg-slate-700 transition">+90°X</button>
+                                <button onclick="rotateSelectedAxis('y', 90)" class="text-[10.5px] px-1.5 py-0.5 rounded bg-slate-800 text-emerald-300 hover:bg-slate-700 transition">+90°Y</button>
+                                <button onclick="rotateSelectedAxis('z', 90)" class="text-[10.5px] px-1.5 py-0.5 rounded bg-slate-800 text-sky-300 hover:bg-slate-700 transition">+90°Z</button>
+                                <button onclick="resetSelectedRotation()" class="text-[10.5px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 hover:bg-slate-700 transition">0°</button>
                             </div>
                         </div>
                         <div class="grid grid-cols-3 gap-2">
@@ -227,24 +281,26 @@
                         </div>
                     </div>
 
-                    <div>
-                        <label class="block text-xs font-medium text-slate-300 mb-1.5">Gyors bővítés a kijelölthöz képest</label>
-                        <div class="grid grid-cols-3 gap-1.5">
-                            <button onclick="addRelativeFrame('side')" class="py-1.5 px-2 rounded-xl text-[11px] font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">+ Mellé</button>
-                            <button onclick="addRelativeFrame('top')" class="py-1.5 px-2 rounded-xl text-[11px] font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">+ Fölé</button>
-                            <button onclick="addRelativeFrame('end')" class="py-1.5 px-2 rounded-xl text-[11px] font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">+ Mögé</button>
+                    <div id="frame-only-extras" class="flex flex-col gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1.5">Gyors bővítés a kijelölt vázhoz képest</label>
+                            <div class="grid grid-cols-3 gap-1.5">
+                                <button onclick="addRelativeFrame('side')" class="py-1.5 px-2 rounded-xl text-[11px] font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">+ Mellé</button>
+                                <button onclick="addRelativeFrame('top')" class="py-1.5 px-2 rounded-xl text-[11px] font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">+ Fölé</button>
+                                <button onclick="addRelativeFrame('end')" class="py-1.5 px-2 rounded-xl text-[11px] font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">+ Mögé</button>
+                            </div>
                         </div>
-                    </div>
 
-                    <div>
-                        <label class="block text-xs font-medium text-slate-300 mb-1.5">Kijelölt váz színe</label>
-                        <div class="flex items-center justify-between gap-2">
-                            <button onclick="setSelectedColor('#8b261d')" class="w-8 h-8 rounded-xl border border-white/20 hover:scale-110 transition" style="background-color: #8b261d;" title="Rozsdavörös"></button>
-                            <button onclick="setSelectedColor('#1e3a8a')" class="w-8 h-8 rounded-xl border border-white/20 hover:scale-110 transition" style="background-color: #1e3a8a;" title="Tengerészkék"></button>
-                            <button onclick="setSelectedColor('#14532d')" class="w-8 h-8 rounded-xl border border-white/20 hover:scale-110 transition" style="background-color: #14532d;" title="Sötétzöld"></button>
-                            <button onclick="setSelectedColor('#cbd5e1')" class="w-8 h-8 rounded-xl border border-white/20 hover:scale-110 transition" style="background-color: #cbd5e1;" title="Világosszürke"></button>
-                            <button onclick="setSelectedColor('#d97706')" class="w-8 h-8 rounded-xl border border-white/20 hover:scale-110 transition" style="background-color: #d97706;" title="Ipari sárga"></button>
-                            <button onclick="setSelectedColor('#334155')" class="w-8 h-8 rounded-xl border border-white/20 hover:scale-110 transition" style="background-color: #334155;" title="Antracit"></button>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1.5">Kijelölt váz színe</label>
+                            <div class="flex items-center justify-between gap-2">
+                                <button onclick="setSelectedColor('#8b261d')" class="w-8 h-8 rounded-xl border border-white/20 hover:scale-110 transition" style="background-color: #8b261d;" title="Rozsdavörös"></button>
+                                <button onclick="setSelectedColor('#1e3a8a')" class="w-8 h-8 rounded-xl border border-white/20 hover:scale-110 transition" style="background-color: #1e3a8a;" title="Tengerészkék"></button>
+                                <button onclick="setSelectedColor('#14532d')" class="w-8 h-8 rounded-xl border border-white/20 hover:scale-110 transition" style="background-color: #14532d;" title="Sötétzöld"></button>
+                                <button onclick="setSelectedColor('#cbd5e1')" class="w-8 h-8 rounded-xl border border-white/20 hover:scale-110 transition" style="background-color: #cbd5e1;" title="Világosszürke"></button>
+                                <button onclick="setSelectedColor('#d97706')" class="w-8 h-8 rounded-xl border border-white/20 hover:scale-110 transition" style="background-color: #d97706;" title="Ipari sárga"></button>
+                                <button onclick="setSelectedColor('#334155')" class="w-8 h-8 rounded-xl border border-white/20 hover:scale-110 transition" style="background-color: #334155;" title="Antracit"></button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -254,19 +310,25 @@
 
     <script>
         const ISO_40 = { W: 2.438, H: 2.591, L: 12.192 };
+        const FLOOR_Y = 0.13;
         const DEFAULT_COLORS = ['#8b261d', '#1e3a8a', '#d97706', '#14532d', '#cbd5e1', '#334155'];
+        const SLOT_LABELS = ['Bal felső', 'Jobb felső', 'Bal alsó', 'Jobb alsó'];
 
         let scene, camera, renderer, orbitControls, transformControls;
         let selectionBoxHelper, resizeObserver;
         let containerFrames = [];
         let selectedFrame = null;
+        let selectedItem = null;
+        let inspectorTab = 'frame';
         let nextFrameId = 1;
+        let nextItemSeq = 1;
         let snapEnabled = false;
         let isDraggingGizmo = false;
         let isCameraAnimating = false;
         let targetCamPos = new THREE.Vector3();
         let targetControlsTarget = new THREE.Vector3();
-        let metalBumpTexture, darkSteelMaterial, holeMaterial;
+        let metalBumpTexture, concreteTexture, noGoTexture;
+        let darkSteelMaterial, holeMaterial, concreteMaterial, steelPlateMaterial, frame2x2SteelMaterial, noGoFaceMaterial, edgeLineMaterial;
         let toastTimeout = null;
         let currentGizmoMode = 'translate';
         let animationFrameId = null;
@@ -301,10 +363,109 @@
             metalBumpTexture.wrapT = THREE.RepeatWrapping;
             metalBumpTexture.repeat.set(6, 6);
 
+            // Realisztikus szemcsés beton textúra
+            const concCanvas = document.createElement('canvas');
+            concCanvas.width = 256;
+            concCanvas.height = 256;
+            const cCtx = concCanvas.getContext('2d');
+            cCtx.fillStyle = '#9aa3ad';
+            cCtx.fillRect(0, 0, 256, 256);
+            for (let i = 0; i < 5000; i++) {
+                const v = 125 + Math.floor(Math.random() * 55);
+                cCtx.fillStyle = `rgb(${v},${v + 2},${v + 5})`;
+                cCtx.fillRect(Math.random() * 256, Math.random() * 256, Math.random() < 0.2 ? 3 : 1.5, Math.random() < 0.2 ? 3 : 1.5);
+            }
+            concreteTexture = new THREE.CanvasTexture(concCanvas);
+            concreteTexture.wrapS = THREE.RepeatWrapping;
+            concreteTexture.wrapT = THREE.RepeatWrapping;
+            concreteTexture.repeat.set(2, 2);
+
+            // Beton + piros-fehér NO GO figyelmeztető sablon textúra
+            const nogoCanvas = document.createElement('canvas');
+            nogoCanvas.width = 512;
+            nogoCanvas.height = 512;
+            const nCtx = nogoCanvas.getContext('2d');
+            nCtx.drawImage(concCanvas, 0, 0, 512, 512);
+
+            // Veszélyjelző sávos keret
+            nCtx.save();
+            nCtx.strokeStyle = '#dc2626';
+            nCtx.lineWidth = 28;
+            nCtx.strokeRect(22, 22, 468, 468);
+            nCtx.strokeStyle = '#fef2f2';
+            nCtx.lineWidth = 6;
+            nCtx.strokeRect(42, 42, 428, 428);
+
+            // Átlós halvány piros X a betonon
+            nCtx.strokeStyle = 'rgba(220, 38, 38, 0.35)';
+            nCtx.lineWidth = 18;
+            nCtx.beginPath();
+            nCtx.moveTo(56, 56); nCtx.lineTo(456, 456);
+            nCtx.moveTo(456, 56); nCtx.lineTo(56, 456);
+            nCtx.stroke();
+
+            // Középső kontrasztos tábla + NO GO felirat
+            nCtx.fillStyle = 'rgba(185, 28, 28, 0.94)';
+            nCtx.fillRect(66, 186, 380, 140);
+            nCtx.strokeStyle = '#ffffff';
+            nCtx.lineWidth = 6;
+            nCtx.strokeRect(66, 186, 380, 140);
+
+            nCtx.fillStyle = '#ffffff';
+            nCtx.font = '900 84px Inter, Arial, sans-serif';
+            nCtx.textAlign = 'center';
+            nCtx.textBaseline = 'middle';
+            nCtx.fillText('NO GO', 256, 250);
+
+            nCtx.fillStyle = '#fecaca';
+            nCtx.font = '700 24px Inter, Arial, sans-serif';
+            nCtx.fillText('TILOS ÁTTÖRNI', 256, 304);
+            nCtx.restore();
+
+            noGoTexture = new THREE.CanvasTexture(nogoCanvas);
+
             darkSteelMaterial = new THREE.MeshStandardMaterial({
                 color: 0x1e293b, metalness: 0.72, roughness: 0.42
             });
             holeMaterial = new THREE.MeshBasicMaterial({ color: 0x090d16 });
+
+            concreteMaterial = new THREE.MeshStandardMaterial({
+                map: concreteTexture,
+                bumpMap: concreteTexture,
+                bumpScale: 0.006,
+                roughness: 0.90,
+                metalness: 0.05
+            });
+
+            steelPlateMaterial = new THREE.MeshStandardMaterial({
+                color: 0x3b4758,
+                metalness: 0.85,
+                roughness: 0.30,
+                bumpMap: metalBumpTexture,
+                bumpScale: 0.002
+            });
+
+            frame2x2SteelMaterial = new THREE.MeshStandardMaterial({
+                color: 0x334155,
+                metalness: 0.68,
+                roughness: 0.38,
+                bumpMap: metalBumpTexture,
+                bumpScale: 0.003
+            });
+
+            noGoFaceMaterial = new THREE.MeshStandardMaterial({
+                map: noGoTexture,
+                bumpMap: concreteTexture,
+                bumpScale: 0.004,
+                roughness: 0.82,
+                metalness: 0.06
+            });
+
+            edgeLineMaterial = new THREE.LineBasicMaterial({
+                color: 0x0f172a,
+                transparent: true,
+                opacity: 0.55
+            });
         }
 
         function createCornerCasting(frameMaterial) {
@@ -426,14 +587,368 @@
         function disposeGroupGeometries(group) {
             const disposedGeoms = new Set();
             group.traverse(child => {
-                if (child.isMesh && child.geometry && !disposedGeoms.has(child.geometry)) {
+                if ((child.isMesh || child.isLineSegments) && child.geometry && !disposedGeoms.has(child.geometry)) {
                     child.geometry.dispose();
                     disposedGeoms.add(child.geometry);
                 }
             });
         }
 
-        window.addContainerFrame = function(pos = null, rot = null, customColor = null, customName = null, silent = false) {
+        // --- BELSŐ ELEMEK (50x50x200 BETONTÖMB, 50x50x2 VASLAP, 2x2m 4-RÉSZES KERET) ---
+        function getItemDefaultLabel(type, seq) {
+            if (type === 'concrete_block') return `Betontömb #${seq} (50×50×200cm)`;
+            if (type === 'steel_plate') return `Vaslap #${seq} (50×50×2cm)`;
+            return `4-részes keret #${seq} (2×2m)`;
+        }
+
+        function addBoxWithEdges(parent, w, h, d, material, x = 0, y = 0, z = 0) {
+            const geom = new THREE.BoxGeometry(w, h, d);
+            const mesh = new THREE.Mesh(geom, material);
+            mesh.position.set(x, y, z);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            const edges = new THREE.LineSegments(new THREE.EdgesGeometry(geom), edgeLineMaterial);
+            mesh.add(edges);
+            parent.add(mesh);
+            return mesh;
+        }
+
+        function tagItemHierarchy(rootGroup, frameId, itemUid) {
+            rootGroup.userData.frameId = frameId;
+            rootGroup.userData.itemUid = itemUid;
+            rootGroup.traverse(child => {
+                child.userData.frameId = frameId;
+                child.userData.itemUid = itemUid;
+            });
+        }
+
+        function rebuildFrame2x2Slots(itemObj, frameId) {
+            if (!itemObj || itemObj.type !== 'frame_2x2' || !itemObj.slotsGroup) return;
+            disposeGroupGeometries(itemObj.slotsGroup);
+            while (itemObj.slotsGroup.children.length > 0) {
+                itemObj.slotsGroup.remove(itemObj.slotsGroup.children[0]);
+            }
+
+            // 2.00m × 2.00m × 0.20m keret: külső keret 8cm, középső osztóborda 6cm -> nyílás: 0.89m × 0.89m
+            const coords = [
+                [-0.475,  0.475], // 0: Bal felső
+                [ 0.475,  0.475], // 1: Jobb felső
+                [-0.475, -0.475], // 2: Bal alsó
+                [ 0.475, -0.475]  // 3: Jobb alsó
+            ];
+            const nogoMaterials = [
+                concreteMaterial, // +X
+                concreteMaterial, // -X
+                concreteMaterial, // +Y
+                concreteMaterial, // -Y
+                noGoFaceMaterial, // +Z (elölnézet)
+                noGoFaceMaterial  // -Z (hátulnézet)
+            ];
+
+            for (let i = 0; i < 4; i++) {
+                const state = (itemObj.slots && itemObj.slots[i]) || 'concrete';
+                if (state === 'empty') continue;
+                const mat = state === 'nogo' ? nogoMaterials : concreteMaterial;
+                addBoxWithEdges(itemObj.slotsGroup, 0.886, 0.886, 0.194, mat, coords[i][0], coords[i][1], 0);
+            }
+            tagItemHierarchy(itemObj.mesh, frameId, itemObj.uid);
+        }
+
+        function buildInteriorItemObject(frameObj, spec) {
+            const seq = nextItemSeq++;
+            const uid = spec.uid || `item_${Date.now()}_${seq}_${Math.floor(Math.random() * 1000)}`;
+            const type = spec.type || 'concrete_block';
+            const name = spec.name || getItemDefaultLabel(type, seq);
+            const slots = Array.isArray(spec.slots) && spec.slots.length === 4
+                ? spec.slots.slice()
+                : ['concrete', 'concrete', 'concrete', 'concrete'];
+
+            const itemGroup = new THREE.Group();
+            let slotsGroup = null;
+
+            if (type === 'concrete_block') {
+                // 50cm × 50cm × 200cm betontömb (fekvő alaphelyzetben: 0.50m × 0.50m × 2.00m)
+                addBoxWithEdges(itemGroup, 0.50, 0.50, 2.00, concreteMaterial, 0, 0, 0);
+            } else if (type === 'steel_plate') {
+                // 50cm × 50cm × 2cm vaslap (0.50m × 0.02m × 0.50m lapjával a padlón, vagy forgatható falra)
+                addBoxWithEdges(itemGroup, 0.50, 0.02, 0.50, steelPlateMaterial, 0, 0, 0);
+            } else if (type === 'frame_2x2') {
+                // 2.00m × 2.00m × 0.20m acélkeret 4 szektorra osztva
+                const outerT = 0.08;
+                const innerT = 0.06;
+                const depth = 0.20;
+                // Felső és alsó vízszintes gerenda (2.00m széles)
+                addBoxWithEdges(itemGroup, 2.00, outerT, depth, frame2x2SteelMaterial, 0,  1.00 - outerT / 2, 0);
+                addBoxWithEdges(itemGroup, 2.00, outerT, depth, frame2x2SteelMaterial, 0, -1.00 + outerT / 2, 0);
+                // Bal és jobb függőleges oszlop
+                addBoxWithEdges(itemGroup, outerT, 2.00 - 2 * outerT, depth, frame2x2SteelMaterial, -1.00 + outerT / 2, 0, 0);
+                addBoxWithEdges(itemGroup, outerT, 2.00 - 2 * outerT, depth, frame2x2SteelMaterial,  1.00 - outerT / 2, 0, 0);
+                // Középső keresztosztók (4 részre osztás)
+                addBoxWithEdges(itemGroup, 2.00 - 2 * outerT, innerT, depth * 0.98, frame2x2SteelMaterial, 0, 0, 0);
+                addBoxWithEdges(itemGroup, innerT, 2.00 - 2 * outerT, depth * 0.98, frame2x2SteelMaterial, 0, 0, 0);
+
+                slotsGroup = new THREE.Group();
+                itemGroup.add(slotsGroup);
+            }
+
+            // Alapértelmezett pozíció a konténer belsejében (konténer lokális koordinátákban)
+            let defaultY = FLOOR_Y + 0.25;
+            if (type === 'steel_plate') defaultY = FLOOR_Y + 0.01;
+            if (type === 'frame_2x2') defaultY = FLOOR_Y + 1.00;
+
+            if (Array.isArray(spec.pos) && spec.pos.length === 3) {
+                itemGroup.position.set(Number(spec.pos[0]) || 0, Number(spec.pos[1]) || 0, Number(spec.pos[2]) || 0);
+            } else {
+                const existingCount = frameObj.items.length;
+                const zSpread = ((existingCount % 7) - 3) * 0.65;
+                itemGroup.position.set(0, defaultY, zSpread);
+            }
+
+            if (Array.isArray(spec.rotDeg) && spec.rotDeg.length === 3) {
+                itemGroup.rotation.set(
+                    THREE.MathUtils.degToRad(Number(spec.rotDeg[0]) || 0),
+                    THREE.MathUtils.degToRad(Number(spec.rotDeg[1]) || 0),
+                    THREE.MathUtils.degToRad(Number(spec.rotDeg[2]) || 0)
+                );
+            }
+
+            const itemObj = { uid, type, name, slots, mesh: itemGroup, slotsGroup };
+            if (type === 'frame_2x2') {
+                rebuildFrame2x2Slots(itemObj, frameObj.id);
+            } else {
+                tagItemHierarchy(itemGroup, frameObj.id, uid);
+            }
+
+            frameObj.group.add(itemGroup);
+            frameObj.items.push(itemObj);
+            return itemObj;
+        }
+
+        function serializeFrameItems(frameObj) {
+            if (!frameObj || !Array.isArray(frameObj.items)) return [];
+            return frameObj.items.map(it => ({
+                uid: it.uid,
+                type: it.type,
+                name: it.name,
+                slots: Array.isArray(it.slots) ? it.slots.slice() : undefined,
+                pos: [
+                    Number(it.mesh.position.x.toFixed(3)),
+                    Number(it.mesh.position.y.toFixed(3)),
+                    Number(it.mesh.position.z.toFixed(3))
+                ],
+                rotDeg: [
+                    Math.round(THREE.MathUtils.radToDeg(it.mesh.rotation.x) * 10) / 10,
+                    Math.round(THREE.MathUtils.radToDeg(it.mesh.rotation.y) * 10) / 10,
+                    Math.round(THREE.MathUtils.radToDeg(it.mesh.rotation.z) * 10) / 10
+                ]
+            }));
+        }
+
+        window.addInteriorItem = function(type, customSpec = null, targetFrame = null, silent = false) {
+            const frame = targetFrame || selectedFrame || containerFrames[0];
+            if (!frame) return null;
+            const spec = Object.assign({ type }, customSpec || {});
+            const itemObj = buildInteriorItemObject(frame, spec);
+
+            if (!silent) {
+                selectedFrame = frame;
+                selectedItem = itemObj;
+                updateFrameSelectorUI();
+                updateItemSelectorUI();
+                window.switchInspectorTab('item');
+                scheduleAutosave();
+                showToast(`${itemObj.name} berakva`);
+            } else {
+                updateItemSelectorUI();
+            }
+            return itemObj;
+        };
+
+        window.selectItemByUid = function(uid) {
+            if (!selectedFrame || !Array.isArray(selectedFrame.items)) return;
+            const found = selectedFrame.items.find(it => it.uid === uid);
+            if (found) {
+                selectedItem = found;
+                window.switchInspectorTab('item');
+            }
+        };
+
+        window.duplicateSelectedItem = function() {
+            if (!selectedFrame || !selectedItem) {
+                showToast('Nincs kijelölt belső elem!');
+                return;
+            }
+            const p = selectedItem.mesh.position;
+            const r = selectedItem.mesh.rotation;
+            // Okos eltolás, hogy láthatóan mellé/fölé kerüljön és könnyű legyen megfogni
+            const offsetX = Math.min(0.85, p.x + (selectedItem.type === 'frame_2x2' ? 0 : 0.52));
+            const offsetZ = Math.min(5.2, p.z + (selectedItem.type === 'frame_2x2' ? 0.35 : 0.15));
+            const copySpec = {
+                type: selectedItem.type,
+                slots: Array.isArray(selectedItem.slots) ? selectedItem.slots.slice() : undefined,
+                pos: [
+                    Number(offsetX.toFixed(3)),
+                    Number(p.y.toFixed(3)),
+                    Number(offsetZ.toFixed(3))
+                ],
+                rotDeg: [
+                    THREE.MathUtils.radToDeg(r.x),
+                    THREE.MathUtils.radToDeg(r.y),
+                    THREE.MathUtils.radToDeg(r.z)
+                ]
+            };
+            window.addInteriorItem(selectedItem.type, copySpec, selectedFrame, false);
+        };
+
+        window.deleteSelectedItem = function() {
+            if (!selectedFrame || !selectedItem) return;
+            const idx = selectedFrame.items.findIndex(it => it.uid === selectedItem.uid);
+            if (idx === -1) return;
+            const removed = selectedFrame.items.splice(idx, 1)[0];
+            if (transformControls) transformControls.detach();
+            selectedFrame.group.remove(removed.mesh);
+            disposeGroupGeometries(removed.mesh);
+
+            selectedItem = selectedFrame.items[Math.max(0, idx - 1)] || null;
+            updateItemSelectorUI();
+            if (selectedItem) {
+                window.switchInspectorTab('item');
+            } else {
+                window.switchInspectorTab('frame');
+            }
+            scheduleAutosave();
+            showToast(`${removed.name} törölve`);
+        };
+
+        window.cycleFrame2x2Slot = function(slotIdx) {
+            if (!selectedFrame || !selectedItem || selectedItem.type !== 'frame_2x2') return;
+            const order = ['concrete', 'nogo', 'empty'];
+            const current = selectedItem.slots[slotIdx] || 'concrete';
+            const next = order[(order.indexOf(current) + 1) % order.length];
+            selectedItem.slots[slotIdx] = next;
+            rebuildFrame2x2Slots(selectedItem, selectedFrame.id);
+            updateFrame2x2SlotsUI();
+            scheduleAutosave();
+        };
+
+        function updateFrame2x2SlotsUI() {
+            const editor = document.getElementById('frame2x2-slots-editor');
+            if (!editor) return;
+            if (inspectorTab !== 'item' || !selectedItem || selectedItem.type !== 'frame_2x2') {
+                editor.classList.add('hidden');
+                return;
+            }
+            editor.classList.remove('hidden');
+            for (let i = 0; i < 4; i++) {
+                const btn = document.getElementById(`slot-btn-${i}`);
+                if (!btn) continue;
+                const st = (selectedItem.slots && selectedItem.slots[i]) || 'concrete';
+                if (st === 'concrete') {
+                    btn.className = 'py-2 px-2 rounded-lg text-[11px] font-bold border transition text-center bg-slate-700/90 border-slate-400/60 text-slate-100 hover:bg-slate-600';
+                    btn.innerHTML = `<div class="text-[9.5px] text-slate-300 font-normal">${SLOT_LABELS[i]}</div>🧱 Beton elem`;
+                } else if (st === 'nogo') {
+                    btn.className = 'py-2 px-2 rounded-lg text-[11px] font-bold border transition text-center bg-rose-900/90 border-rose-400 text-white hover:bg-rose-800';
+                    btn.innerHTML = `<div class="text-[9.5px] text-rose-200 font-normal">${SLOT_LABELS[i]}</div>⛔ Beton + NO GO`;
+                } else {
+                    btn.className = 'py-2 px-2 rounded-lg text-[11px] font-bold border transition text-center bg-slate-950/90 border-slate-700 border-dashed text-slate-400 hover:bg-slate-900';
+                    btn.innerHTML = `<div class="text-[9.5px] text-slate-500 font-normal">${SLOT_LABELS[i]}</div>⬜ Üres nyílás`;
+                }
+            }
+        }
+
+        function updateItemSelectorUI() {
+            const selector = document.getElementById('item-selector');
+            const badge = document.getElementById('item-count-badge');
+            const items = (selectedFrame && Array.isArray(selectedFrame.items)) ? selectedFrame.items : [];
+            if (badge) badge.textContent = String(items.length);
+            if (!selector) return;
+            selector.innerHTML = '';
+            if (items.length === 0) {
+                const opt = document.createElement('option');
+                opt.value = '';
+                opt.textContent = 'Nincs belső elem ebben a vázban';
+                selector.appendChild(opt);
+                return;
+            }
+            items.forEach(it => {
+                const opt = document.createElement('option');
+                opt.value = it.uid;
+                opt.textContent = it.name;
+                if (selectedItem && selectedItem.uid === it.uid) opt.selected = true;
+                selector.appendChild(opt);
+            });
+        }
+
+        function getActiveObject3D() {
+            if (inspectorTab === 'item' && selectedItem && selectedItem.mesh) {
+                return selectedItem.mesh;
+            }
+            return selectedFrame ? selectedFrame.group : null;
+        }
+
+        function refreshGizmoAndHighlight() {
+            const activeObj = getActiveObject3D();
+            if (activeObj) {
+                if (transformControls) {
+                    if (currentGizmoMode === 'off') {
+                        transformControls.detach();
+                    } else {
+                        transformControls.attach(activeObj);
+                    }
+                }
+                if (selectionBoxHelper) {
+                    selectionBoxHelper.material.color.setHex(inspectorTab === 'item' ? 0xfbbf24 : 0x38bdf8);
+                    selectionBoxHelper.setFromObject(activeObj);
+                    selectionBoxHelper.visible = true;
+                }
+                syncInputsFromSelected();
+            } else {
+                if (transformControls) transformControls.detach();
+                if (selectionBoxHelper) selectionBoxHelper.visible = false;
+            }
+        }
+
+        window.switchInspectorTab = function(tab) {
+            if (tab === 'item' && (!selectedFrame || !selectedFrame.items || selectedFrame.items.length === 0)) {
+                showToast('Először adj hozzá egy belső elemet a bal oldali panelen!');
+                tab = 'frame';
+            }
+            inspectorTab = tab;
+            if (inspectorTab === 'item' && (!selectedItem || !selectedFrame.items.some(i => i.uid === selectedItem.uid))) {
+                selectedItem = selectedFrame.items[selectedFrame.items.length - 1] || null;
+            }
+
+            const btnFrame = document.getElementById('tab-btn-frame');
+            const btnItem = document.getElementById('tab-btn-item');
+            const frameHdr = document.getElementById('frame-controls-header');
+            const itemHdr = document.getElementById('item-controls-header');
+            const frameExtras = document.getElementById('frame-only-extras');
+            const posLabel = document.getElementById('pos-label');
+
+            if (inspectorTab === 'item') {
+                btnFrame.className = 'flex-1 py-1 px-2 rounded-lg text-[11px] font-bold text-slate-300 hover:bg-slate-800 transition';
+                btnItem.className = 'flex-1 py-1 px-2 rounded-lg text-[11px] font-bold bg-amber-500 text-slate-950 transition';
+                frameHdr.classList.add('hidden');
+                itemHdr.classList.remove('hidden');
+                itemHdr.classList.add('flex');
+                frameExtras.classList.add('hidden');
+                if (posLabel) posLabel.textContent = 'Pozíció a konténerben (m)';
+            } else {
+                btnFrame.className = 'flex-1 py-1 px-2 rounded-lg text-[11px] font-bold bg-sky-600 text-white transition';
+                btnItem.className = 'flex-1 py-1 px-2 rounded-lg text-[11px] font-bold text-slate-300 hover:bg-slate-800 transition';
+                frameHdr.classList.remove('hidden');
+                itemHdr.classList.add('hidden');
+                itemHdr.classList.remove('flex');
+                frameExtras.classList.remove('hidden');
+                if (posLabel) posLabel.textContent = 'Konténer pozíció (méter)';
+            }
+
+            updateItemSelectorUI();
+            updateFrame2x2SlotsUI();
+            refreshGizmoAndHighlight();
+        };
+
+        window.addContainerFrame = function(pos = null, rot = null, customColor = null, customName = null, silent = false, initialItems = null) {
             const id = nextFrameId++;
             const color = customColor || DEFAULT_COLORS[(id - 1) % DEFAULT_COLORS.length];
             const { group, material } = create40ftFrameGroup(id, color);
@@ -452,6 +967,13 @@
 
             const frameObj = { id, name: customName || `40' Váz #${id}`, group, material, color, items: [] };
             containerFrames.push(frameObj);
+
+            if (Array.isArray(initialItems)) {
+                initialItems.forEach(itemSpec => {
+                    const cleanCopy = Object.assign({}, itemSpec, { uid: null });
+                    buildInteriorItemObject(frameObj, cleanCopy);
+                });
+            }
 
             selectFrame(frameObj);
             updateFrameSelectorUI();
@@ -472,14 +994,16 @@
 
             localOffset.applyEuler(ref.rotation);
             const newPos = ref.position.clone().add(localOffset);
-            addContainerFrame(newPos, ref.rotation.clone());
+            const clonedItems = serializeFrameItems(selectedFrame);
+            addContainerFrame(newPos, ref.rotation.clone(), null, null, false, clonedItems);
         };
 
         window.duplicateSelectedFrame = function() {
             if (!selectedFrame) return;
             const pos = selectedFrame.group.position.clone();
             pos.x += ISO_40.W + 0.5;
-            addContainerFrame(pos, selectedFrame.group.rotation.clone(), selectedFrame.color);
+            const clonedItems = serializeFrameItems(selectedFrame);
+            addContainerFrame(pos, selectedFrame.group.rotation.clone(), selectedFrame.color, null, false, clonedItems);
         };
 
         window.deleteSelectedFrame = function() {
@@ -496,6 +1020,7 @@
                 disposeGroupGeometries(removed.group);
                 removed.material.dispose();
 
+                selectedItem = null;
                 const nextSelect = containerFrames[Math.max(0, idx - 1)] || null;
                 selectFrame(nextSelect);
                 updateFrameSelectorUI();
@@ -504,29 +1029,20 @@
             }
         };
 
-        function selectFrame(frameObj) {
+        function selectFrame(frameObj, keepItemTab = false) {
             selectedFrame = frameObj;
-            if (selectedFrame) {
-                if (transformControls && currentGizmoMode !== 'off') {
-                    transformControls.attach(selectedFrame.group);
-                }
-                if (selectionBoxHelper) {
-                    selectionBoxHelper.setFromObject(selectedFrame.group);
-                    selectionBoxHelper.visible = true;
-                }
-                syncInputsFromSelected();
-            } else {
-                if (transformControls) transformControls.detach();
-                if (selectionBoxHelper) selectionBoxHelper.visible = false;
+            if (!keepItemTab) {
+                selectedItem = (selectedFrame && selectedFrame.items && selectedFrame.items[0]) || null;
+                inspectorTab = 'frame';
             }
-
             const selector = document.getElementById('frame-selector');
             if (selector && selectedFrame) selector.value = String(selectedFrame.id);
+            window.switchInspectorTab(keepItemTab ? 'item' : 'frame');
         }
 
         window.selectFrameById = function(id) {
             const found = containerFrames.find(f => f.id === id);
-            if (found) selectFrame(found);
+            if (found) selectFrame(found, false);
         };
 
         function updateFrameSelectorUI() {
@@ -536,17 +1052,19 @@
             containerFrames.forEach(f => {
                 const opt = document.createElement('option');
                 opt.value = f.id;
-                opt.textContent = f.name;
+                opt.textContent = `${f.name}${f.items && f.items.length ? ` (${f.items.length} elem)` : ''}`;
                 if (selectedFrame && selectedFrame.id === f.id) opt.selected = true;
                 selector.appendChild(opt);
             });
-            badge.textContent = `${containerFrames.length} db`;
+            badge.textContent = String(containerFrames.length);
+            updateItemSelectorUI();
         }
 
         function syncInputsFromSelected() {
-            if (!selectedFrame) return;
-            const p = selectedFrame.group.position;
-            const r = selectedFrame.group.rotation;
+            const target = getActiveObject3D();
+            if (!target) return;
+            const p = target.position;
+            const r = target.rotation;
             document.getElementById('pos-x').value = Number(p.x.toFixed(2));
             document.getElementById('pos-y').value = Number(p.y.toFixed(2));
             document.getElementById('pos-z').value = Number(p.z.toFixed(2));
@@ -556,7 +1074,8 @@
         }
 
         window.updateTransformFromInputs = function() {
-            if (!selectedFrame) return;
+            const target = getActiveObject3D();
+            if (!target) return;
             const px = parseFloat(document.getElementById('pos-x').value);
             const py = parseFloat(document.getElementById('pos-y').value);
             const pz = parseFloat(document.getElementById('pos-z').value);
@@ -564,32 +1083,55 @@
             const ry = parseFloat(document.getElementById('rot-y').value);
             const rz = parseFloat(document.getElementById('rot-z').value);
 
-            if (!isNaN(px)) selectedFrame.group.position.x = px;
-            if (!isNaN(py)) selectedFrame.group.position.y = py;
-            if (!isNaN(pz)) selectedFrame.group.position.z = pz;
-            if (!isNaN(rx)) selectedFrame.group.rotation.x = THREE.MathUtils.degToRad(rx);
-            if (!isNaN(ry)) selectedFrame.group.rotation.y = THREE.MathUtils.degToRad(ry);
-            if (!isNaN(rz)) selectedFrame.group.rotation.z = THREE.MathUtils.degToRad(rz);
+            if (!isNaN(px)) target.position.x = px;
+            if (!isNaN(py)) target.position.y = py;
+            if (!isNaN(pz)) target.position.z = pz;
+            if (!isNaN(rx)) target.rotation.x = THREE.MathUtils.degToRad(rx);
+            if (!isNaN(ry)) target.rotation.y = THREE.MathUtils.degToRad(ry);
+            if (!isNaN(rz)) target.rotation.z = THREE.MathUtils.degToRad(rz);
             scheduleAutosave();
         };
 
         window.snapToGround = function() {
-            if (!selectedFrame) return;
-            selectedFrame.group.position.y = 0;
+            if (inspectorTab === 'item' && selectedItem && selectedFrame) {
+                // Belső elem leültetése pontosan a konténer padlókereszttartóira (FLOOR_Y = 0.13m)
+                selectedFrame.group.updateMatrixWorld(true);
+                const invParent = new THREE.Matrix4().copy(selectedFrame.group.matrixWorld).invert();
+                const localBox = new THREE.Box3();
+                selectedItem.mesh.traverse(child => {
+                    if (child.isMesh && child.geometry) {
+                        if (!child.geometry.boundingBox) child.geometry.computeBoundingBox();
+                        const b = child.geometry.boundingBox.clone();
+                        const m = new THREE.Matrix4().multiplyMatrices(invParent, child.matrixWorld);
+                        b.applyMatrix4(m);
+                        localBox.union(b);
+                    }
+                });
+                if (!localBox.isEmpty()) {
+                    selectedItem.mesh.position.y += (FLOOR_Y - localBox.min.y);
+                }
+            } else if (selectedFrame) {
+                selectedFrame.group.position.y = 0;
+            }
             syncInputsFromSelected();
             scheduleAutosave();
         };
 
-        window.rotateSelectedY = function(deg) {
-            if (!selectedFrame) return;
-            selectedFrame.group.rotation.y += THREE.MathUtils.degToRad(deg);
+        window.rotateSelectedAxis = function(axis, deg) {
+            const target = getActiveObject3D();
+            if (!target) return;
+            const rad = THREE.MathUtils.degToRad(deg);
+            if (axis === 'x') target.rotation.x += rad;
+            if (axis === 'y') target.rotation.y += rad;
+            if (axis === 'z') target.rotation.z += rad;
             syncInputsFromSelected();
             scheduleAutosave();
         };
 
         window.resetSelectedRotation = function() {
-            if (!selectedFrame) return;
-            selectedFrame.group.rotation.set(0, 0, 0);
+            const target = getActiveObject3D();
+            if (!target) return;
+            target.rotation.set(0, 0, 0);
             syncInputsFromSelected();
             scheduleAutosave();
         };
@@ -609,7 +1151,7 @@
 
         function serializeScene(name = '') {
             return {
-                version: 1,
+                version: 2,
                 name: name || currentProjectName || 'Névtelen projekt',
                 savedAt: new Date().toISOString(),
                 snapEnabled: snapEnabled,
@@ -627,7 +1169,7 @@
                         Math.round(THREE.MathUtils.radToDeg(f.group.rotation.y) * 10) / 10,
                         Math.round(THREE.MathUtils.radToDeg(f.group.rotation.z) * 10) / 10
                     ],
-                    items: Array.isArray(f.items) ? f.items : []
+                    items: serializeFrameItems(f)
                 }))
             };
         }
@@ -652,7 +1194,10 @@
             });
             containerFrames = [];
             selectedFrame = null;
+            selectedItem = null;
+            inspectorTab = 'frame';
             nextFrameId = 1;
+            nextItemSeq = 1;
         }
 
         function loadSceneData(data, toastMsg = null) {
@@ -673,15 +1218,16 @@
                     THREE.MathUtils.degToRad(r[1] || 0),
                     THREE.MathUtils.degToRad(r[2] || 0)
                 );
-                const created = window.addContainerFrame(
+                window.addContainerFrame(
                     new THREE.Vector3(p[0] || 0, p[1] || 0, p[2] || 0),
                     euler,
                     fd.color || '#8b261d',
                     fd.name || null,
-                    true
+                    true,
+                    Array.isArray(fd.items) ? fd.items : []
                 );
-                if (Array.isArray(fd.items)) created.items = fd.items;
             });
+            updateFrameSelectorUI();
             if (typeof data.snapEnabled === 'boolean' && data.snapEnabled !== snapEnabled) {
                 window.toggleSnap();
             }
@@ -872,7 +1418,8 @@
                 transformControls.detach();
             } else {
                 transformControls.setMode(mode);
-                if (selectedFrame) transformControls.attach(selectedFrame.group);
+                const activeObj = getActiveObject3D();
+                if (activeObj) transformControls.attach(activeObj);
             }
         };
 
@@ -880,12 +1427,12 @@
             snapEnabled = !snapEnabled;
             const btn = document.getElementById('btn-snap');
             if (transformControls) {
-                transformControls.setTranslationSnap(snapEnabled ? 0.5 : null);
+                transformControls.setTranslationSnap(snapEnabled ? 0.1 : null);
                 transformControls.setRotationSnap(snapEnabled ? THREE.MathUtils.degToRad(15) : null);
             }
             if (snapEnabled) {
                 btn.innerHTML = '<span id="snap-dot" class="w-2 h-2 rounded-full bg-emerald-400"></span>Igazítás: Be';
-                showToast('Igazítás bekapcsolva (0.5m / 15°)');
+                showToast('Igazítás bekapcsolva (10cm / 15°)');
             } else {
                 btn.innerHTML = '<span id="snap-dot" class="w-2 h-2 rounded-full bg-slate-500"></span>Igazítás: Ki';
                 showToast('Szabad mozgatás és forgatás');
@@ -959,13 +1506,30 @@
 
                 raycaster.setFromCamera(pointer, camera);
                 const allGroups = containerFrames.map(f => f.group);
-                const intersects = raycaster.intersectObjects(allGroups, true);
+                // Csak Mesh találatokat veszünk figyelembe (LineSegments ne zavarjon be)
+                const intersects = raycaster.intersectObjects(allGroups, true).filter(hit => hit.object && hit.object.isMesh);
 
                 if (intersects.length > 0) {
-                    const hitId = intersects[0].object.userData.frameId;
-                    if (hitId) {
-                        const found = containerFrames.find(f => f.id === hitId);
-                        if (found) selectFrame(found);
+                    // Ha a sugár előbb vázon halad át, de közvetlenül mögötte belső elem van, nézzük meg az első belső elemet vagy a legközelebbi találatot
+                    const firstHit = intersects[0].object;
+                    const hitFrameId = firstHit.userData.frameId;
+                    const hitItemUid = firstHit.userData.itemUid;
+
+                    if (hitFrameId) {
+                        const foundFrame = containerFrames.find(f => f.id === hitFrameId);
+                        if (foundFrame) {
+                            if (hitItemUid) {
+                                selectedFrame = foundFrame;
+                                const foundItem = (foundFrame.items || []).find(it => it.uid === hitItemUid);
+                                if (foundItem) {
+                                    selectedItem = foundItem;
+                                    updateFrameSelectorUI();
+                                    window.switchInspectorTab('item');
+                                    return;
+                                }
+                            }
+                            selectFrame(foundFrame, false);
+                        }
                     }
                 }
             };
@@ -976,11 +1540,19 @@
 
         function setupKeyboardShortcuts() {
             onKeyDownHandler = (e) => {
-                if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
+                if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'SELECT')) return;
                 if (e.key === 'w' || e.key === 'W') setGizmoMode('translate');
                 if (e.key === 'e' || e.key === 'E') setGizmoMode('rotate');
                 if (e.key === 'Escape') setGizmoMode('off');
-                if (e.key === 'Delete' || e.key === 'Backspace') deleteSelectedFrame();
+                if (e.key === 'd' && (e.ctrlKey || e.metaKey)) {
+                    e.preventDefault();
+                    if (inspectorTab === 'item' && selectedItem) duplicateSelectedItem();
+                    else duplicateSelectedFrame();
+                }
+                if (e.key === 'Delete' || e.key === 'Backspace') {
+                    if (inspectorTab === 'item' && selectedItem) deleteSelectedItem();
+                    else deleteSelectedFrame();
+                }
             };
             window.addEventListener('keydown', onKeyDownHandler);
         }
@@ -1031,8 +1603,15 @@
             containerFrames = [];
 
             if (metalBumpTexture) metalBumpTexture.dispose();
+            if (concreteTexture) concreteTexture.dispose();
+            if (noGoTexture) noGoTexture.dispose();
             if (darkSteelMaterial) darkSteelMaterial.dispose();
             if (holeMaterial) holeMaterial.dispose();
+            if (concreteMaterial) concreteMaterial.dispose();
+            if (steelPlateMaterial) steelPlateMaterial.dispose();
+            if (frame2x2SteelMaterial) frame2x2SteelMaterial.dispose();
+            if (noGoFaceMaterial) noGoFaceMaterial.dispose();
+            if (edgeLineMaterial) edgeLineMaterial.dispose();
 
             if (renderer) {
                 renderer.dispose();
@@ -1145,8 +1724,9 @@
         function animate() {
             if (isDisposed) return;
             animationFrameId = requestAnimationFrame(animate);
-            if (selectedFrame && selectionBoxHelper && selectionBoxHelper.visible) {
-                selectionBoxHelper.setFromObject(selectedFrame.group);
+            const activeObj = getActiveObject3D();
+            if (activeObj && selectionBoxHelper && selectionBoxHelper.visible) {
+                selectionBoxHelper.setFromObject(activeObj);
             }
             if (isCameraAnimating) {
                 camera.position.lerp(targetCamPos, 0.08);
