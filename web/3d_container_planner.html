@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interaktív 3D 40' Konténerváz Tervező</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/TransformControls.js"></script>
+    <style>
+        html, body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #0f172a;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        #planner-root {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        #canvas-container {
+            width: 100%;
+            height: 100%;
+            display: block;
+            cursor: grab;
+        }
+        #canvas-container:active {
+            cursor: grabbing;
+        }
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.82);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
+        }
+        input[type="number"] {
+            user-select: text;
+            -webkit-user-select: text;
+        }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.22); border-radius: 4px; }
+    </style>
+</head>
+<body class="text-slate-100">
+    <div id="planner-root">
+        <div id="canvas-container"></div>
+
+        <div id="loader" class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-slate-950 transition-opacity duration-500">
+            <div class="w-12 h-12 border-4 border-sky-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+            <p class="text-slate-300 font-medium tracking-wide">40' Konténerváz tervező betöltése...</p>
+        </div>
+
+        <div id="toast" class="absolute top-20 left-1/2 -translate-x-1/2 z-40 pointer-events-none opacity-0 transition-opacity duration-300">
+            <div id="toast-text" class="glass-panel px-4 py-2 rounded-xl text-xs sm:text-sm font-medium text-sky-200 border-sky-500/40"></div>
+        </div>
+
+        <div class="absolute top-4 left-4 z-10 pointer-events-none max-w-xs hidden md:block">
+            <div class="glass-panel rounded-2xl p-4 pointer-events-auto">
+                <div class="flex items-center gap-2.5 mb-1">
+                    <div class="w-2.5 h-2.5 rounded-full bg-sky-400 animate-pulse"></div>
+                    <h1 class="text-base font-bold tracking-tight text-white">40' ISO Konténerváz</h1>
+                </div>
+                <p class="text-xs text-slate-300 font-medium">
+                    Csak acélváz • 12.19m × 2.44m × 2.59m
+                </p>
+                <div class="mt-2.5 pt-2.5 border-t border-slate-700/60 flex flex-col gap-1 text-[11px] text-slate-400">
+                    <span>• Kattints egy vázra a kijelöléshez</span>
+                    <span>• Húzd a 3D nyilakat / gyűrűket a mozgatáshoz</span>
+                    <span>• Gombok: <kbd class="px-1 py-0.5 bg-slate-800 rounded text-slate-300">W</kbd> Mozgatás, <kbd class="px-1 py-0.5 bg-slate-800 rounded text-slate-300">E</kbd> Forgatás</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="absolute top-4 left-1/2 -translate-x-1/2 z-20 w-[94%] sm:w-auto flex justify-center pointer-events-none">
+            <div class="glass-panel rounded-2xl p-1.5 flex items-center gap-1.5 pointer-events-auto overflow-x-auto max-w-full">
+                <button id="btn-add-frame" onclick="addContainerFrame()" class="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white transition whitespace-nowrap shadow-md shadow-emerald-900/30">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    Új 40' váz
+                </button>
+
+                <div class="w-px h-6 bg-slate-700/70 mx-0.5"></div>
+
+                <button id="mode-translate" onclick="setGizmoMode('translate')" class="px-3 py-2 rounded-xl text-xs font-semibold bg-sky-600 text-white transition whitespace-nowrap">
+                    Mozgatás
+                </button>
+                <button id="mode-rotate" onclick="setGizmoMode('rotate')" class="px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:bg-slate-800 transition whitespace-nowrap">
+                    Forgatás
+                </button>
+                <button id="mode-off" onclick="setGizmoMode('off')" class="px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:bg-slate-800 transition whitespace-nowrap">
+                    Gizmo ki
+                </button>
+
+                <div class="w-px h-6 bg-slate-700/70 mx-0.5 hidden sm:block"></div>
+
+                <button id="btn-snap" onclick="toggleSnap()" class="px-3 py-2 rounded-xl text-xs font-medium text-slate-300 hover:bg-slate-800 transition whitespace-nowrap hidden sm:flex items-center gap-1.5" title="Rácsra és szögre igazítás (0.5m / 15°)">
+                    <span id="snap-dot" class="w-2 h-2 rounded-full bg-slate-500"></span>
+                    Igazítás: Ki
+                </button>
+
+                <button onclick="resetCamera()" class="p-2 rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white transition" title="Kamera alaphelyzetbe">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="absolute bottom-4 right-4 left-4 sm:left-auto z-20 sm:w-80">
+            <div class="glass-panel rounded-2xl p-4 flex flex-col gap-3 max-h-[65%] overflow-y-auto">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Kijelölt váz</span>
+                        <span id="frame-count-badge" class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-sky-400 border border-slate-700">1 db</span>
+                    </div>
+                    <button id="toggle-panel-btn" class="sm:hidden text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded-lg transition">
+                        Elrejtés
+                    </button>
+                </div>
+
+                <div id="panel-content" class="flex flex-col gap-3.5">
+                    <div class="flex items-center gap-2">
+                        <select id="frame-selector" onchange="selectFrameById(Number(this.value))" class="flex-1 bg-slate-900/90 border border-slate-700 rounded-xl px-3 py-2 text-xs font-medium text-white focus:outline-none focus:border-sky-500"></select>
+                        <button onclick="duplicateSelectedFrame()" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-sky-400 border border-slate-700 transition" title="Kijelölt váz duplikálása">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                        </button>
+                        <button onclick="deleteSelectedFrame()" class="p-2 rounded-xl bg-slate-800 hover:bg-rose-900/70 text-rose-400 border border-slate-700 transition" title="Kijelölt váz törlése">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    </div>
+
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <label class="text-xs font-medium text-slate-300">Pozíció (méter)</label>
+                            <button onclick="snapToGround()" class="text-[11px] text-sky-400 hover:text-sky-300 transition">Talajra (Y=0)</button>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2">
+                            <div class="relative">
+                                <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] font-bold text-rose-400">X</span>
+                                <input id="pos-x" type="number" step="0.1" oninput="updateTransformFromInputs()" class="w-full bg-slate-900/90 border border-slate-700 rounded-xl pl-6 pr-2 py-1.5 text-xs text-white focus:outline-none focus:border-sky-500">
+                            </div>
+                            <div class="relative">
+                                <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] font-bold text-emerald-400">Y</span>
+                                <input id="pos-y" type="number" step="0.1" oninput="updateTransformFromInputs()" class="w-full bg-slate-900/90 border border-slate-700 rounded-xl pl-6 pr-2 py-1.5 text-xs text-white focus:outline-none focus:border-sky-500">
+                            </div>
+                            <div class="relative">
+                                <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] font-bold text-sky-400">Z</span>
+                                <input id="pos-z" type="number" step="0.1" oninput="updateTransformFromInputs()" class="w-full bg-slate-900/90 border border-slate-700 rounded-xl pl-6 pr-2 py-1.5 text-xs text-white focus:outline-none focus:border-sky-500">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <label class="text-xs font-medium text-slate-300">Forgatás (fok)</label>
+                            <div class="flex gap-2">
+                                <button onclick="rotateSelectedY(90)" class="text-[11px] text-amber-400 hover:text-amber-300 transition">+90°</button>
+                                <button onclick="resetSelectedRotation()" class="text-[11px] text-slate-400 hover:text-slate-200 transition">0°</button>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2">
+                            <div class="relative">
+                                <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] font-bold text-rose-400">X</span>
+                                <input id="rot-x" type="number" step="5" oninput="updateTransformFromInputs()" class="w-full bg-slate-900/90 border border-slate-700 rounded-xl pl-6 pr-2 py-1.5 text-xs text-white focus:outline-none focus:border-sky-500">
+                            </div>
+                            <div class="relative">
+                                <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] font-bold text-emerald-400">Y</span>
+                                <input id="rot-y" type="number" step="5" oninput="updateTransformFromInputs()" class="w-full bg-slate-900/90 border border-slate-700 rounded-xl pl-6 pr-2 py-1.5 text-xs text-white focus:outline-none focus:border-sky-500">
+                            </div>
+                            <div class="relative">
+                                <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] font-bold text-sky-400">Z</span>
+                                <input id="rot-z" type="number" step="5" oninput="updateTransformFromInputs()" class="w-full bg-slate-900/90 border border-slate-700 rounded-xl pl-6 pr-2 py-1.5 text-xs text-white focus:outline-none focus:border-sky-500">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1.5">Gyors bővítés a kijelölthöz képest</label>
+                        <div class="grid grid-cols-3 gap-1.5">
+                            <button onclick="addRelativeFrame('side')" class="py-1.5 px-2 rounded-xl text-[11px] font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">+ Mellé</button>
+                            <button onclick="addRelativeFrame('top')" class="py-1.5 px-2 rounded-xl text-[11px] font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">+ Fölé</button>
+                            <button onclick="addRelativeFrame('end')" class="py-1.5 px-2 rounded-xl text-[11px] font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">+ Mögé</button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1.5">Kijelölt váz színe</label>
+                        <div class="flex items-center justify-between gap-2">
+                            <button onclick="setSelectedColor('#8b261d')" class="w-8 h-8 rounded-xl border border-white/20 hover:scale-110 transition" style="background-color: #8b261d;" title="Rozsdavörös"></button>
+                            <button onclick="setSelectedColor('#1e3a8a')" class="w-8 h-8 rounded-xl border border-white/20 hover:scale-110 transition" style="background-color: #1e3a8a;" title="Tengerészkék"></button>
+                            <button onclick="setSelectedColor('#14532d')" class="w-8 h-8 rounded-xl border border-white/20 hover:scale-110 transition" style="background-color: #14532d;" title="Sötétzöld"></button>
+                            <button onclick="setSelectedColor('#cbd5e1')" class="w-8 h-8 rounded-xl border border-white/20 hover:scale-110 transition" style="background-color: #cbd5e1;" title="Világosszürke"></button>
+                            <button onclick="setSelectedColor('#d97706')" class="w-8 h-8 rounded-xl border border-white/20 hover:scale-110 transition" style="background-color: #d97706;" title="Ipari sárga"></button>
+                            <button onclick="setSelectedColor('#334155')" class="w-8 h-8 rounded-xl border border-white/20 hover:scale-110 transition" style="background-color: #334155;" title="Antracit"></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const ISO_40 = { W: 2.438, H: 2.591, L: 12.192 };
+        const DEFAULT_COLORS = ['#8b261d', '#1e3a8a', '#d97706', '#14532d', '#cbd5e1', '#334155'];
+
+        let scene, camera, renderer, orbitControls, transformControls;
+        let selectionBoxHelper, resizeObserver;
+        let containerFrames = [];
+        let selectedFrame = null;
+        let nextFrameId = 1;
+        let snapEnabled = false;
+        let isDraggingGizmo = false;
+        let isCameraAnimating = false;
+        let targetCamPos = new THREE.Vector3();
+        let targetControlsTarget = new THREE.Vector3();
+        let metalBumpTexture, darkSteelMaterial, holeMaterial;
+        let toastTimeout = null;
+        let currentGizmoMode = 'translate';
+        let animationFrameId = null;
+        let isDisposed = false;
+
+        let onPointerDownHandler, onPointerUpHandler, onKeyDownHandler, onMessageHandler;
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            const text = document.getElementById('toast-text');
+            if (!toast || !text) return;
+            text.textContent = message;
+            toast.style.opacity = '1';
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => { toast.style.opacity = '0'; }, 2200);
+        }
+
+        function createSharedMaterials() {
+            const metalCanvas = document.createElement('canvas');
+            metalCanvas.width = 256;
+            metalCanvas.height = 256;
+            const mCtx = metalCanvas.getContext('2d');
+            mCtx.fillStyle = '#808080';
+            mCtx.fillRect(0, 0, 256, 256);
+            for (let i = 0; i < 3500; i++) {
+                const v = 115 + Math.random() * 26;
+                mCtx.fillStyle = `rgb(${v},${v},${v})`;
+                mCtx.fillRect(Math.random() * 256, Math.random() * 256, 2, 2);
+            }
+            metalBumpTexture = new THREE.CanvasTexture(metalCanvas);
+            metalBumpTexture.wrapS = THREE.RepeatWrapping;
+            metalBumpTexture.wrapT = THREE.RepeatWrapping;
+            metalBumpTexture.repeat.set(6, 6);
+
+            darkSteelMaterial = new THREE.MeshStandardMaterial({
+                color: 0x1e293b, metalness: 0.72, roughness: 0.42
+            });
+            holeMaterial = new THREE.MeshBasicMaterial({ color: 0x090d16 });
+        }
+
+        function createCornerCasting(frameMaterial) {
+            const group = new THREE.Group();
+            const cw = 0.178, ch = 0.162, cd = 0.178;
+            const boxMesh = new THREE.Mesh(new THREE.BoxGeometry(cw, ch, cd), frameMaterial);
+            boxMesh.castShadow = true;
+            boxMesh.receiveShadow = true;
+            group.add(boxMesh);
+
+            const holeSide = new THREE.Mesh(new THREE.BoxGeometry(cw + 0.004, 0.065, 0.045), holeMaterial);
+            const holeFront = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.065, cd + 0.004), holeMaterial);
+            const holeTop = new THREE.Mesh(new THREE.BoxGeometry(0.05, ch + 0.004, 0.075), holeMaterial);
+            group.add(holeSide, holeFront, holeTop);
+            return group;
+        }
+
+        function create40ftFrameGroup(frameId, hexColor) {
+            const group = new THREE.Group();
+            group.userData.frameId = frameId;
+
+            const frameMaterial = new THREE.MeshStandardMaterial({
+                color: hexColor,
+                metalness: 0.48,
+                roughness: 0.44,
+                bumpMap: metalBumpTexture,
+                bumpScale: 0.003
+            });
+
+            const { W, H, L } = ISO_40;
+            const bottomRailH = 0.16;
+            const topRailH = 0.12;
+            const railW = 0.13;
+
+            const sideRailGeom = new THREE.BoxGeometry(railW, bottomRailH, L - 0.34);
+            const leftBottomRail = new THREE.Mesh(sideRailGeom, frameMaterial);
+            leftBottomRail.position.set(-W / 2 + railW / 2, bottomRailH / 2, 0);
+            const rightBottomRail = new THREE.Mesh(sideRailGeom, frameMaterial);
+            rightBottomRail.position.set(W / 2 - railW / 2, bottomRailH / 2, 0);
+            leftBottomRail.castShadow = rightBottomRail.castShadow = true;
+            leftBottomRail.receiveShadow = rightBottomRail.receiveShadow = true;
+            group.add(leftBottomRail, rightBottomRail);
+
+            const crossCount = 34;
+            const crossGeom = new THREE.BoxGeometry(W - 0.24, 0.10, 0.055);
+            for (let i = 0; i <= crossCount; i++) {
+                const zPos = -L / 2 + 0.30 + (i / crossCount) * (L - 0.60);
+                const cross = new THREE.Mesh(crossGeom, darkSteelMaterial);
+                cross.position.set(0, 0.075, zPos);
+                cross.castShadow = true;
+                cross.receiveShadow = true;
+                group.add(cross);
+            }
+
+            const tunnelLength = 3.15;
+            const tunnelRailGeom = new THREE.BoxGeometry(0.08, 0.12, tunnelLength);
+            [-0.515, 0.515].forEach(tx => {
+                const tRail = new THREE.Mesh(tunnelRailGeom, frameMaterial);
+                tRail.position.set(tx, 0.08, -L / 2 + tunnelLength / 2 + 0.18);
+                group.add(tRail);
+            });
+
+            const topRailGeom = new THREE.BoxGeometry(railW, topRailH, L - 0.34);
+            const leftTopRail = new THREE.Mesh(topRailGeom, frameMaterial);
+            leftTopRail.position.set(-W / 2 + railW / 2, H - topRailH / 2, 0);
+            const rightTopRail = new THREE.Mesh(topRailGeom, frameMaterial);
+            rightTopRail.position.set(W / 2 - railW / 2, H - topRailH / 2, 0);
+            leftTopRail.castShadow = rightTopRail.castShadow = true;
+            group.add(leftTopRail, rightTopRail);
+
+            const endTopGeom = new THREE.BoxGeometry(W - 0.34, topRailH, 0.14);
+            const endBotGeom = new THREE.BoxGeometry(W - 0.34, bottomRailH, 0.14);
+
+            const frontTop = new THREE.Mesh(endTopGeom, frameMaterial);
+            frontTop.position.set(0, H - topRailH / 2, -L / 2 + 0.08);
+            const rearTop = new THREE.Mesh(endTopGeom, frameMaterial);
+            rearTop.position.set(0, H - topRailH / 2, L / 2 - 0.08);
+
+            const frontBot = new THREE.Mesh(endBotGeom, frameMaterial);
+            frontBot.position.set(0, bottomRailH / 2, -L / 2 + 0.08);
+            const rearBot = new THREE.Mesh(endBotGeom, frameMaterial);
+            rearBot.position.set(0, bottomRailH / 2, L / 2 - 0.08);
+
+            [frontTop, rearTop, frontBot, rearBot].forEach(m => {
+                m.castShadow = true;
+                m.receiveShadow = true;
+                group.add(m);
+            });
+
+            const postH = H - 0.32;
+            const postGeom = new THREE.BoxGeometry(0.16, postH, 0.16);
+            [-W / 2 + 0.08, W / 2 - 0.08].forEach(cx => {
+                [-L / 2 + 0.08, L / 2 - 0.08].forEach(cz => {
+                    const post = new THREE.Mesh(postGeom, frameMaterial);
+                    post.position.set(cx, H / 2, cz);
+                    post.castShadow = true;
+                    post.receiveShadow = true;
+                    group.add(post);
+                });
+            });
+
+            [-W / 2 + 0.089, W / 2 - 0.089].forEach(x => {
+                [0.081, H - 0.081].forEach(y => {
+                    [-L / 2 + 0.089, L / 2 - 0.089].forEach(z => {
+                        const casting = createCornerCasting(frameMaterial);
+                        casting.position.set(x, y, z);
+                        group.add(casting);
+                    });
+                });
+            });
+
+            group.traverse(child => {
+                if (child.isMesh) child.userData.frameId = frameId;
+            });
+
+            return { group, material: frameMaterial };
+        }
+
+        function disposeGroupGeometries(group) {
+            const disposedGeoms = new Set();
+            group.traverse(child => {
+                if (child.isMesh && child.geometry && !disposedGeoms.has(child.geometry)) {
+                    child.geometry.dispose();
+                    disposedGeoms.add(child.geometry);
+                }
+            });
+        }
+
+        window.addContainerFrame = function(pos = null, rot = null, customColor = null) {
+            const id = nextFrameId++;
+            const color = customColor || DEFAULT_COLORS[(id - 1) % DEFAULT_COLORS.length];
+            const { group, material } = create40ftFrameGroup(id, color);
+
+            if (pos) {
+                group.position.copy(pos);
+            } else if (selectedFrame) {
+                group.position.copy(selectedFrame.group.position);
+                group.position.x += ISO_40.W + 0.4;
+            } else {
+                group.position.set(0, 0, 0);
+            }
+
+            if (rot) group.rotation.copy(rot);
+            scene.add(group);
+
+            const frameObj = { id, name: `40' Váz #${id}`, group, material, color };
+            containerFrames.push(frameObj);
+
+            selectFrame(frameObj);
+            updateFrameSelectorUI();
+            if (id > 1) showToast(`${frameObj.name} hozzáadva`);
+            return frameObj;
+        };
+
+        window.addRelativeFrame = function(direction) {
+            if (!selectedFrame) { addContainerFrame(); return; }
+            const ref = selectedFrame.group;
+            const localOffset = new THREE.Vector3();
+            if (direction === 'side') localOffset.set(ISO_40.W, 0, 0);
+            if (direction === 'top')  localOffset.set(0, ISO_40.H, 0);
+            if (direction === 'end')  localOffset.set(0, 0, ISO_40.L);
+
+            localOffset.applyEuler(ref.rotation);
+            const newPos = ref.position.clone().add(localOffset);
+            addContainerFrame(newPos, ref.rotation.clone());
+        };
+
+        window.duplicateSelectedFrame = function() {
+            if (!selectedFrame) return;
+            const pos = selectedFrame.group.position.clone();
+            pos.x += ISO_40.W + 0.5;
+            addContainerFrame(pos, selectedFrame.group.rotation.clone(), selectedFrame.color);
+        };
+
+        window.deleteSelectedFrame = function() {
+            if (!selectedFrame) return;
+            if (containerFrames.length <= 1) {
+                showToast('Legalább egy konténerváznak maradnia kell!');
+                return;
+            }
+            const idx = containerFrames.findIndex(f => f.id === selectedFrame.id);
+            if (idx !== -1) {
+                const removed = containerFrames.splice(idx, 1)[0];
+                if (transformControls) transformControls.detach();
+                scene.remove(removed.group);
+                disposeGroupGeometries(removed.group);
+                removed.material.dispose();
+
+                const nextSelect = containerFrames[Math.max(0, idx - 1)] || null;
+                selectFrame(nextSelect);
+                updateFrameSelectorUI();
+                showToast(`${removed.name} törölve`);
+            }
+        };
+
+        function selectFrame(frameObj) {
+            selectedFrame = frameObj;
+            if (selectedFrame) {
+                if (transformControls && currentGizmoMode !== 'off') {
+                    transformControls.attach(selectedFrame.group);
+                }
+                if (selectionBoxHelper) {
+                    selectionBoxHelper.setFromObject(selectedFrame.group);
+                    selectionBoxHelper.visible = true;
+                }
+                syncInputsFromSelected();
+            } else {
+                if (transformControls) transformControls.detach();
+                if (selectionBoxHelper) selectionBoxHelper.visible = false;
+            }
+
+            const selector = document.getElementById('frame-selector');
+            if (selector && selectedFrame) selector.value = String(selectedFrame.id);
+        }
+
+        window.selectFrameById = function(id) {
+            const found = containerFrames.find(f => f.id === id);
+            if (found) selectFrame(found);
+        };
+
+        function updateFrameSelectorUI() {
+            const selector = document.getElementById('frame-selector');
+            const badge = document.getElementById('frame-count-badge');
+            selector.innerHTML = '';
+            containerFrames.forEach(f => {
+                const opt = document.createElement('option');
+                opt.value = f.id;
+                opt.textContent = f.name;
+                if (selectedFrame && selectedFrame.id === f.id) opt.selected = true;
+                selector.appendChild(opt);
+            });
+            badge.textContent = `${containerFrames.length} db`;
+        }
+
+        function syncInputsFromSelected() {
+            if (!selectedFrame) return;
+            const p = selectedFrame.group.position;
+            const r = selectedFrame.group.rotation;
+            document.getElementById('pos-x').value = Number(p.x.toFixed(2));
+            document.getElementById('pos-y').value = Number(p.y.toFixed(2));
+            document.getElementById('pos-z').value = Number(p.z.toFixed(2));
+            document.getElementById('rot-x').value = Math.round(THREE.MathUtils.radToDeg(r.x));
+            document.getElementById('rot-y').value = Math.round(THREE.MathUtils.radToDeg(r.y));
+            document.getElementById('rot-z').value = Math.round(THREE.MathUtils.radToDeg(r.z));
+        }
+
+        window.updateTransformFromInputs = function() {
+            if (!selectedFrame) return;
+            const px = parseFloat(document.getElementById('pos-x').value);
+            const py = parseFloat(document.getElementById('pos-y').value);
+            const pz = parseFloat(document.getElementById('pos-z').value);
+            const rx = parseFloat(document.getElementById('rot-x').value);
+            const ry = parseFloat(document.getElementById('rot-y').value);
+            const rz = parseFloat(document.getElementById('rot-z').value);
+
+            if (!isNaN(px)) selectedFrame.group.position.x = px;
+            if (!isNaN(py)) selectedFrame.group.position.y = py;
+            if (!isNaN(pz)) selectedFrame.group.position.z = pz;
+            if (!isNaN(rx)) selectedFrame.group.rotation.x = THREE.MathUtils.degToRad(rx);
+            if (!isNaN(ry)) selectedFrame.group.rotation.y = THREE.MathUtils.degToRad(ry);
+            if (!isNaN(rz)) selectedFrame.group.rotation.z = THREE.MathUtils.degToRad(rz);
+        };
+
+        window.snapToGround = function() {
+            if (!selectedFrame) return;
+            selectedFrame.group.position.y = 0;
+            syncInputsFromSelected();
+        };
+
+        window.rotateSelectedY = function(deg) {
+            if (!selectedFrame) return;
+            selectedFrame.group.rotation.y += THREE.MathUtils.degToRad(deg);
+            syncInputsFromSelected();
+        };
+
+        window.resetSelectedRotation = function() {
+            if (!selectedFrame) return;
+            selectedFrame.group.rotation.set(0, 0, 0);
+            syncInputsFromSelected();
+        };
+
+        window.setSelectedColor = function(hexColor) {
+            if (!selectedFrame) return;
+            selectedFrame.color = hexColor;
+            selectedFrame.material.color.set(hexColor);
+        };
+
+        window.setGizmoMode = function(mode) {
+            currentGizmoMode = mode;
+            ['translate', 'rotate', 'off'].forEach(m => {
+                const btn = document.getElementById(`mode-${m}`);
+                if (!btn) return;
+                btn.className = (m === mode)
+                    ? 'px-3 py-2 rounded-xl text-xs font-semibold bg-sky-600 text-white transition whitespace-nowrap'
+                    : 'px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:bg-slate-800 transition whitespace-nowrap';
+            });
+            if (!transformControls) return;
+            if (mode === 'off') {
+                transformControls.detach();
+            } else {
+                transformControls.setMode(mode);
+                if (selectedFrame) transformControls.attach(selectedFrame.group);
+            }
+        };
+
+        window.toggleSnap = function() {
+            snapEnabled = !snapEnabled;
+            const btn = document.getElementById('btn-snap');
+            if (transformControls) {
+                transformControls.setTranslationSnap(snapEnabled ? 0.5 : null);
+                transformControls.setRotationSnap(snapEnabled ? THREE.MathUtils.degToRad(15) : null);
+            }
+            if (snapEnabled) {
+                btn.innerHTML = '<span id="snap-dot" class="w-2 h-2 rounded-full bg-emerald-400"></span>Igazítás: Be';
+                showToast('Igazítás bekapcsolva (0.5m / 15°)');
+            } else {
+                btn.innerHTML = '<span id="snap-dot" class="w-2 h-2 rounded-full bg-slate-500"></span>Igazítás: Ki';
+                showToast('Szabad mozgatás és forgatás');
+            }
+        };
+
+        window.resetCamera = function() {
+            targetCamPos.set(14, 9.5, 16);
+            targetControlsTarget.set(0, 1.5, 0);
+            isCameraAnimating = true;
+        };
+
+        function setupEnvironment() {
+            scene.background = new THREE.Color(0x0f172a);
+            scene.fog = new THREE.FogExp2(0x0f172a, 0.0085);
+
+            const hemiLight = new THREE.HemisphereLight(0xe0f2fe, 0x334155, 0.85);
+            hemiLight.position.set(0, 30, 0);
+            scene.add(hemiLight);
+
+            const dirLight = new THREE.DirectionalLight(0xffffff, 1.35);
+            dirLight.position.set(18, 28, 20);
+            dirLight.castShadow = true;
+            dirLight.shadow.mapSize.width = 2048;
+            dirLight.shadow.mapSize.height = 2048;
+            dirLight.shadow.camera.near = 1;
+            dirLight.shadow.camera.far = 90;
+            const d = 28;
+            dirLight.shadow.camera.left = -d;
+            dirLight.shadow.camera.right = d;
+            dirLight.shadow.camera.top = d;
+            dirLight.shadow.camera.bottom = -d;
+            dirLight.shadow.bias = -0.0005;
+            scene.add(dirLight);
+
+            const fillLight = new THREE.DirectionalLight(0x93c5fd, 0.55);
+            fillLight.position.set(-16, 10, -14);
+            scene.add(fillLight);
+
+            const ground = new THREE.Mesh(
+                new THREE.PlaneGeometry(240, 240),
+                new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.88, metalness: 0.08 })
+            );
+            ground.rotation.x = -Math.PI / 2;
+            ground.receiveShadow = true;
+            scene.add(ground);
+
+            const gridHelper = new THREE.GridHelper(120, 120, 0x334155, 0x1e293b);
+            gridHelper.position.y = 0.003;
+            scene.add(gridHelper);
+        }
+
+        function setupRaycasting() {
+            const raycaster = new THREE.Raycaster();
+            const pointer = new THREE.Vector2();
+            let pointerDownPos = { x: 0, y: 0 };
+            const domElem = renderer.domElement;
+
+            onPointerDownHandler = (e) => {
+                pointerDownPos = { x: e.clientX, y: e.clientY };
+            };
+
+            onPointerUpHandler = (e) => {
+                if (isDraggingGizmo) return;
+                const dist = Math.hypot(e.clientX - pointerDownPos.x, e.clientY - pointerDownPos.y);
+                if (dist > 6) return;
+
+                const rect = domElem.getBoundingClientRect();
+                pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+                pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+                raycaster.setFromCamera(pointer, camera);
+                const allGroups = containerFrames.map(f => f.group);
+                const intersects = raycaster.intersectObjects(allGroups, true);
+
+                if (intersects.length > 0) {
+                    const hitId = intersects[0].object.userData.frameId;
+                    if (hitId) {
+                        const found = containerFrames.find(f => f.id === hitId);
+                        if (found) selectFrame(found);
+                    }
+                }
+            };
+
+            domElem.addEventListener('pointerdown', onPointerDownHandler);
+            domElem.addEventListener('pointerup', onPointerUpHandler);
+        }
+
+        function setupKeyboardShortcuts() {
+            onKeyDownHandler = (e) => {
+                if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
+                if (e.key === 'w' || e.key === 'W') setGizmoMode('translate');
+                if (e.key === 'e' || e.key === 'E') setGizmoMode('rotate');
+                if (e.key === 'Escape') setGizmoMode('off');
+                if (e.key === 'Delete' || e.key === 'Backspace') deleteSelectedFrame();
+            };
+            window.addEventListener('keydown', onKeyDownHandler);
+        }
+
+        function updateSize(container) {
+            if (!renderer || !camera || !container) return;
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            if (width <= 0 || height <= 0) return;
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            renderer.setSize(width, height, false);
+        }
+
+        function disposePlanner() {
+            if (isDisposed) return;
+            isDisposed = true;
+
+            if (animationFrameId !== null) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+            clearTimeout(toastTimeout);
+
+            if (resizeObserver) {
+                resizeObserver.disconnect();
+                resizeObserver = null;
+            }
+
+            if (onKeyDownHandler) window.removeEventListener('keydown', onKeyDownHandler);
+            if (onMessageHandler) window.removeEventListener('message', onMessageHandler);
+
+            if (renderer && renderer.domElement) {
+                if (onPointerDownHandler) renderer.domElement.removeEventListener('pointerdown', onPointerDownHandler);
+                if (onPointerUpHandler) renderer.domElement.removeEventListener('pointerup', onPointerUpHandler);
+            }
+
+            if (transformControls) {
+                transformControls.detach();
+                transformControls.dispose();
+            }
+            if (orbitControls) orbitControls.dispose();
+
+            containerFrames.forEach(f => {
+                disposeGroupGeometries(f.group);
+                f.material.dispose();
+            });
+            containerFrames = [];
+
+            if (metalBumpTexture) metalBumpTexture.dispose();
+            if (darkSteelMaterial) darkSteelMaterial.dispose();
+            if (holeMaterial) holeMaterial.dispose();
+
+            if (renderer) {
+                renderer.dispose();
+                renderer.forceContextLoss();
+                if (renderer.domElement && renderer.domElement.parentNode) {
+                    renderer.domElement.parentNode.removeChild(renderer.domElement);
+                }
+            }
+        }
+
+        window.disposePlanner = disposePlanner;
+
+        function init() {
+            const container = document.getElementById('canvas-container');
+            scene = new THREE.Scene();
+
+            const initW = container.clientWidth || 800;
+            const initH = container.clientHeight || 600;
+            camera = new THREE.PerspectiveCamera(45, initW / initH, 0.1, 300);
+            camera.position.set(14, 9.5, 16);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+            renderer.setSize(initW, initH);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.08;
+            renderer.domElement.style.width = '100%';
+            renderer.domElement.style.height = '100%';
+            container.appendChild(renderer.domElement);
+
+            orbitControls = new THREE.OrbitControls(camera, renderer.domElement);
+            orbitControls.enableDamping = true;
+            orbitControls.dampingFactor = 0.06;
+            orbitControls.minDistance = 3;
+            orbitControls.maxDistance = 120;
+            orbitControls.maxPolarAngle = Math.PI / 2 - 0.015;
+            orbitControls.target.set(0, 1.5, 0);
+            orbitControls.update();
+            orbitControls.addEventListener('start', () => { isCameraAnimating = false; });
+
+            try {
+                transformControls = new THREE.TransformControls(camera, renderer.domElement);
+                transformControls.setMode('translate');
+                transformControls.addEventListener('dragging-changed', (event) => {
+                    isDraggingGizmo = event.value;
+                    orbitControls.enabled = !event.value;
+                });
+                transformControls.addEventListener('objectChange', () => { syncInputsFromSelected(); });
+                scene.add(transformControls);
+            } catch (err) {
+                console.error('TransformControls betöltési hiba:', err);
+            }
+
+            selectionBoxHelper = new THREE.BoxHelper(new THREE.Object3D(), 0x38bdf8);
+            selectionBoxHelper.visible = false;
+            scene.add(selectionBoxHelper);
+
+            createSharedMaterials();
+            setupEnvironment();
+            setupRaycasting();
+            setupKeyboardShortcuts();
+
+            addContainerFrame(new THREE.Vector3(0, 0, 0), new THREE.Euler(0, 0, 0), '#8b261d');
+
+            resizeObserver = new ResizeObserver(() => updateSize(container));
+            resizeObserver.observe(container);
+
+            onMessageHandler = (event) => {
+                if (event.data && event.data.type === 'DISPOSE_3D_PLANNER') {
+                    disposePlanner();
+                }
+            };
+            window.addEventListener('message', onMessageHandler);
+            window.addEventListener('pagehide', disposePlanner);
+            window.addEventListener('beforeunload', disposePlanner);
+
+            const toggleBtn = document.getElementById('toggle-panel-btn');
+            const panelContent = document.getElementById('panel-content');
+            let panelVisible = true;
+            toggleBtn.addEventListener('click', () => {
+                panelVisible = !panelVisible;
+                panelContent.style.display = panelVisible ? 'flex' : 'none';
+                toggleBtn.textContent = panelVisible ? 'Elrejtés' : 'Megjelenítés';
+            });
+
+            setTimeout(() => {
+                const loader = document.getElementById('loader');
+                if (loader) {
+                    loader.style.opacity = '0';
+                    setTimeout(() => loader.remove(), 500);
+                }
+            }, 200);
+        }
+
+        function animate() {
+            if (isDisposed) return;
+            animationFrameId = requestAnimationFrame(animate);
+            if (selectedFrame && selectionBoxHelper && selectionBoxHelper.visible) {
+                selectionBoxHelper.setFromObject(selectedFrame.group);
+            }
+            if (isCameraAnimating) {
+                camera.position.lerp(targetCamPos, 0.08);
+                orbitControls.target.lerp(targetControlsTarget, 0.08);
+                if (camera.position.distanceTo(targetCamPos) < 0.08 && orbitControls.target.distanceTo(targetControlsTarget) < 0.08) {
+                    isCameraAnimating = false;
+                }
+            }
+            orbitControls.update();
+            renderer.render(scene, camera);
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => { init(); animate(); });
+        } else {
+            init();
+            animate();
+        }
+    </script>
+</body>
+</html>

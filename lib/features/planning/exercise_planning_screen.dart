@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../api/supabase_rescue_platform_api.dart';
 import '../../models/member.dart';
 import '../../services/app_store.dart';
+import 'container_3d_planner_tab.dart';
 import 'planning_board.dart';
 import 'planning_injects_board.dart';
 import 'planning_models.dart';
@@ -13,7 +14,15 @@ import 'planning_repository.dart';
 import 'planning_timeline_planner.dart';
 import 'planning_victims_board.dart';
 
-enum _PlanningTab { board, obstacles, victims, injects, timeline, realTimeline }
+enum _PlanningTab {
+  board,
+  obstacles,
+  victims,
+  injects,
+  timeline,
+  realTimeline,
+  container3d,
+}
 
 class ExercisePlanningScreen extends StatelessWidget {
   const ExercisePlanningScreen({super.key, this.onReturnToPortal});
@@ -307,13 +316,13 @@ class _PlanningWorkspaceState extends State<_PlanningWorkspace> {
               ),
             ),
             if (_creating) const LinearProgressIndicator(),
-            if (_selectedId != null)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-                child: Wrap(
-                  spacing: 8,
-                  runSpacing: 4,
-                  children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                children: [
+                  if (_selectedId != null) ...[
                     ChoiceChip(
                       label: const Text('1. Tervezőasztal & Pályák'),
                       selected: _activeTab == _PlanningTab.board,
@@ -363,61 +372,75 @@ class _PlanningWorkspaceState extends State<_PlanningWorkspace> {
                               () => _activeTab = _PlanningTab.realTimeline),
                     ),
                   ],
-                ),
+                  ChoiceChip(
+                    avatar: const Icon(Icons.view_in_ar_rounded, size: 16),
+                    label: const Text('3D Konténerváz tervező'),
+                    selected: _activeTab == _PlanningTab.container3d,
+                    onSelected: _savingBoard || _creating
+                        ? null
+                        : (_) => setState(
+                            () => _activeTab = _PlanningTab.container3d),
+                  ),
+                ],
               ),
+            ),
             Expanded(
-              child: _selectedId == null
-                  ? Center(
-                      child: Text(
-                        exercises.isEmpty
-                            ? 'Még nincs rögzített gyakorlat.'
-                            : 'Válassz egy gyakorlatot.',
-                      ),
-                    )
-                  : switch (_activeTab) {
-                      _PlanningTab.board => PlanningBoard(
-                          key: ValueKey('board-${_selectedId!}'),
-                          exerciseId: _selectedId!,
-                          repository: widget.repository,
-                          onSavingChanged: (saving) =>
-                              setState(() => _savingBoard = saving),
-                        ),
-                      _PlanningTab.victims => PlanningVictimsBoard(
-                          key: ValueKey('victims-${_selectedId!}'),
-                          exerciseId: _selectedId!,
-                          repository: widget.repository,
-                          onSavingChanged: (saving) =>
-                              setState(() => _savingBoard = saving),
-                        ),
-                      _PlanningTab.injects => PlanningInjectsBoard(
-                          key: ValueKey('injects-${_selectedId!}'),
-                          exerciseId: _selectedId!,
-                          repository: widget.repository,
-                          onSavingChanged: (saving) =>
-                              setState(() => _savingBoard = saving),
-                        ),
-                      _PlanningTab.obstacles => PlanningObstaclesBoard(
-                          key: ValueKey('obstacles-${_selectedId!}'),
-                          exerciseId: _selectedId!,
-                          repository: widget.repository,
-                          onSavingChanged: (saving) =>
-                              setState(() => _savingBoard = saving),
-                        ),
-                      _PlanningTab.timeline => PlanningTimelinePlanner(
-                          key: ValueKey('timeline-${_selectedId!}'),
-                          exerciseId: _selectedId!,
-                          repository: widget.repository,
-                          onSavingChanged: (saving) =>
-                              setState(() => _savingBoard = saving),
-                        ),
-                      _PlanningTab.realTimeline => PlanningRealTimeline(
-                          key: ValueKey('real-${_selectedId!}'),
-                          exerciseId: _selectedId!,
-                          repository: widget.repository,
-                          onSavingChanged: (saving) =>
-                              setState(() => _savingBoard = saving),
-                        ),
-                    },
+              child: _activeTab == _PlanningTab.container3d
+                  ? const Container3DPlannerTab()
+                  : _selectedId == null
+                      ? Center(
+                          child: Text(
+                            exercises.isEmpty
+                                ? 'Még nincs rögzített gyakorlat.'
+                                : 'Válassz egy gyakorlatot.',
+                          ),
+                        )
+                      : switch (_activeTab) {
+                          _PlanningTab.board => PlanningBoard(
+                              key: ValueKey('board-${_selectedId!}'),
+                              exerciseId: _selectedId!,
+                              repository: widget.repository,
+                              onSavingChanged: (saving) =>
+                                  setState(() => _savingBoard = saving),
+                            ),
+                          _PlanningTab.victims => PlanningVictimsBoard(
+                              key: ValueKey('victims-${_selectedId!}'),
+                              exerciseId: _selectedId!,
+                              repository: widget.repository,
+                              onSavingChanged: (saving) =>
+                                  setState(() => _savingBoard = saving),
+                            ),
+                          _PlanningTab.injects => PlanningInjectsBoard(
+                              key: ValueKey('injects-${_selectedId!}'),
+                              exerciseId: _selectedId!,
+                              repository: widget.repository,
+                              onSavingChanged: (saving) =>
+                                  setState(() => _savingBoard = saving),
+                            ),
+                          _PlanningTab.obstacles => PlanningObstaclesBoard(
+                              key: ValueKey('obstacles-${_selectedId!}'),
+                              exerciseId: _selectedId!,
+                              repository: widget.repository,
+                              onSavingChanged: (saving) =>
+                                  setState(() => _savingBoard = saving),
+                            ),
+                          _PlanningTab.timeline => PlanningTimelinePlanner(
+                              key: ValueKey('timeline-${_selectedId!}'),
+                              exerciseId: _selectedId!,
+                              repository: widget.repository,
+                              onSavingChanged: (saving) =>
+                                  setState(() => _savingBoard = saving),
+                            ),
+                          _PlanningTab.realTimeline => PlanningRealTimeline(
+                              key: ValueKey('real-${_selectedId!}'),
+                              exerciseId: _selectedId!,
+                              repository: widget.repository,
+                              onSavingChanged: (saving) =>
+                                  setState(() => _savingBoard = saving),
+                            ),
+                          _PlanningTab.container3d =>
+                            const Container3DPlannerTab(),
+                        },
             ),
           ],
         );
