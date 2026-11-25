@@ -81,7 +81,7 @@
             </div>
 
             <!-- BELSŐ ELEMEK HOZZÁADÁSA PANEL -->
-            <div class="glass-panel rounded-2xl p-3.5 pointer-events-auto">
+            <div class="glass-panel rounded-2xl p-3.5 pointer-events-auto max-h-[68vh] overflow-y-auto">
                 <div class="text-[11px] font-bold uppercase tracking-wider text-amber-400 mb-2">
                     + Belső elemek berakása
                 </div>
@@ -97,6 +97,18 @@
                     <button onclick="addInteriorItem('frame_2x2')" class="flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-xs font-semibold bg-slate-800/90 hover:bg-slate-700 text-amber-200 border border-amber-500/40 transition text-left">
                         <span>🪟 4-részes keret</span>
                         <span class="text-[10px] text-amber-300/80 font-mono">2×2m • 20cm</span>
+                    </button>
+                    <button onclick="addInteriorItem('hatch_1x1')" class="flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-xs font-semibold bg-slate-800/90 hover:bg-slate-700 text-sky-200 border border-sky-500/40 transition text-left">
+                        <span>🚪 Kibúvó keret</span>
+                        <span class="text-[10px] text-sky-300/80 font-mono">1×1m üreges</span>
+                    </button>
+                    <button onclick="addInteriorItem('i_beam')" class="flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-xs font-semibold bg-slate-800/90 hover:bg-slate-700 text-slate-100 border border-slate-600/70 transition text-left">
+                        <span>🏗️ I-vasgerenda</span>
+                        <span class="text-[10px] text-slate-400 font-mono">20×20×100cm</span>
+                    </button>
+                    <button onclick="addInteriorItem('wood_beam')" class="flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-xs font-semibold bg-slate-800/90 hover:bg-slate-700 text-orange-200 border border-orange-500/40 transition text-left">
+                        <span>🪵 Fagerenda</span>
+                        <span class="text-[10px] text-orange-300/80 font-mono">30×30×100cm</span>
                     </button>
                 </div>
             </div>
@@ -234,6 +246,22 @@
                         </div>
                     </div>
 
+                    <!-- 1x1m KIBÚVÓ KERET GYORS SÍKBA ILLESZTÉS -->
+                    <div id="hatch1x1-plane-editor" class="hidden bg-slate-900/80 border border-sky-500/40 rounded-xl p-2.5">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[11px] font-bold text-sky-300">1×1m Kibúvó – Síkba illesztés</span>
+                            <span class="text-[10px] text-slate-400">Konténervázra</span>
+                        </div>
+                        <div class="grid grid-cols-3 gap-1.5">
+                            <button onclick="alignHatchToPlane('left')" class="py-1.5 px-1.5 rounded-lg text-[10.5px] font-semibold bg-slate-800 hover:bg-slate-700 text-sky-200 border border-slate-700 transition">Bal fal</button>
+                            <button onclick="alignHatchToPlane('right')" class="py-1.5 px-1.5 rounded-lg text-[10.5px] font-semibold bg-slate-800 hover:bg-slate-700 text-sky-200 border border-slate-700 transition">Jobb fal</button>
+                            <button onclick="alignHatchToPlane('top')" class="py-1.5 px-1.5 rounded-lg text-[10.5px] font-semibold bg-slate-800 hover:bg-slate-700 text-sky-200 border border-slate-700 transition">Tetősík</button>
+                            <button onclick="alignHatchToPlane('bottom')" class="py-1.5 px-1.5 rounded-lg text-[10.5px] font-semibold bg-slate-800 hover:bg-slate-700 text-sky-200 border border-slate-700 transition">Padlósík</button>
+                            <button onclick="alignHatchToPlane('front')" class="py-1.5 px-1.5 rounded-lg text-[10.5px] font-semibold bg-slate-800 hover:bg-slate-700 text-sky-200 border border-slate-700 transition">Első vég</button>
+                            <button onclick="alignHatchToPlane('back')" class="py-1.5 px-1.5 rounded-lg text-[10.5px] font-semibold bg-slate-800 hover:bg-slate-700 text-sky-200 border border-slate-700 transition">Hátsó vég</button>
+                        </div>
+                    </div>
+
                     <div>
                         <div class="flex items-center justify-between mb-1.5">
                             <label id="pos-label" class="text-xs font-medium text-slate-300">Pozíció (méter)</label>
@@ -327,8 +355,8 @@
         let isCameraAnimating = false;
         let targetCamPos = new THREE.Vector3();
         let targetControlsTarget = new THREE.Vector3();
-        let metalBumpTexture, concreteTexture, noGoTexture;
-        let darkSteelMaterial, holeMaterial, concreteMaterial, steelPlateMaterial, frame2x2SteelMaterial, noGoFaceMaterial, edgeLineMaterial;
+        let metalBumpTexture, concreteTexture, noGoTexture, woodTexture;
+        let darkSteelMaterial, holeMaterial, concreteMaterial, steelPlateMaterial, frame2x2SteelMaterial, hatchSteelMaterial, iBeamSteelMaterial, woodBeamMaterial, noGoFaceMaterial, edgeLineMaterial;
         let toastTimeout = null;
         let currentGizmoMode = 'translate';
         let animationFrameId = null;
@@ -459,6 +487,58 @@
                 bumpScale: 0.004,
                 roughness: 0.82,
                 metalness: 0.06
+            });
+
+            // 1x1m kibúvó keret jelzőacél anyaga (ipari világos acél / sárga-szürke kontraszt)
+            hatchSteelMaterial = new THREE.MeshStandardMaterial({
+                color: 0x38bdf8,
+                metalness: 0.58,
+                roughness: 0.36,
+                bumpMap: metalBumpTexture,
+                bumpScale: 0.002
+            });
+
+            // 20x20x100cm I-vasgerenda hengerelt acél anyaga
+            iBeamSteelMaterial = new THREE.MeshStandardMaterial({
+                color: 0x475569,
+                metalness: 0.86,
+                roughness: 0.32,
+                bumpMap: metalBumpTexture,
+                bumpScale: 0.003
+            });
+
+            // 30x30x100cm fagerenda erezett fa textúra + anyag
+            const woodCanvas = document.createElement('canvas');
+            woodCanvas.width = 256;
+            woodCanvas.height = 256;
+            const wCtx = woodCanvas.getContext('2d');
+            wCtx.fillStyle = '#b47b44';
+            wCtx.fillRect(0, 0, 256, 256);
+            for (let i = 0; i < 180; i++) {
+                const y = Math.random() * 256;
+                const h = 1 + Math.random() * 3.5;
+                const shade = Math.floor(-24 + Math.random() * 38);
+                wCtx.fillStyle = `rgb(${175 + shade}, ${118 + Math.floor(shade * 0.7)}, ${64 + Math.floor(shade * 0.5)})`;
+                wCtx.fillRect(0, y, 256, h);
+            }
+            for (let k = 0; k < 5; k++) {
+                wCtx.strokeStyle = 'rgba(92, 52, 22, 0.35)';
+                wCtx.lineWidth = 2;
+                wCtx.beginPath();
+                wCtx.ellipse(Math.random() * 256, Math.random() * 256, 18 + Math.random() * 20, 4 + Math.random() * 5, 0, 0, Math.PI * 2);
+                wCtx.stroke();
+            }
+            woodTexture = new THREE.CanvasTexture(woodCanvas);
+            woodTexture.wrapS = THREE.RepeatWrapping;
+            woodTexture.wrapT = THREE.RepeatWrapping;
+            woodTexture.repeat.set(1, 2);
+
+            woodBeamMaterial = new THREE.MeshStandardMaterial({
+                map: woodTexture,
+                bumpMap: woodTexture,
+                bumpScale: 0.005,
+                roughness: 0.84,
+                metalness: 0.04
             });
 
             edgeLineMaterial = new THREE.LineBasicMaterial({
@@ -594,10 +674,13 @@
             });
         }
 
-        // --- BELSŐ ELEMEK (50x50x200 BETONTÖMB, 50x50x2 VASLAP, 2x2m 4-RÉSZES KERET) ---
+        // --- BELSŐ ELEMEK ---
         function getItemDefaultLabel(type, seq) {
             if (type === 'concrete_block') return `Betontömb #${seq} (50×50×200cm)`;
             if (type === 'steel_plate') return `Vaslap #${seq} (50×50×2cm)`;
+            if (type === 'hatch_1x1') return `Kibúvó keret #${seq} (1×1m)`;
+            if (type === 'i_beam') return `I-vasgerenda #${seq} (20×20×100cm)`;
+            if (type === 'wood_beam') return `Fagerenda #${seq} (30×30×100cm)`;
             return `4-részes keret #${seq} (2×2m)`;
         }
 
@@ -689,19 +772,55 @@
 
                 slotsGroup = new THREE.Group();
                 itemGroup.add(slotsGroup);
+            } else if (type === 'hatch_1x1') {
+                // 1.00m × 1.00m üreges négyszög (kibúvó keret), 13cm mélységgel, hogy pontosan illeszkedjen a konténerváz síkjába
+                const barT = 0.08;
+                const depth = 0.13;
+                // Felső és alsó rúd (1.00m külső szélesség, 0.84m × 0.84m tiszta kibúvó nyílás)
+                addBoxWithEdges(itemGroup, 1.00, barT, depth, hatchSteelMaterial, 0,  0.50 - barT / 2, 0);
+                addBoxWithEdges(itemGroup, 1.00, barT, depth, hatchSteelMaterial, 0, -0.50 + barT / 2, 0);
+                // Bal és jobb oldalsó rúd
+                addBoxWithEdges(itemGroup, barT, 1.00 - 2 * barT, depth, hatchSteelMaterial, -0.50 + barT / 2, 0, 0);
+                addBoxWithEdges(itemGroup, barT, 1.00 - 2 * barT, depth, hatchSteelMaterial,  0.50 - barT / 2, 0, 0);
+            } else if (type === 'i_beam') {
+                // 20cm × 20cm × 100cm valódi HEB-200 I-vasgerenda profil (0.20m × 0.20m × 1.00m)
+                const flangeW = 0.20;
+                const beamH = 0.20;
+                const flangeT = 0.018;
+                const webT = 0.014;
+                const beamLen = 1.00;
+                // Felső övlemez
+                addBoxWithEdges(itemGroup, flangeW, flangeT, beamLen, iBeamSteelMaterial, 0,  beamH / 2 - flangeT / 2, 0);
+                // Alsó övlemez
+                addBoxWithEdges(itemGroup, flangeW, flangeT, beamLen, iBeamSteelMaterial, 0, -beamH / 2 + flangeT / 2, 0);
+                // Középső gerinclemez
+                addBoxWithEdges(itemGroup, webT, beamH - 2 * flangeT, beamLen, iBeamSteelMaterial, 0, 0, 0);
+            } else if (type === 'wood_beam') {
+                // 30cm × 30cm × 100cm tömör fagerenda (0.30m × 0.30m × 1.00m)
+                addBoxWithEdges(itemGroup, 0.30, 0.30, 1.00, woodBeamMaterial, 0, 0, 0);
             }
 
-            // Alapértelmezett pozíció a konténer belsejében (konténer lokális koordinátákban)
+            // Alapértelmezett pozíció a konténer belsejében / oldalfal síkjában (konténer lokális koordinátákban)
+            let defaultX = 0;
             let defaultY = FLOOR_Y + 0.25;
+            let defaultRotY = 0;
             if (type === 'steel_plate') defaultY = FLOOR_Y + 0.01;
             if (type === 'frame_2x2') defaultY = FLOOR_Y + 1.00;
+            if (type === 'i_beam') defaultY = FLOOR_Y + 0.10;
+            if (type === 'wood_beam') defaultY = FLOOR_Y + 0.15;
+            if (type === 'hatch_1x1') {
+                // Alapból a jobb oldali konténerfal síkjába kerül (90° Y forgatással, hogy a nyílás kifelé nézzen)
+                defaultX = ISO_40.W / 2 - 0.065;
+                defaultY = 1.30;
+                defaultRotY = 90;
+            }
 
             if (Array.isArray(spec.pos) && spec.pos.length === 3) {
                 itemGroup.position.set(Number(spec.pos[0]) || 0, Number(spec.pos[1]) || 0, Number(spec.pos[2]) || 0);
             } else {
                 const existingCount = frameObj.items.length;
                 const zSpread = ((existingCount % 7) - 3) * 0.65;
-                itemGroup.position.set(0, defaultY, zSpread);
+                itemGroup.position.set(defaultX, defaultY, zSpread);
             }
 
             if (Array.isArray(spec.rotDeg) && spec.rotDeg.length === 3) {
@@ -710,6 +829,8 @@
                     THREE.MathUtils.degToRad(Number(spec.rotDeg[1]) || 0),
                     THREE.MathUtils.degToRad(Number(spec.rotDeg[2]) || 0)
                 );
+            } else if (defaultRotY !== 0) {
+                itemGroup.rotation.set(0, THREE.MathUtils.degToRad(defaultRotY), 0);
             }
 
             const itemObj = { uid, type, name, slots, mesh: itemGroup, slotsGroup };
@@ -780,9 +901,20 @@
             }
             const p = selectedItem.mesh.position;
             const r = selectedItem.mesh.rotation;
-            // Okos eltolás, hogy láthatóan mellé/fölé kerüljön és könnyű legyen megfogni
-            const offsetX = Math.min(0.85, p.x + (selectedItem.type === 'frame_2x2' ? 0 : 0.52));
-            const offsetZ = Math.min(5.2, p.z + (selectedItem.type === 'frame_2x2' ? 0.35 : 0.15));
+            // Okos eltolás, hogy láthatóan mellé/arrébb kerüljön és könnyű legyen megfogni
+            let offsetX = p.x;
+            let offsetZ = p.z;
+            if (selectedItem.type === 'hatch_1x1') {
+                offsetZ = Math.min(5.4, p.z + 1.15);
+            } else if (selectedItem.type === 'frame_2x2') {
+                offsetZ = Math.min(5.2, p.z + 0.35);
+            } else if (selectedItem.type === 'i_beam' || selectedItem.type === 'wood_beam') {
+                offsetX = Math.min(0.95, p.x + 0.35);
+                offsetZ = Math.min(5.4, p.z + 0.15);
+            } else {
+                offsetX = Math.min(0.85, p.x + 0.52);
+                offsetZ = Math.min(5.2, p.z + 0.15);
+            }
             const copySpec = {
                 type: selectedItem.type,
                 slots: Array.isArray(selectedItem.slots) ? selectedItem.slots.slice() : undefined,
@@ -855,6 +987,48 @@
                 }
             }
         }
+
+        function updateHatch1x1UI() {
+            const editor = document.getElementById('hatch1x1-plane-editor');
+            if (!editor) return;
+            if (inspectorTab !== 'item' || !selectedItem || selectedItem.type !== 'hatch_1x1') {
+                editor.classList.add('hidden');
+            } else {
+                editor.classList.remove('hidden');
+            }
+        }
+
+        window.alignHatchToPlane = function(plane) {
+            if (!selectedFrame || !selectedItem || selectedItem.type !== 'hatch_1x1') return;
+            const m = selectedItem.mesh;
+            // Megőrizzük a hosszirányú Z pozíciót (oldal/tető/padló esetén) a határokon belül
+            const clampedZ = Math.max(-ISO_40.L / 2 + 0.65, Math.min(ISO_40.L / 2 - 0.65, m.position.z));
+            const clampedY = Math.max(0.68, Math.min(ISO_40.H - 0.65, m.position.y));
+            const clampedX = Math.max(-ISO_40.W / 2 + 0.65, Math.min(ISO_40.W / 2 - 0.65, m.position.x));
+
+            if (plane === 'left') {
+                m.position.set(-ISO_40.W / 2 + 0.065, clampedY, clampedZ);
+                m.rotation.set(0, THREE.MathUtils.degToRad(90), 0);
+            } else if (plane === 'right') {
+                m.position.set(ISO_40.W / 2 - 0.065, clampedY, clampedZ);
+                m.rotation.set(0, THREE.MathUtils.degToRad(90), 0);
+            } else if (plane === 'top') {
+                m.position.set(clampedX, ISO_40.H - 0.06, clampedZ);
+                m.rotation.set(THREE.MathUtils.degToRad(90), 0, 0);
+            } else if (plane === 'bottom') {
+                m.position.set(clampedX, 0.08, clampedZ);
+                m.rotation.set(THREE.MathUtils.degToRad(90), 0, 0);
+            } else if (plane === 'front') {
+                m.position.set(clampedX, clampedY, -ISO_40.L / 2 + 0.08);
+                m.rotation.set(0, 0, 0);
+            } else if (plane === 'back') {
+                m.position.set(clampedX, clampedY, ISO_40.L / 2 - 0.08);
+                m.rotation.set(0, 0, 0);
+            }
+            syncInputsFromSelected();
+            scheduleAutosave();
+            showToast('1×1m kibúvó a konténer síkjába igazítva');
+        };
 
         function updateItemSelectorUI() {
             const selector = document.getElementById('item-selector');
@@ -945,6 +1119,7 @@
 
             updateItemSelectorUI();
             updateFrame2x2SlotsUI();
+            updateHatch1x1UI();
             refreshGizmoAndHighlight();
         };
 
@@ -1605,11 +1780,15 @@
             if (metalBumpTexture) metalBumpTexture.dispose();
             if (concreteTexture) concreteTexture.dispose();
             if (noGoTexture) noGoTexture.dispose();
+            if (woodTexture) woodTexture.dispose();
             if (darkSteelMaterial) darkSteelMaterial.dispose();
             if (holeMaterial) holeMaterial.dispose();
             if (concreteMaterial) concreteMaterial.dispose();
             if (steelPlateMaterial) steelPlateMaterial.dispose();
             if (frame2x2SteelMaterial) frame2x2SteelMaterial.dispose();
+            if (hatchSteelMaterial) hatchSteelMaterial.dispose();
+            if (iBeamSteelMaterial) iBeamSteelMaterial.dispose();
+            if (woodBeamMaterial) woodBeamMaterial.dispose();
             if (noGoFaceMaterial) noGoFaceMaterial.dispose();
             if (edgeLineMaterial) edgeLineMaterial.dispose();
 
