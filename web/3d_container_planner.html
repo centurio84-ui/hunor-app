@@ -110,6 +110,14 @@
                         <span>🪵 Fagerenda</span>
                         <span class="text-[10px] text-orange-300/80 font-mono">30×30×100cm</span>
                     </button>
+                    <button onclick="addInteriorItem('car')" class="flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-xs font-semibold bg-slate-800/90 hover:bg-slate-700 text-cyan-200 border border-cyan-500/40 transition text-left">
+                        <span>🚗 Személyautó</span>
+                        <span class="text-[10px] text-cyan-300/80 font-mono">1.76×1.45×4.30m</span>
+                    </button>
+                    <button onclick="addInteriorItem('victim')" class="flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-xs font-semibold bg-rose-950/80 hover:bg-rose-900 text-rose-100 border border-rose-500/50 transition text-left">
+                        <span>🚨 Sérült (bábu)</span>
+                        <span class="text-[10px] text-rose-300 font-mono">175cm • póz</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -262,6 +270,33 @@
                         </div>
                     </div>
 
+                    <!-- SÉRÜLT BÁBU TESTHELYZET VÁLASZTÓ -->
+                    <div id="victim-pose-editor" class="hidden bg-slate-900/80 border border-rose-500/40 rounded-xl p-2.5">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[11px] font-bold text-rose-300">🚨 Sérült testhelyzete</span>
+                            <span class="text-[10px] text-slate-400">1:1 bábu</span>
+                        </div>
+                        <div class="grid grid-cols-3 gap-1.5">
+                            <button id="pose-btn-lying" onclick="setVictimPose('lying')" class="py-1.5 px-1.5 rounded-lg text-[10.5px] font-semibold border transition">Fekvő</button>
+                            <button id="pose-btn-sitting" onclick="setVictimPose('sitting')" class="py-1.5 px-1.5 rounded-lg text-[10.5px] font-semibold border transition">Ülő (autóba)</button>
+                            <button id="pose-btn-curled" onclick="setVictimPose('curled')" class="py-1.5 px-1.5 rounded-lg text-[10.5px] font-semibold border transition">Összekuporodott</button>
+                        </div>
+                    </div>
+
+                    <!-- SZEMÉLYAUTÓ GYORS POZÍCIÓ A KONTÉNERBEN -->
+                    <div id="car-quick-editor" class="hidden bg-slate-900/80 border border-cyan-500/40 rounded-xl p-2.5">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[11px] font-bold text-cyan-300">🚗 Személyautó (4.30×1.76×1.45m)</span>
+                            <span class="text-[10px] text-slate-400">2 db befér!</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-1.5">
+                            <button onclick="quickPlaceCar('front_slot')" class="py-1.5 px-2 rounded-lg text-[10.5px] font-semibold bg-slate-800 hover:bg-slate-700 text-cyan-200 border border-slate-700 transition">1. autó helye (elöl)</button>
+                            <button onclick="quickPlaceCar('rear_slot')" class="py-1.5 px-2 rounded-lg text-[10.5px] font-semibold bg-slate-800 hover:bg-slate-700 text-cyan-200 border border-slate-700 transition">2. autó helye (hátul)</button>
+                            <button onclick="quickPlaceCar('roof_crush')" class="py-1.5 px-2 rounded-lg text-[10.5px] font-semibold bg-slate-800 hover:bg-slate-700 text-amber-200 border border-slate-700 transition">Fejre állítva (180°)</button>
+                            <button onclick="quickPlaceCar('side_roll')" class="py-1.5 px-2 rounded-lg text-[10.5px] font-semibold bg-slate-800 hover:bg-slate-700 text-amber-200 border border-slate-700 transition">Oldalára borítva (90°)</button>
+                        </div>
+                    </div>
+
                     <div>
                         <div class="flex items-center justify-between mb-1.5">
                             <label id="pos-label" class="text-xs font-medium text-slate-300">Pozíció (méter)</label>
@@ -377,6 +412,8 @@
         let targetControlsTarget = new THREE.Vector3();
         let metalBumpTexture, concreteTexture, noGoTexture, woodTexture;
         let darkSteelMaterial, holeMaterial, concreteMaterial, steelPlateMaterial, frame2x2SteelMaterial, hatchSteelMaterial, iBeamSteelMaterial, woodBeamMaterial, noGoFaceMaterial, edgeLineMaterial;
+        let victimSuitMaterial, victimHeadMaterial, victimStripeMaterial;
+        let carBodyMaterial, carGlassMaterial, carTireMaterial, carRimMaterial, carLightFrontMaterial, carLightRearMaterial;
         let toastTimeout = null;
         let currentGizmoMode = 'translate';
         let animationFrameId = null;
@@ -561,6 +598,63 @@
                 metalness: 0.04
             });
 
+            // USAR mentőbábu (sérült) jól látható narancs-piros + fényvisszaverő csík anyagok
+            victimSuitMaterial = new THREE.MeshStandardMaterial({
+                color: 0xea580c,
+                roughness: 0.62,
+                metalness: 0.08
+            });
+            victimHeadMaterial = new THREE.MeshStandardMaterial({
+                color: 0xfdba74,
+                roughness: 0.55,
+                metalness: 0.05
+            });
+            victimStripeMaterial = new THREE.MeshStandardMaterial({
+                color: 0xfef08a,
+                emissive: 0xca8a04,
+                emissiveIntensity: 0.28,
+                roughness: 0.35,
+                metalness: 0.25
+            });
+
+            // 1:1 Személyautó anyagok (4.30m × 1.76m × 1.45m – 2 db befér egy 40' konténerbe)
+            carBodyMaterial = new THREE.MeshStandardMaterial({
+                color: 0x0284c7,
+                metalness: 0.62,
+                roughness: 0.28,
+                bumpMap: metalBumpTexture,
+                bumpScale: 0.001
+            });
+            carGlassMaterial = new THREE.MeshStandardMaterial({
+                color: 0xbae6fd,
+                metalness: 0.20,
+                roughness: 0.12,
+                transparent: true,
+                opacity: 0.42
+            });
+            carTireMaterial = new THREE.MeshStandardMaterial({
+                color: 0x111827,
+                roughness: 0.90,
+                metalness: 0.05
+            });
+            carRimMaterial = new THREE.MeshStandardMaterial({
+                color: 0xcbd5e1,
+                metalness: 0.80,
+                roughness: 0.25
+            });
+            carLightFrontMaterial = new THREE.MeshStandardMaterial({
+                color: 0xfef9c3,
+                emissive: 0xfde047,
+                emissiveIntensity: 0.45,
+                roughness: 0.2
+            });
+            carLightRearMaterial = new THREE.MeshStandardMaterial({
+                color: 0xef4444,
+                emissive: 0xdc2626,
+                emissiveIntensity: 0.45,
+                roughness: 0.25
+            });
+
             edgeLineMaterial = new THREE.LineBasicMaterial({
                 color: 0x0f172a,
                 transparent: true,
@@ -704,6 +798,8 @@
             if (type === 'hatch_1x1') return `Kibúvó keret #${seq} (1×1m)`;
             if (type === 'i_beam') return `I-vasgerenda #${seq} (20×20×100cm)`;
             if (type === 'wood_beam') return `Fagerenda #${seq} (30×30×100cm)`;
+            if (type === 'car') return `Személyautó #${seq} (4.30×1.76×1.45m)`;
+            if (type === 'victim') return `Sérült bábu #${seq} (175cm)`;
             return `4-részes keret #${seq} (2×2m)`;
         }
 
@@ -760,6 +856,158 @@
             tagItemHierarchy(itemObj.mesh, frameId, itemObj.uid);
         }
 
+        // 1:1 méretarányú USAR mentőbábu építése (fekvő / ülő / összekuporodott póz)
+        function rebuildVictimPose(itemObj, frameId) {
+            if (!itemObj || itemObj.type !== 'victim') return;
+            disposeGroupGeometries(itemObj.mesh);
+            while (itemObj.mesh.children.length > 0) {
+                itemObj.mesh.remove(itemObj.mesh.children[0]);
+            }
+            const pose = itemObj.pose || 'lying';
+            const g = itemObj.mesh;
+
+            function addPart(geom, mat, x, y, z, rx = 0, ry = 0, rz = 0) {
+                const m = new THREE.Mesh(geom, mat);
+                m.position.set(x, y, z);
+                m.rotation.set(rx, ry, rz);
+                m.castShadow = true;
+                m.receiveShadow = true;
+                g.add(m);
+                return m;
+            }
+
+            if (pose === 'sitting') {
+                // Ülő sérült (pl. autóülésbe vagy sarokba támasztva): 0,0,0 az ülőfelület alja
+                // Medence + törzs
+                addPart(new THREE.BoxGeometry(0.36, 0.16, 0.26), victimSuitMaterial, 0, 0.08, -0.05);
+                addPart(new THREE.BoxGeometry(0.38, 0.50, 0.22), victimSuitMaterial, 0, 0.39, -0.08, -0.10, 0, 0);
+                // Mellkasi fényvisszaverő mentőcsík + kereszt
+                addPart(new THREE.BoxGeometry(0.39, 0.07, 0.23), victimStripeMaterial, 0, 0.48, -0.08, -0.10, 0, 0);
+                // Fej
+                addPart(new THREE.SphereGeometry(0.115, 16, 14), victimHeadMaterial, 0, 0.76, -0.11);
+                // Combok előre (+Z)
+                addPart(new THREE.CylinderGeometry(0.075, 0.068, 0.44, 12), victimSuitMaterial, -0.10, 0.11, 0.16, Math.PI / 2 - 0.08, 0, 0);
+                addPart(new THREE.CylinderGeometry(0.075, 0.068, 0.44, 12), victimSuitMaterial,  0.10, 0.11, 0.16, Math.PI / 2 - 0.08, 0, 0);
+                // Lábszárak lefelé
+                addPart(new THREE.CylinderGeometry(0.062, 0.052, 0.42, 12), victimSuitMaterial, -0.10, -0.08, 0.38, 0.18, 0, 0);
+                addPart(new THREE.CylinderGeometry(0.062, 0.052, 0.42, 12), victimSuitMaterial,  0.10, -0.08, 0.38, 0.18, 0, 0);
+                // Karok ölbe engedve
+                addPart(new THREE.CylinderGeometry(0.052, 0.045, 0.52, 10), victimSuitMaterial, -0.24, 0.34, 0.06, 0.65, 0, 0.12);
+                addPart(new THREE.CylinderGeometry(0.052, 0.045, 0.52, 10), victimSuitMaterial,  0.24, 0.34, 0.06, 0.65, 0, -0.12);
+            } else if (pose === 'curled') {
+                // Oldalán összekuporodott sérült szűk üregbe (~1.05m × 0.55m helyigény)
+                addPart(new THREE.BoxGeometry(0.24, 0.24, 0.54), victimSuitMaterial, 0, 0.13, -0.06, 0, 0.15, 0);
+                addPart(new THREE.BoxGeometry(0.25, 0.25, 0.08), victimStripeMaterial, 0, 0.13, -0.14, 0, 0.15, 0);
+                addPart(new THREE.SphereGeometry(0.115, 16, 14), victimHeadMaterial, 0.05, 0.14, -0.43);
+                // Felhúzott lábak
+                addPart(new THREE.CylinderGeometry(0.072, 0.062, 0.42, 12), victimSuitMaterial, 0.14, 0.11, 0.24, Math.PI / 2, 0, -0.65);
+                addPart(new THREE.CylinderGeometry(0.060, 0.050, 0.40, 12), victimSuitMaterial, 0.16, 0.09, 0.42, Math.PI / 2, 0, 0.55);
+                // Mellkas elé húzott karok
+                addPart(new THREE.CylinderGeometry(0.048, 0.042, 0.44, 10), victimSuitMaterial, 0.16, 0.16, -0.24, Math.PI / 2, 0, -0.5);
+            } else {
+                // Fekvő 175 cm-es sérült bábu (hátán fekszik, Y = 0..0.24m)
+                // Törzs + medence
+                addPart(new THREE.BoxGeometry(0.38, 0.20, 0.62), victimSuitMaterial, 0, 0.11, -0.12);
+                // Fényvisszaverő csík a mellkason
+                addPart(new THREE.BoxGeometry(0.39, 0.21, 0.08), victimStripeMaterial, 0, 0.11, -0.24);
+                // Fej (-Z irányban)
+                addPart(new THREE.SphereGeometry(0.115, 16, 14), victimHeadMaterial, 0, 0.13, -0.57);
+                // Bal és jobb láb (+Z irányban, enyhén terpeszben)
+                addPart(new THREE.CylinderGeometry(0.075, 0.055, 0.84, 12), victimSuitMaterial, -0.11, 0.09, 0.58, Math.PI / 2, 0, -0.06);
+                addPart(new THREE.CylinderGeometry(0.075, 0.055, 0.84, 12), victimSuitMaterial,  0.11, 0.09, 0.58, Math.PI / 2, 0,  0.06);
+                addPart(new THREE.CylinderGeometry(0.062, 0.062, 0.06, 12), victimStripeMaterial, -0.12, 0.09, 0.78, Math.PI / 2, 0, -0.06);
+                addPart(new THREE.CylinderGeometry(0.062, 0.062, 0.06, 12), victimStripeMaterial,  0.12, 0.09, 0.78, Math.PI / 2, 0,  0.06);
+                // Bal és jobb kar
+                addPart(new THREE.CylinderGeometry(0.052, 0.044, 0.66, 10), victimSuitMaterial, -0.27, 0.09, -0.08, Math.PI / 2, 0, 0.18);
+                addPart(new THREE.CylinderGeometry(0.052, 0.044, 0.66, 10), victimSuitMaterial,  0.27, 0.09, -0.08, Math.PI / 2, 0, -0.18);
+            }
+            tagItemHierarchy(g, frameId, itemObj.uid);
+        }
+
+        // Valódi 1:1 méretarányú kompakt személyautó (4.30m hosszú × 1.76m széles × 1.45m magas)
+        // Kerekek alja Y = 0-nál van, így 2 db kényelmesen befér a 12.19m × 2.44m-es konténerbe!
+        function buildRealisticCarGeometry(itemGroup) {
+            // 1. Alsó karosszériatest (4.30m × 0.54m × 1.76m -> X=1.76, Y=0.54, Z=4.30)
+            addBoxWithEdges(itemGroup, 1.76, 0.52, 4.30, carBodyMaterial, 0, 0.48, 0);
+            // Első és hátsó lökhárító szoknya
+            addBoxWithEdges(itemGroup, 1.78, 0.22, 0.36, darkSteelMaterial, 0, 0.29, -1.98);
+            addBoxWithEdges(itemGroup, 1.78, 0.22, 0.36, darkSteelMaterial, 0, 0.29,  1.98);
+
+            // 2. Utasfülke tetőoszlopokkal (üvegezett kabin, hogy a belsejébe is lehessen sérültet ültetni!)
+            // Tetőlemez (1.52m széles, 1.85m hosszú, Y = 1.41m -> teljes magasság 1.45m)
+            addBoxWithEdges(itemGroup, 1.52, 0.07, 1.85, carBodyMaterial, 0, 1.415, 0.12);
+
+            // A-, B-, C-oszlopok (bal és jobb oldalon)
+            const pillarPositions = [
+                [-0.73, 1.07, -0.78,  0.42], // Bal A-oszlop (döntött)
+                [ 0.73, 1.07, -0.78,  0.42], // Jobb A-oszlop
+                [-0.74, 1.07,  0.10,  0.00], // Bal B-oszlop
+                [ 0.74, 1.07,  0.10,  0.00], // Jobb B-oszlop
+                [-0.73, 1.07,  0.98, -0.38], // Bal C-oszlop (döntött)
+                [ 0.73, 1.07,  0.98, -0.38]  // Jobb C-oszlop
+            ];
+            pillarPositions.forEach(([px, py, pz, tiltX]) => {
+                const pGeom = new THREE.BoxGeometry(0.06, 0.70, 0.08);
+                const pMesh = new THREE.Mesh(pGeom, carBodyMaterial);
+                pMesh.position.set(px, py, pz);
+                pMesh.rotation.x = tiltX;
+                pMesh.castShadow = true;
+                itemGroup.add(pMesh);
+            });
+
+            // Átlátszó szélvédő, hátsó üveg és oldalablakok
+            const frontGlass = new THREE.Mesh(new THREE.BoxGeometry(1.46, 0.68, 0.03), carGlassMaterial);
+            frontGlass.position.set(0, 1.07, -0.82);
+            frontGlass.rotation.x = 0.46;
+            itemGroup.add(frontGlass);
+
+            const rearGlass = new THREE.Mesh(new THREE.BoxGeometry(1.46, 0.66, 0.03), carGlassMaterial);
+            rearGlass.position.set(0, 1.07, 1.04);
+            rearGlass.rotation.x = -0.42;
+            itemGroup.add(rearGlass);
+
+            [-0.75, 0.75].forEach(sx => {
+                const sideGlass = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.56, 1.65), carGlassMaterial);
+                sideGlass.position.set(sx, 1.07, 0.12);
+                itemGroup.add(sideGlass);
+            });
+
+            // Belső ülések (hogy az ülő sérült bábu élethűen beleültethető legyen)
+            [-0.38, 0.38].forEach(sx => {
+                addBoxWithEdges(itemGroup, 0.46, 0.12, 0.48, darkSteelMaterial, sx, 0.56, -0.12);
+                addBoxWithEdges(itemGroup, 0.44, 0.52, 0.10, darkSteelMaterial, sx, 0.84,  0.08);
+            });
+
+            // 3. Fényszórók (elöl: -Z) és hátsó lámpák (hátul: +Z)
+            [-0.62, 0.62].forEach(lx => {
+                const hl = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.14, 0.06), carLightFrontMaterial);
+                hl.position.set(lx, 0.56, -2.14);
+                itemGroup.add(hl);
+
+                const tl = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.14, 0.06), carLightRearMaterial);
+                tl.position.set(lx, 0.58, 2.14);
+                itemGroup.add(tl);
+            });
+
+            // 4. 4 db kerék (átmérő: 64cm -> sugár: 0.32m, szélesség: 21cm; tengelytáv: 2.62m)
+            const wheelGeom = new THREE.CylinderGeometry(0.32, 0.32, 0.21, 20);
+            wheelGeom.rotateZ(Math.PI / 2);
+            const rimGeom = new THREE.CylinderGeometry(0.19, 0.19, 0.22, 14);
+            rimGeom.rotateZ(Math.PI / 2);
+
+            [[-0.80, -1.31], [0.80, -1.31], [-0.80, 1.31], [0.80, 1.31]].forEach(([wx, wz]) => {
+                const tire = new THREE.Mesh(wheelGeom, carTireMaterial);
+                tire.position.set(wx, 0.32, wz);
+                tire.castShadow = true;
+                tire.receiveShadow = true;
+                itemGroup.add(tire);
+
+                const rim = new THREE.Mesh(rimGeom, carRimMaterial);
+                rim.position.set(wx, 0.32, wz);
+                itemGroup.add(rim);
+            });
+        }
+
         function buildInteriorItemObject(frameObj, spec) {
             const seq = nextItemSeq++;
             const uid = spec.uid || `item_${Date.now()}_${seq}_${Math.floor(Math.random() * 1000)}`;
@@ -768,6 +1016,7 @@
             const slots = Array.isArray(spec.slots) && spec.slots.length === 4
                 ? spec.slots.slice()
                 : ['concrete', 'concrete', 'concrete', 'concrete'];
+            const pose = spec.pose || 'lying';
 
             const itemGroup = new THREE.Group();
             let slotsGroup = null;
@@ -821,6 +1070,8 @@
             } else if (type === 'wood_beam') {
                 // 30cm × 30cm × 100cm tömör fagerenda (0.30m × 0.30m × 1.00m)
                 addBoxWithEdges(itemGroup, 0.30, 0.30, 1.00, woodBeamMaterial, 0, 0, 0);
+            } else if (type === 'car') {
+                buildRealisticCarGeometry(itemGroup);
             }
 
             // Alapértelmezett pozíció a konténer belsejében / oldalfal síkjában (konténer lokális koordinátákban)
@@ -831,6 +1082,8 @@
             if (type === 'frame_2x2') defaultY = FLOOR_Y + 1.00;
             if (type === 'i_beam') defaultY = FLOOR_Y + 0.10;
             if (type === 'wood_beam') defaultY = FLOOR_Y + 0.15;
+            if (type === 'car') defaultY = FLOOR_Y;
+            if (type === 'victim') defaultY = FLOOR_Y + 0.02;
             if (type === 'hatch_1x1') {
                 // Alapból a jobb oldali konténerfal síkjába kerül (90° Y forgatással, hogy a nyílás kifelé nézzen)
                 defaultX = ISO_40.W / 2 - 0.065;
@@ -840,6 +1093,11 @@
 
             if (Array.isArray(spec.pos) && spec.pos.length === 3) {
                 itemGroup.position.set(Number(spec.pos[0]) || 0, Number(spec.pos[1]) || 0, Number(spec.pos[2]) || 0);
+            } else if (type === 'car') {
+                // Ha már van 1 autó a konténerben, a 2. automatikusan a hátsó félbe kerül (+2.85m), az 1. pedig az első félbe (-2.85m)!
+                const existingCars = frameObj.items.filter(it => it.type === 'car').length;
+                const carZ = existingCars % 2 === 0 ? -2.85 : 2.85;
+                itemGroup.position.set(0, defaultY, carZ);
             } else {
                 const existingCount = frameObj.items.length;
                 const zSpread = ((existingCount % 7) - 3) * 0.65;
@@ -856,9 +1114,11 @@
                 itemGroup.rotation.set(0, THREE.MathUtils.degToRad(defaultRotY), 0);
             }
 
-            const itemObj = { uid, type, name, slots, mesh: itemGroup, slotsGroup };
+            const itemObj = { uid, type, name, slots, pose, mesh: itemGroup, slotsGroup };
             if (type === 'frame_2x2') {
                 rebuildFrame2x2Slots(itemObj, frameObj.id);
+            } else if (type === 'victim') {
+                rebuildVictimPose(itemObj, frameObj.id);
             } else {
                 tagItemHierarchy(itemGroup, frameObj.id, uid);
             }
@@ -874,7 +1134,8 @@
                 uid: it.uid,
                 type: it.type,
                 name: it.name,
-                slots: Array.isArray(it.slots) ? it.slots.slice() : undefined,
+                slots: it.type === 'frame_2x2' && Array.isArray(it.slots) ? it.slots.slice() : undefined,
+                pose: it.type === 'victim' ? (it.pose || 'lying') : undefined,
                 pos: [
                     Number(it.mesh.position.x.toFixed(3)),
                     Number(it.mesh.position.y.toFixed(3)),
@@ -929,6 +1190,12 @@
             let offsetZ = p.z;
             if (selectedItem.type === 'hatch_1x1') {
                 offsetZ = Math.min(5.4, p.z + 1.15);
+            } else if (selectedItem.type === 'car') {
+                // Ha az első térfélben van, a másolat ugorjon a hátsó térfélbe (és fordítva), hogy a 2 autó szépen egymás mögé kerüljön!
+                offsetZ = p.z <= 0 ? 2.85 : -2.85;
+            } else if (selectedItem.type === 'victim') {
+                offsetX = Math.max(-0.75, Math.min(0.75, p.x >= 0 ? p.x - 0.55 : p.x + 0.55));
+                offsetZ = Math.min(5.2, p.z + 0.35);
             } else if (selectedItem.type === 'frame_2x2') {
                 offsetZ = Math.min(5.2, p.z + 0.35);
             } else if (selectedItem.type === 'i_beam' || selectedItem.type === 'wood_beam') {
@@ -940,7 +1207,8 @@
             }
             const copySpec = {
                 type: selectedItem.type,
-                slots: Array.isArray(selectedItem.slots) ? selectedItem.slots.slice() : undefined,
+                slots: selectedItem.type === 'frame_2x2' && Array.isArray(selectedItem.slots) ? selectedItem.slots.slice() : undefined,
+                pose: selectedItem.type === 'victim' ? (selectedItem.pose || 'lying') : undefined,
                 pos: [
                     Number(offsetX.toFixed(3)),
                     Number(p.y.toFixed(3)),
@@ -1053,6 +1321,74 @@
             showToast('1×1m kibúvó a konténer síkjába igazítva');
         };
 
+        function updateVictimAndCarUI() {
+            const poseEditor = document.getElementById('victim-pose-editor');
+            const carEditor = document.getElementById('car-quick-editor');
+
+            if (poseEditor) {
+                if (inspectorTab === 'item' && selectedItem && selectedItem.type === 'victim') {
+                    poseEditor.classList.remove('hidden');
+                    const curPose = selectedItem.pose || 'lying';
+                    ['lying', 'sitting', 'curled'].forEach(p => {
+                        const btn = document.getElementById(`pose-btn-${p}`);
+                        if (!btn) return;
+                        btn.className = (p === curPose)
+                            ? 'py-1.5 px-1.5 rounded-lg text-[10.5px] font-bold bg-rose-600 text-white border border-rose-300 transition'
+                            : 'py-1.5 px-1.5 rounded-lg text-[10.5px] font-semibold bg-slate-800 hover:bg-slate-700 text-rose-200 border border-slate-700 transition';
+                    });
+                } else {
+                    poseEditor.classList.add('hidden');
+                }
+            }
+
+            if (carEditor) {
+                if (inspectorTab === 'item' && selectedItem && selectedItem.type === 'car') {
+                    carEditor.classList.remove('hidden');
+                } else {
+                    carEditor.classList.add('hidden');
+                }
+            }
+        }
+
+        window.setVictimPose = function(pose) {
+            if (!selectedFrame || !selectedItem || selectedItem.type !== 'victim') return;
+            selectedItem.pose = pose;
+            rebuildVictimPose(selectedItem, selectedFrame.id);
+            if (pose === 'sitting' && selectedItem.mesh.position.y < FLOOR_Y + 0.25) {
+                // Ülő póznál kissé megemeljük, hogy a lába se lógjon a padló alá (vagy autóülés magasságba kerüljön)
+                selectedItem.mesh.position.y = FLOOR_Y + 0.30;
+            }
+            updateVictimAndCarUI();
+            refreshGizmoAndHighlight();
+            scheduleAutosave();
+            showToast('Sérült testhelyzete frissítve');
+        };
+
+        window.quickPlaceCar = function(preset) {
+            if (!selectedFrame || !selectedItem || selectedItem.type !== 'car') return;
+            const m = selectedItem.mesh;
+            if (preset === 'front_slot') {
+                m.position.set(0, FLOOR_Y, -2.95);
+                m.rotation.set(0, 0, 0);
+                showToast('1. autó helyére (első félbe) állítva');
+            } else if (preset === 'rear_slot') {
+                m.position.set(0, FLOOR_Y, 2.95);
+                m.rotation.set(0, 0, 0);
+                showToast('2. autó helyére (hátsó félbe) állítva');
+            } else if (preset === 'roof_crush') {
+                m.rotation.set(0, m.rotation.y, Math.PI);
+                m.position.y = FLOOR_Y + 1.46;
+                showToast('Autó a tetejére (fejre) fordítva');
+            } else if (preset === 'side_roll') {
+                m.rotation.set(0, m.rotation.y, Math.PI / 2);
+                m.position.y = FLOOR_Y + 0.90;
+                showToast('Autó az oldalára borítva');
+            }
+            syncInputsFromSelected();
+            refreshGizmoAndHighlight();
+            scheduleAutosave();
+        };
+
         function updateItemSelectorUI() {
             const selector = document.getElementById('item-selector');
             const badge = document.getElementById('item-count-badge');
@@ -1143,6 +1479,7 @@
             updateItemSelectorUI();
             updateFrame2x2SlotsUI();
             updateHatch1x1UI();
+            updateVictimAndCarUI();
             updateFloorRibsUI();
             refreshGizmoAndHighlight();
         };
@@ -1924,6 +2261,15 @@
             if (hatchSteelMaterial) hatchSteelMaterial.dispose();
             if (iBeamSteelMaterial) iBeamSteelMaterial.dispose();
             if (woodBeamMaterial) woodBeamMaterial.dispose();
+            if (victimSuitMaterial) victimSuitMaterial.dispose();
+            if (victimHeadMaterial) victimHeadMaterial.dispose();
+            if (victimStripeMaterial) victimStripeMaterial.dispose();
+            if (carBodyMaterial) carBodyMaterial.dispose();
+            if (carGlassMaterial) carGlassMaterial.dispose();
+            if (carTireMaterial) carTireMaterial.dispose();
+            if (carRimMaterial) carRimMaterial.dispose();
+            if (carLightFrontMaterial) carLightFrontMaterial.dispose();
+            if (carLightRearMaterial) carLightRearMaterial.dispose();
             if (noGoFaceMaterial) noGoFaceMaterial.dispose();
             if (edgeLineMaterial) edgeLineMaterial.dispose();
 
