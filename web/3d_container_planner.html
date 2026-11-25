@@ -330,6 +330,24 @@
                                 <button onclick="setSelectedColor('#334155')" class="w-8 h-8 rounded-xl border border-white/20 hover:scale-110 transition" style="background-color: #334155;" title="Antracit"></button>
                             </div>
                         </div>
+
+                        <!-- ALSÓ PADLÓRÁCSOZÁS RÁCSONKÉNTI TÖRLÉSE / VISSZAÁLLÍTÁSA -->
+                        <div class="bg-slate-900/80 border border-slate-700/80 rounded-xl p-2.5 flex flex-col gap-2">
+                            <div class="flex items-center justify-between gap-2">
+                                <div>
+                                    <div class="text-xs font-bold text-slate-200">Alsó rácsozás (<span id="floor-rib-count">35/35</span>)</div>
+                                    <div class="text-[10px] text-slate-400">Törlés rácsonként vagy 3D kattintással</div>
+                                </div>
+                                <button id="btn-rib-eraser" onclick="toggleRibEraserMode()" class="px-2.5 py-1.5 rounded-lg text-[10.5px] font-bold bg-slate-800 hover:bg-rose-900/70 text-slate-200 border border-slate-600 transition whitespace-nowrap" title="Ha bekapcsolod, a 3D nézetben bármelyik alsó rácsra kattintva ki/be kapcsolhatod azt">
+                                    ✂️ 3D Törlő: Ki
+                                </button>
+                            </div>
+                            <div id="floor-ribs-grid" class="grid grid-cols-7 gap-1"></div>
+                            <div class="flex items-center justify-between gap-2 pt-0.5">
+                                <button onclick="restoreAllFloorRibs()" class="flex-1 py-1 px-2 rounded-lg text-[10.5px] font-semibold bg-slate-800 hover:bg-emerald-900/60 text-emerald-300 border border-slate-700 transition">Összes vissza</button>
+                                <button onclick="removeAllFloorRibs()" class="flex-1 py-1 px-2 rounded-lg text-[10.5px] font-semibold bg-slate-800 hover:bg-rose-900/60 text-rose-300 border border-slate-700 transition">Összes törlése</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -339,6 +357,7 @@
     <script>
         const ISO_40 = { W: 2.438, H: 2.591, L: 12.192 };
         const FLOOR_Y = 0.13;
+        const FLOOR_RIB_TOTAL = 35;
         const DEFAULT_COLORS = ['#8b261d', '#1e3a8a', '#d97706', '#14532d', '#cbd5e1', '#334155'];
         const SLOT_LABELS = ['Bal felső', 'Jobb felső', 'Bal alsó', 'Jobb alsó'];
 
@@ -348,6 +367,7 @@
         let selectedFrame = null;
         let selectedItem = null;
         let inspectorTab = 'frame';
+        let ribEraserMode = false;
         let nextFrameId = 1;
         let nextItemSeq = 1;
         let snapEnabled = false;
@@ -589,15 +609,18 @@
             leftBottomRail.receiveShadow = rightBottomRail.receiveShadow = true;
             group.add(leftBottomRail, rightBottomRail);
 
-            const crossCount = 34;
+            const crossCount = FLOOR_RIB_TOTAL - 1;
             const crossGeom = new THREE.BoxGeometry(W - 0.24, 0.10, 0.055);
+            const floorRibMeshes = [];
             for (let i = 0; i <= crossCount; i++) {
                 const zPos = -L / 2 + 0.30 + (i / crossCount) * (L - 0.60);
                 const cross = new THREE.Mesh(crossGeom, darkSteelMaterial);
                 cross.position.set(0, 0.075, zPos);
                 cross.castShadow = true;
                 cross.receiveShadow = true;
+                cross.userData.floorRibIndex = i;
                 group.add(cross);
+                floorRibMeshes.push(cross);
             }
 
             const tunnelLength = 3.15;
@@ -661,7 +684,7 @@
                 if (child.isMesh) child.userData.frameId = frameId;
             });
 
-            return { group, material: frameMaterial };
+            return { group, material: frameMaterial, floorRibMeshes };
         }
 
         function disposeGroupGeometries(group) {
@@ -1120,13 +1143,101 @@
             updateItemSelectorUI();
             updateFrame2x2SlotsUI();
             updateHatch1x1UI();
+            updateFloorRibsUI();
             refreshGizmoAndHighlight();
         };
 
-        window.addContainerFrame = function(pos = null, rot = null, customColor = null, customName = null, silent = false, initialItems = null) {
+        // --- ALSÓ PADLÓRÁCSOZÁS RÁCSONKÉNTI KEZELÉSE (35 DB KERESZTTARTÓ) ---
+        function applyFloorRibVisibility(frameObj) {
+            if (!frameObj || !Array.isArray(frameObj.floorRibMeshes)) return;
+            const removedSet = frameObj.removedFloorRibs || new Set();
+            frameObj.floorRibMeshes.forEach((mesh, idx) => {
+                mesh.visible = !removedSet.has(idx);
+            });
+        }
+
+        function updateFloorRibsUI() {
+            const grid = document.getElementById('floor-ribs-grid');
+            const countEl = document.getElementById('floor-rib-count');
+            const eraserBtn = document.getElementById('btn-rib-eraser');
+            if (eraserBtn) {
+                eraserBtn.className = ribEraserMode
+                    ? 'px-2.5 py-1.5 rounded-lg text-[10.5px] font-bold bg-rose-600 text-white border border-rose-400 transition whitespace-nowrap shadow shadow-rose-950/50'
+                    : 'px-2.5 py-1.5 rounded-lg text-[10.5px] font-bold bg-slate-800 hover:bg-rose-900/70 text-slate-200 border border-slate-600 transition whitespace-nowrap';
+                eraserBtn.textContent = ribEraserMode ? '✂️ 3D Törlő: AKTÍV' : '✂️ 3D Törlő: Ki';
+            }
+            if (!grid || !selectedFrame) return;
+            const removedSet = selectedFrame.removedFloorRibs || new Set();
+            const activeCount = FLOOR_RIB_TOTAL - removedSet.size;
+            if (countEl) countEl.textContent = `${activeCount}/${FLOOR_RIB_TOTAL}`;
+
+            grid.innerHTML = '';
+            for (let i = 0; i < FLOOR_RIB_TOTAL; i++) {
+                const isRemoved = removedSet.has(i);
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.title = isRemoved
+                    ? `${i + 1}. padlórács visszaállítása`
+                    : `${i + 1}. padlórács törlése`;
+                btn.className = isRemoved
+                    ? 'py-1 rounded text-[9.5px] font-mono font-bold bg-rose-950/60 border border-rose-800/70 border-dashed text-rose-400/80 hover:bg-rose-900/70 transition'
+                    : 'py-1 rounded text-[9.5px] font-mono font-bold bg-slate-800 border border-slate-600 text-slate-200 hover:bg-rose-600 hover:border-rose-400 hover:text-white transition';
+                btn.textContent = String(i + 1);
+                btn.onclick = () => window.toggleFloorRib(i);
+                grid.appendChild(btn);
+            }
+        }
+
+        window.toggleFloorRib = function(ribIdx, targetFrame = null) {
+            const frame = targetFrame || selectedFrame;
+            if (!frame || ribIdx < 0 || ribIdx >= FLOOR_RIB_TOTAL) return;
+            if (!frame.removedFloorRibs) frame.removedFloorRibs = new Set();
+            const wasRemoved = frame.removedFloorRibs.has(ribIdx);
+            if (wasRemoved) {
+                frame.removedFloorRibs.delete(ribIdx);
+            } else {
+                frame.removedFloorRibs.add(ribIdx);
+            }
+            applyFloorRibVisibility(frame);
+            updateFloorRibsUI();
+            scheduleAutosave();
+            showToast(wasRemoved ? `${ribIdx + 1}. alsó rács visszaállítva` : `${ribIdx + 1}. alsó rács törölve`);
+        };
+
+        window.toggleRibEraserMode = function() {
+            ribEraserMode = !ribEraserMode;
+            if (ribEraserMode && inspectorTab !== 'frame') {
+                window.switchInspectorTab('frame');
+            } else {
+                updateFloorRibsUI();
+            }
+            showToast(ribEraserMode
+                ? '3D Rácstörlő mód: kattints bármelyik alsó rácsra a törléshez!'
+                : '3D Rácstörlő mód kikapcsolva');
+        };
+
+        window.restoreAllFloorRibs = function() {
+            if (!selectedFrame) return;
+            selectedFrame.removedFloorRibs = new Set();
+            applyFloorRibVisibility(selectedFrame);
+            updateFloorRibsUI();
+            scheduleAutosave();
+            showToast('Összes alsó rács visszaállítva');
+        };
+
+        window.removeAllFloorRibs = function() {
+            if (!selectedFrame) return;
+            selectedFrame.removedFloorRibs = new Set(Array.from({ length: FLOOR_RIB_TOTAL }, (_, i) => i));
+            applyFloorRibVisibility(selectedFrame);
+            updateFloorRibsUI();
+            scheduleAutosave();
+            showToast('Összes alsó rács törölve');
+        };
+
+        window.addContainerFrame = function(pos = null, rot = null, customColor = null, customName = null, silent = false, initialItems = null, initialRemovedRibs = null) {
             const id = nextFrameId++;
             const color = customColor || DEFAULT_COLORS[(id - 1) % DEFAULT_COLORS.length];
-            const { group, material } = create40ftFrameGroup(id, color);
+            const { group, material, floorRibMeshes } = create40ftFrameGroup(id, color);
 
             if (pos) {
                 group.position.copy(pos);
@@ -1140,7 +1251,13 @@
             if (rot) group.rotation.copy(rot);
             scene.add(group);
 
-            const frameObj = { id, name: customName || `40' Váz #${id}`, group, material, color, items: [] };
+            const removedFloorRibs = new Set(
+                Array.isArray(initialRemovedRibs)
+                    ? initialRemovedRibs.map(n => Number(n)).filter(n => Number.isInteger(n) && n >= 0 && n < FLOOR_RIB_TOTAL)
+                    : []
+            );
+            const frameObj = { id, name: customName || `40' Váz #${id}`, group, material, color, items: [], floorRibMeshes, removedFloorRibs };
+            applyFloorRibVisibility(frameObj);
             containerFrames.push(frameObj);
 
             if (Array.isArray(initialItems)) {
@@ -1170,7 +1287,8 @@
             localOffset.applyEuler(ref.rotation);
             const newPos = ref.position.clone().add(localOffset);
             const clonedItems = serializeFrameItems(selectedFrame);
-            addContainerFrame(newPos, ref.rotation.clone(), null, null, false, clonedItems);
+            const clonedRibs = selectedFrame.removedFloorRibs ? Array.from(selectedFrame.removedFloorRibs) : [];
+            addContainerFrame(newPos, ref.rotation.clone(), null, null, false, clonedItems, clonedRibs);
         };
 
         window.duplicateSelectedFrame = function() {
@@ -1178,7 +1296,8 @@
             const pos = selectedFrame.group.position.clone();
             pos.x += ISO_40.W + 0.5;
             const clonedItems = serializeFrameItems(selectedFrame);
-            addContainerFrame(pos, selectedFrame.group.rotation.clone(), selectedFrame.color, null, false, clonedItems);
+            const clonedRibs = selectedFrame.removedFloorRibs ? Array.from(selectedFrame.removedFloorRibs) : [];
+            addContainerFrame(pos, selectedFrame.group.rotation.clone(), selectedFrame.color, null, false, clonedItems, clonedRibs);
         };
 
         window.deleteSelectedFrame = function() {
@@ -1344,6 +1463,7 @@
                         Math.round(THREE.MathUtils.radToDeg(f.group.rotation.y) * 10) / 10,
                         Math.round(THREE.MathUtils.radToDeg(f.group.rotation.z) * 10) / 10
                     ],
+                    removedFloorRibs: f.removedFloorRibs ? Array.from(f.removedFloorRibs).sort((a, b) => a - b) : [],
                     items: serializeFrameItems(f)
                 }))
             };
@@ -1399,7 +1519,8 @@
                     fd.color || '#8b261d',
                     fd.name || null,
                     true,
-                    Array.isArray(fd.items) ? fd.items : []
+                    Array.isArray(fd.items) ? fd.items : [],
+                    Array.isArray(fd.removedFloorRibs) ? fd.removedFloorRibs : []
                 );
             });
             updateFrameSelectorUI();
@@ -1681,11 +1802,25 @@
 
                 raycaster.setFromCamera(pointer, camera);
                 const allGroups = containerFrames.map(f => f.group);
-                // Csak Mesh találatokat veszünk figyelembe (LineSegments ne zavarjon be)
-                const intersects = raycaster.intersectObjects(allGroups, true).filter(hit => hit.object && hit.object.isMesh);
+                // Csak látható Mesh találatokat veszünk figyelembe (LineSegments és már törölt rács ne zavarjon be)
+                const intersects = raycaster.intersectObjects(allGroups, true).filter(hit => hit.object && hit.object.isMesh && hit.object.visible);
 
                 if (intersects.length > 0) {
-                    // Ha a sugár előbb vázon halad át, de közvetlenül mögötte belső elem van, nézzük meg az első belső elemet vagy a legközelebbi találatot
+                    // Ha aktív a 3D Rácstörlő mód, vagy Shift/Alt billentyűvel kattintunk egy alsó padlórácsra: azonnal töröljük azt a rácsot!
+                    if (ribEraserMode || e.shiftKey || e.altKey) {
+                        const ribHit = intersects.find(hit => typeof hit.object.userData.floorRibIndex === 'number');
+                        if (ribHit) {
+                            const ribFrame = containerFrames.find(f => f.id === ribHit.object.userData.frameId);
+                            if (ribFrame) {
+                                if (!selectedFrame || selectedFrame.id !== ribFrame.id) {
+                                    selectFrame(ribFrame, false);
+                                }
+                                window.toggleFloorRib(ribHit.object.userData.floorRibIndex, ribFrame);
+                                return;
+                            }
+                        }
+                    }
+
                     const firstHit = intersects[0].object;
                     const hitFrameId = firstHit.userData.frameId;
                     const hitItemUid = firstHit.userData.itemUid;
