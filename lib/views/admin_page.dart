@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../features/event_quiz/event_quiz_admin_screen.dart';
 import '../models/member.dart';
 import '../models/rescue_alert.dart';
 import '../models/rescue_event.dart';
@@ -33,6 +34,36 @@ class AdminPage extends StatelessWidget {
             const SizedBox(width: 10),
             Expanded(child: _MetricCard(Icons.warning_amber_rounded, s.alerts.where((a) => a.status == 'active').length.toString(), 'Aktív')),
           ]),
+          const SizedBox(height: 18),
+          _SectionHeader('RENDEZVÉNY QR KVÍZ', Icons.qr_code_2_rounded),
+          Card(
+            child: ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              leading: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: HunorColors.surface2,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.qr_code_scanner_rounded, color: Color(0xFFF59E0B)),
+              ),
+              title: const Text(
+                'Event QR Kvíz & Nyereménykód Kezelő',
+                style: TextStyle(fontWeight: FontWeight.w800),
+              ),
+              subtitle: const Text(
+                'Rendezvény-kvízek létrehozása, élő statisztika és nyomtatható QR-kód generálás',
+                style: TextStyle(color: HunorColors.muted, fontSize: 12),
+              ),
+              trailing: const Icon(Icons.chevron_right, color: HunorColors.muted),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const EventQuizAdminScreen(),
+                ),
+              ),
+            ),
+          ),
           const SizedBox(height: 18),
           _SectionHeader('ÁLLOMÁNY', Icons.people_outline),
           Card(child: Column(children: [

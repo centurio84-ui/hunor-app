@@ -6,6 +6,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'config.dart';
+import 'features/event_quiz/event_quiz_admin_screen.dart';
+import 'features/event_quiz/event_quiz_guest_screen.dart';
 import 'features/planning/exercise_planning_screen.dart';
 import 'api/mock_rescue_platform_api.dart';
 import 'api/staging_api.dart';
@@ -158,37 +160,131 @@ class HunorApp extends StatelessWidget {
     launchUrl(Uri.base.resolve('/#home'), webOnlyWindowName: '_self');
   }
 
+  /// Extracts `/quiz?event=<slug>` or `/#/quiz?event=<slug>` from either `Uri.base` or route settings.
+  static String? _resolveEventQuizSlug([String? routeName]) {
+    if (routeName != null && routeName.isNotEmpty) {
+      final parsed = Uri.tryParse(routeName);
+      if (parsed != null &&
+          (parsed.path == '/quiz' ||
+              parsed.path.endsWith('/quiz') ||
+              parsed.queryParameters['mode'] == 'quiz')) {
+        final slug = parsed.queryParameters['event']?.trim();
+        if (slug != null && slug.isNotEmpty) return slug;
+      }
+    }
+    if (!kIsWeb) return null;
+    final base = Uri.base;
+    final directEvent = base.queryParameters['event']?.trim();
+    if (directEvent != null &&
+        directEvent.isNotEmpty &&
+        (base.path.contains('/quiz') ||
+            base.queryParameters['mode'] == 'quiz')) {
+      return directEvent;
+    }
+    final frag = base.fragment;
+    if (frag.isNotEmpty) {
+      final fragUri =
+          Uri.tryParse(frag.startsWith('/') ? frag : '/$frag');
+      if (fragUri != null &&
+          (fragUri.path == '/quiz' ||
+              fragUri.path.endsWith('/quiz') ||
+              fragUri.queryParameters['mode'] == 'quiz')) {
+        final fSlug = fragUri.queryParameters['event']?.trim();
+        if (fSlug != null && fSlug.isNotEmpty) return fSlug;
+      }
+    }
+    return null;
+  }
+
+  static bool _isQuizEventsAdminUrl([String? routeName]) {
+    if (routeName != null && routeName.isNotEmpty) {
+      if (routeName.startsWith('/quiz-events')) return true;
+      final parsed = Uri.tryParse(routeName);
+      if (parsed != null &&
+          (parsed.path == '/quiz-events' ||
+              parsed.path.endsWith('/quiz-events') ||
+              parsed.queryParameters['mode'] == 'quiz_admin')) {
+        return true;
+      }
+    }
+    if (!kIsWeb) return false;
+    final base = Uri.base;
+    if (base.queryParameters['mode'] == 'quiz_admin' ||
+        base.path.endsWith('/quiz-events')) {
+      return true;
+    }
+    if (base.fragment.startsWith('/quiz-events') ||
+        base.fragment.startsWith('quiz-events')) {
+      return true;
+    }
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
     final themeController = Provider.of<ThemeController?>(context);
     final theme = themeController?.currentTheme ?? HunorTheme.dark;
+    final initialQuizSlug = _resolveEventQuizSlug();
+    final initialQuizAdmin = _isQuizEventsAdminUrl();
 
     return MaterialApp(
       title: 'MAD Tech Rescue Platform',
       debugShowCheckedModeBanner: false,
       theme: theme,
+      onGenerateRoute: (settings) {
+        final slug = _resolveEventQuizSlug(settings.name);
+        if (slug != null) {
+          // Guest bypass: load EventQuizGuestScreen directly without requiring login!
+          return MaterialPageRoute<void>(
+            settings: settings,
+            builder: (_) => EventQuizGuestScreen(eventSlug: slug),
+          );
+        }
+        if (_isQuizEventsAdminUrl(settings.name)) {
+          return MaterialPageRoute<void>(
+            settings: settings,
+            builder: (_) => const EventQuizAdminScreen(
+              onReturnToPortal: _returnToPortal,
+            ),
+          );
+        }
+        return null;
+      },
       routes: {
         '/planning': (context) => const ExercisePlanningScreen(),
+        '/quiz-events': (context) =>
+            const EventQuizAdminScreen(onReturnToPortal: _returnToPortal),
         '/excon': (context) => const Scaffold(body: ExconScreen()),
         '/dashboard': (context) => const Scaffold(body: ExconDashboardScreen()),
         '/t0': (context) => const Scaffold(body: T0Screen()),
         '/t1': (context) => const Scaffold(body: T1Screen()),
       },
-      home: Consumer<AppStore>(
-        builder: (context, store, _) {
-          if (!store.initialized) {
-            return const Scaffold(
-              body: Center(
-                child: CircularProgressIndicator(color: HunorColors.red),
-              ),
-            );
-          }
-          if (portalPlanning) {
-            return const ExercisePlanningScreen(onReturnToPortal: _returnToPortal);
-          }
-          return store.isAuthenticated ? const AppShell() : const LoginPage();
-        },
-      ),
+      home: initialQuizSlug != null
+          ? EventQuizGuestScreen(eventSlug: initialQuizSlug)
+          : Consumer<AppStore>(
+              builder: (context, store, _) {
+                if (!store.initialized) {
+                  return const Scaffold(
+                    body: Center(
+                      child: CircularProgressIndicator(color: HunorColors.red),
+                    ),
+                  );
+                }
+                if (initialQuizAdmin) {
+                  return const EventQuizAdminScreen(
+                    onReturnToPortal: _returnToPortal,
+                  );
+                }
+                if (portalPlanning) {
+                  return const ExercisePlanningScreen(
+                    onReturnToPortal: _returnToPortal,
+                  );
+                }
+                return store.isAuthenticated
+                    ? const AppShell()
+                    : const LoginPage();
+              },
+            ),
     );
   }
 }
