@@ -16,8 +16,8 @@
     "question": "Miért kell füstben lehetőleg alacsonyan haladni?",
     "options": [
       "Mert a padlón mindig friss levegő van.",
-      "A hő és a füst jellemzően felfelé terjed.",
-      "Mert így gyorsabb a futás."
+      "A hő és a füst jellemzően felfelé száll.",
+      "Mert négykézláb haladva sokkal kisebb az elbotlás és a sérülés veszélye."
     ],
     "correct_index": 1,
     "explanation": "Alacsonyabban általában kedvezőbbek a körülmények, de a füst ott is mérgező lehet.",
@@ -27,9 +27,9 @@
     "id": "Q-003",
     "question": "Mit teszel, ha egy edényben ég a főzőolaj?",
     "options": [
-      "Hideg vizet öntesz rá.",
-      "Az égő edényt kiviszed az erkélyre.",
-      "Ha biztonságos, elzárod a hőt és megfelelő fedővel letakarod; vizet nem öntesz rá."
+      "Azonnal hideg csapvizet öntesz rá, hogy lehűtsd a lángoló zsiradékot.",
+      "Óvatosan megfogod konyharuhával, és kiviszed az égő edényt az erkélyre.",
+      "Elzárod a hőt és fedővel letakarod; vizet tilos ráönteni."
     ],
     "correct_index": 2,
     "explanation": "Az égő olajra öntött víz súlyos lángfellobbanást okozhat. Veszély esetén távolodj el és hívd a 112-t.",
@@ -52,8 +52,8 @@
     "question": "Mire jó az otthoni füstérzékelő?",
     "options": [
       "Automatikusan elolt minden tüzet.",
-      "Korán jelezheti a füstöt és időt adhat a menekülésre.",
-      "Kiváltja a menekülési tervet."
+      "Korán jelzi a füstöt, így időt ad a menekülésre.",
+      "Teljesen kiváltja az otthoni menekülési tervet és a tűzoltó készüléket."
     ],
     "correct_index": 1,
     "explanation": "A korai figyelmeztetés életmentő lehet; az érzékelőt rendszeresen ellenőrizni kell.",
@@ -63,9 +63,9 @@
     "id": "Q-006",
     "question": "Mit teszel, ha egy lítiumakkumulátoros eszköz füstöl és sziszeg?",
     "options": [
-      "Megfogod és zsebre teszed.",
-      "Közelről beleszagolsz, mi ég.",
-      "Eltávolodsz a füsttől, másokat is biztonságba juttatsz, és 112-t hívsz."
+      "Vastag kesztyűvel megfogod, és gyorsan bedobod a konyhai mosogatómedencébe.",
+      "Közelről megvizsgálod a készüléket, és azonnal kihúzod belőle az akkumulátort.",
+      "Eltávolodsz a füsttől, másokat is kiküldesz, és 112-t hívsz."
     ],
     "correct_index": 2,
     "explanation": "A sérült akkumulátor mérgező gázokat bocsáthat ki, és újra meggyulladhat.",
@@ -88,8 +88,8 @@
     "question": "Miért fontos a családi menekülési terv?",
     "options": [
       "Csak a biztosító miatt.",
-      "Mindenki előre tudhatja, merre juthat ki és hol találkozzatok.",
-      "Hogy tűz esetén előbb dokumentumokat keressetek."
+      "Mindenki előre tudja, merre juthat ki és hol találkoztok.",
+      "Hogy vészhelyzetben pontosan beosszátok, ki melyik műszaki cikket menti ki."
     ],
     "correct_index": 1,
     "explanation": "A kijáratok és menekülési útvonalak előzetes ismerete csökkenti a bizonytalanságot.",
@@ -99,9 +99,9 @@
     "id": "Q-009",
     "question": "Mit jelent az elzárkózás veszélyesanyag-felhő esetén?",
     "options": [
-      "Azonnal autóba ülni és a felhő felé indulni.",
-      "Az ablakokat kitárni a szellőzéshez.",
-      "Védett épületben maradni, a nyílászárókat bezárni és követni az utasításokat."
+      "Azonnal gépkocsiba ülni, és megpróbálni kikerülni a terjedő gázfelhőt.",
+      "Minden nyílászárót kitárni, hogy a lakásban ne halmozódjon fel a gáz.",
+      "Épületben maradni, bezárni az ablakokat és figyelni a híreket."
     ],
     "correct_index": 2,
     "explanation": "Veszélyesanyag-felhőnél a külső levegő bejutását kell csökkenteni a hatósági tájékoztatásnak megfelelően.",
@@ -124,8 +124,8 @@
     "question": "Mi a különbség kitelepítés és kimenekítés között?",
     "options": [
       "Nincs különbség, mindkettő ugyanaz.",
-      "A kitelepítés szervezetten tervezhető, a kimenekítés közvetlen veszély miatt sürgős.",
-      "A kitelepítés mindig önkéntes túrázás."
+      "A kitelepítés előre tervezhető, a kimenekítés azonnali veszély miatti.",
+      "A kitelepítés kizárólag önkéntes döntés, a kimenekítés pedig csak gyakorlat."
     ],
     "correct_index": 1,
     "explanation": "A polgári védelem külön kezeli az előre tervezhető és a sürgős lakóhelyelhagyást.",
@@ -135,9 +135,9 @@
     "id": "Q-012",
     "question": "Melyik a legfontosabb összeállítás egy hosszabb kitelepítésre?",
     "options": [
-      "Csak televízió és játékkonzol.",
-      "Nehéz, csak kézben vihető berendezések.",
-      "Okmányok, gyógyszerek, víz, tartós étel, megfelelő ruházat és alapvető higiéniai eszközök."
+      "Nagy értékű szórakoztatóelektronikai eszközök, laptop és családi fotóalbumok.",
+      "Többheti fagyasztott élelmiszerkészlet és nehéz konyhai kisgépek dobozban.",
+      "Okmányok, gyógyszerek, víz, tartós étel, ruha és higiéniai cikkek."
     ],
     "correct_index": 2,
     "explanation": "A csomag legyen személyre szabott, könnyen hordozható, és igazodjon a hatóság tájékoztatásához.",
@@ -160,8 +160,8 @@
     "question": "Mit tegyél, ha hivatalosan elrendelik a kitelepítést?",
     "options": [
       "Várj napokat további magyarázat nélkül.",
-      "Kövesd a kijelölt útvonalat és az illetékesek utasításait.",
-      "Indulj ellenkező irányba ismeretlen úton."
+      "Kövesd a kijelölt útvonalat és a hatóságok utasításait.",
+      "Indulj el önállóan földutakon, hogy elkerüld a főutakon kialakuló torlódást."
     ],
     "correct_index": 1,
     "explanation": "A szervezett mozgás és a tájékoztatás követése fontos az életvédelemhez.",
@@ -171,9 +171,9 @@
     "id": "Q-015",
     "question": "Mire kell gondolni különösen a veszélyhelyzeti csomag tervezésekor?",
     "options": [
-      "Csak a felnőttek irataira.",
-      "Arra, hogy mindenki ugyanazt a méretű ruhát kapja.",
-      "Gyermekek, idősek és tartós betegek sajátos szükségleteire."
+      "Kizárólag a családfenntartó felnőttek eredeti okmányaira és bankkártyáira.",
+      "Arra, hogy minden családtag pontosan egyforma felszerelést és ruhát kapjon.",
+      "Gyermekek, idősek és tartós betegek egyéni szükségleteire."
     ],
     "correct_index": 2,
     "explanation": "A személyes szükségletek, gyógyszerek és segédeszközök nélkülözhetetlenek lehetnek.",
@@ -196,8 +196,8 @@
     "question": "Hosszabb áramszünet alatt mit tegyél a hűtőszekrény ajtajával?",
     "options": [
       "Percenként nyitogasd.",
-      "Lehetőleg tartsd csukva.",
-      "Hagyd kitárva, hogy felmelegedjen."
+      "Lehetőleg tartsd végig csukva az ajtaját.",
+      "Támaszd ki résnyire, hogy ne keletkezzen kellemetlen szag a hűtőtérben."
     ],
     "correct_index": 1,
     "explanation": "A hűtő ajtajának csukva tartása lassítja a felmelegedést. Egy előzőleg megfelelően hűtött, zárva tartott hűtő nagyjából 4 órán át tarthatja biztonságosan hidegen az ételt. Hosszabb kimaradásnál a hőmérséklet és az élelmiszer típusa alapján kell dönteni; kóstolással ne ellenőrizd a biztonságot.",
@@ -207,9 +207,9 @@
     "id": "Q-018",
     "question": "Hol szabad működtetni egy benzinmotoros áramfejlesztőt?",
     "options": [
-      "Zárt garázsban, nyitott belső ajtó mellett.",
-      "A nappaliban nyitott ablakkal.",
-      "Kizárólag a szabadban, legalább 6 méterre az épülettől, ajtóktól, ablakoktól és szellőzőktől távol, a kipufogót az épülettől elfelé fordítva."
+      "Jól szellőző pincében vagy garázsban, ha a garázskaput félig nyitva hagyod.",
+      "Fedett előtérben vagy zárt verandán, közvetlenül a nyitott ablak alá téve.",
+      "Csak szabadban, az épülettől és nyílászáróktól legalább 6 méterre."
     ],
     "correct_index": 2,
     "explanation": "Az áramfejlesztő kipufogógáza életveszélyes szén-monoxidot tartalmaz. Garázsban vagy más zárt térben nyitott ajtó mellett sem működtethető. A gyártó ennél nagyobb távolságot is előírhat.",
@@ -232,8 +232,8 @@
     "question": "Erős gázszagot észlelsz a lakásban. Mi a biztonságos reakció?",
     "options": [
       "Kapcsold fel sorban a villanyokat.",
-      "Ne kapcsolj elektromos készüléket; ha biztonságos, zárd el a gázt, hagyd el a helyet és kintről kérj segítséget.",
-      "Gyújts gyufát a szivárgás kereséséhez."
+      "Ne kapcsolj villanyt; zárd el a gázt, menj ki és kintről hívj segítséget.",
+      "Indítsd el a konyhai páraelszívót maximális fokozaton az ablak kinyitása mellett."
     ],
     "correct_index": 1,
     "explanation": "Ne működtess kapcsolót, ne húzz ki dugót, és ne telefonálj a gázszagú térben. A gázt csak saját veszélyeztetésed nélkül zárd el. Hagyd el a helyet, és biztonságos távolságból hívd a gázszolgáltatót vagy közvetlen veszélyben a 112-t.",
@@ -243,9 +243,9 @@
     "id": "Q-021",
     "question": "Miért kell áramszünetkor a fontos egészségügyi eszközökre is tervezni?",
     "options": [
-      "Mert az eszközök mind örökké akkumulátorról működnek.",
-      "Mert csak internet nélkül használhatók.",
-      "Mert egyes orvosi eszközök és gyógyszerek áramellátást vagy hűtést igényelnek."
+      "Mert minden otthoni gyógyászati berendezés legalább egy hétig bírja akkumulátorról.",
+      "Mert áramszünet idején az elektromos orvosi készülékek maguktól újraindulnak.",
+      "Egyes orvosi eszközök és gyógyszerek áramot vagy hűtést igényelnek."
     ],
     "correct_index": 2,
     "explanation": "Életfontosságú eszköz esetén előre kidolgozott tartalék áramellátási és ellátási terv szükséges.",
@@ -268,8 +268,8 @@
     "question": "A szén-monoxid-érzékelő CO-veszélyjelzést ad. Mit teszel?",
     "options": [
       "Biztosan csak lemerült a telefon.",
-      "Potenciális életveszélyt: biztonságosan hagyd el az épületet, és kérj segítséget.",
-      "Azt, hogy ki kell kapcsolni minden riasztót és aludni."
+      "Azonnal hagyd el az épületet, és kintről kérj segítséget.",
+      "Kapcsold be a fürdőszobai elszívóventilátort, és feküdj le pihenni a szobában."
     ],
     "correct_index": 1,
     "explanation": "A CO színtelen, szagtalan és életveszélyes. Menj biztonságos helyre, kérj segítséget, és ne térj vissza a veszélyes térbe hibát keresni. Az elem- vagy készülékhiba-jelzéseket a gyártói útmutató különíti el a CO-riasztástól.",
@@ -279,9 +279,9 @@
     "id": "Q-024",
     "question": "Mit érdemes kéznél tartani váratlan áramszünetre?",
     "options": [
-      "Csak gyertyát felügyelet nélkül.",
-      "Egy kizárólag hálózatról működő telefont.",
-      "Feltöltött mobiltelefont, powerbankot, elemlámpát és elemes rádiót."
+      "Több szál égő viaszgyertyát minden szobában, éjszakára is égve hagyva.",
+      "Kizárólag vezetékes asztali telefont és hálózati 230 voltos halogén reflektorokat.",
+      "Feltöltött telefont, powerbankot, elemlámpát és elemes rádiót."
     ],
     "correct_index": 2,
     "explanation": "Az önálló energiaforrás és a hiteles tájékoztatás elérése alapvető.",
@@ -292,8 +292,8 @@
     "question": "Nagy hóban elakadsz egy elhagyatott úton. Mi az elsődleges?",
     "options": [
       "Segítséget kérsz és megadod a helyzeted; ha a járműnél nem fenyeget közvetlen veszély, ott maradsz védett helyen.",
-      "Vakon elindulni gyalog a hóviharba.",
-      "Elrejteni az autót a keresők elől."
+      "Indulj el azonnal gyalogosan a szántóföldön át a legközelebbi település irányába.",
+      "Kapcsold le az összes világítást, és zárd el teljesen a levegő utánpótlását."
     ],
     "correct_index": 0,
     "explanation": "Erős hóviharban a jármű védelmet adhat és könnyebben megtalálható; közvetlen veszély esetén más döntés szükséges.",
@@ -304,8 +304,8 @@
     "question": "Miért kell a kipufogót szabaddá tenni, mielőtt a havas úton járatod a motort?",
     "options": [
       "Hogy hangosabban szóljon a motor.",
-      "Az utastérbe jutó szén-monoxid-mérgezés elkerüléséhez.",
-      "Hogy gyorsabban fogyjon az üzemanyag."
+      "Az utastérbe jutó szén-monoxid-mérgezés elkerüléséért.",
+      "Hogy a forró kipufogógáz ne olvassza meg a hátsó lökhárító műanyag elemeit."
     ],
     "correct_index": 1,
     "explanation": "A hó eltömítheti a kipufogót, és a kipufogógáz visszajuthat a járműbe.",
@@ -315,9 +315,9 @@
     "id": "Q-027",
     "question": "Melyik felszereléscsomag a leghasznosabb hosszú téli útra?",
     "options": [
-      "Csak strandpapucs és naptej.",
-      "Csak egy extra autóillatosító.",
-      "Takaró, meleg ruha, víz, tartós étel, lámpa, hólapát és feltöltött telefon."
+      "Csak egy műanyag jégkaparó, páramentesítő kendő és nyári szélvédőmosó folyadék.",
+      "Pótkerék helyett defektjavító spray, napszemüveg és vékony esőkabát a csomagtérben.",
+      "Takaró, meleg ruha, víz, étel, lámpa, hólapát és töltött telefon."
     ],
     "correct_index": 2,
     "explanation": "A magyar rendőrség is hangsúlyozza az úti és téli vészfelszerelés fontosságát.",
@@ -340,8 +340,8 @@
     "question": "Hóviharban elakadt autót látsz. Mit tegyél?",
     "options": [
       "Azonnal megállsz az úttest közepén.",
-      "Biztonságos helyről felméred, kell-e segítség, és szükség esetén 112-t hívsz.",
-      "Figyelmen kívül hagyod minden körülmények között."
+      "Biztonságos helyről mérd fel a helyzetet, szükség esetén hívd a 112-t.",
+      "Hajts tovább megállás és bejelentés nélkül, mert télen ez mindennapos jelenség."
     ],
     "correct_index": 1,
     "explanation": "Saját biztonságod elsődleges; a bajba jutók helyét és állapotát pontosan jelezd a segélyhívón.",
@@ -351,9 +351,9 @@
     "id": "Q-030",
     "question": "Meghibásodás miatt biztonságosan megálltál az út szélén. Mi segítheti a láthatóságot?",
     "options": [
-      "Kikapcsolt világítás minden helyzetben.",
-      "Az autó sárral való lefedése.",
-      "Vészvillogó és jól látható jelzés, a körülményeknek megfelelően."
+      "A teljes világítás lekapcsolása, hogy ne merüljön le idő előtt az akkumulátor.",
+      "A csomagtérajtó felnyitása vészvillogó és elakadásjelző háromszög használata nélkül.",
+      "Vészvillogó, láthatósági mellény és elakadásjelző háromszög."
     ],
     "correct_index": 2,
     "explanation": "A vészvillogó és a körülményeknek megfelelő elakadásjelzés figyelmeztethet másokat. A jelzés kihelyezése ne sodorjon új veszélybe. Autópályán a járműben várakozás helyett a szalagkorláton kívüli védett hely lehet szükséges; kövesd a helyszíni útmutatást.",
@@ -364,8 +364,8 @@
     "question": "Elakadás közben hogyan csökkentheted a kihűlés kockázatát?",
     "options": [
       "Száraz, réteges ruházattal, takaróval és szükség esetén szakszerű segítségkéréssel.",
-      "Alkoholfogyasztással a felmelegedéshez.",
-      "Nedves ruhában maradva."
+      "Tömény szeszes ital fogyasztásával, mert az tartósan megemeli a belső testhőt.",
+      "Folyamatos ki-be szállással és a hóban végzett intenzív futással az autó körül."
     ],
     "correct_index": 0,
     "explanation": "A kihűlés megelőzéséhez a száraz ruházat és a hőveszteség csökkentése fontos.",
@@ -376,8 +376,8 @@
     "question": "Hóviharban, biztonságos helyen várakozva mi igaz a fűtés céljából járatott motorra?",
     "options": [
       "Órákon át folyamatosan járhat, zárt ablakok mellett.",
-      "Csak korlátozott ideig járjon, szabad kipufogó és megfelelő szellőzés mellett; ez sem helyettesíti a segítségkérést.",
-      "A CO-érzékelő megléte feleslegessé teszi a kipufogó ellenőrzését."
+      "Csak szakaszosan járjon, szabad kipufogó és résnyire nyitott ablak mellett.",
+      "Csak belső levegőkeringtetéssel szabad járatni, a kipufogót nem kell ellenőrizni."
     ],
     "correct_index": 1,
     "explanation": "A hóviharban várakozó járműnél az NWS rövid, szakaszos motorjáratást javasol, például óránként körülbelül 10 percet. A kipufogó legyen szabad, és biztosítani kell a szellőzést. Ez nem általános biztonsági garancia: CO-kockázat vagy más közvetlen veszély esetén kérj sürgős segítséget.",
@@ -387,9 +387,9 @@
     "id": "Q-033",
     "question": "Mit kell tenni, ha lakott területen hirtelen, rendkívül erős szélvihar (orkán) tör ki az utcán?",
     "options": [
-      "Bújjak el egy nagy fa alatt, mert az véd a széltől.",
-      "Maradjak távol a fáktól, vezetékektől és leeső tárgyaktól; biztonságos útvonalon menjek stabil épületbe.",
-      "Feküdjek le laposan az út közepére."
+      "Állj be egy terebélyes fa vagy magas reklámtábla alá, amíg elvonul a széllökés.",
+      "Kerüld a fákat és vezetékeket, menj mielőbb stabil épületbe.",
+      "Kapaszkodj meg egy utcai villanyoszlopban vagy ideiglenes építési állványzatban."
     ],
     "correct_index": 1,
     "explanation": "Kerüld a leszakadó ágakat és tárgyakat. Ne állj meg sérült épületrész alatt; keress biztonságos menedéket.",
@@ -399,9 +399,9 @@
     "id": "Q-034",
     "question": "Mit jelent a HungaroMet piros figyelmeztetése magas középhőmérséklet miatt?",
     "options": [
-      "Csak annyit, hogy érdemes napszemüveget venni.",
+      "Csak mérsékelt nyári felmelegedést jelez, elegendő szalmakalapot viselni délben.",
       "Kiemelten veszélyes hőséget jelez; csökkenteni kell a megterhelést, hűvös helyet keresni és követni a hivatalos tájékoztatást.",
-      "Azt, hogy éjszaka fagyveszély várható."
+      "Kizárólag a mezőgazdasági öntözőrendszerek üzemeltetőinek szóló technikai jelzés."
     ],
     "correct_index": 1,
     "explanation": "A meteorológiai figyelmeztetés és az egészségügyi hőségriasztás külön rendszer. Nem azonos a szociális ellátás vörös kódjával.",
@@ -412,8 +412,8 @@
     "question": "Hogyan kell védekezni villámárvizek (hirtelen lezúduló nagy esők miatti áradások) esetén?",
     "options": [
       "Le kell menni a mélygarázsba megnézni az autót.",
-      "Minél gyorsabban el kell jutni a magasabban fekvő, biztonságos területekre, és kerülni kell az aluljárókat, pincéket.",
-      "Be kell úszni az áradó vízbe."
+      "Menj magasabb terepre, és kerüld az aluljárókat, pincéket.",
+      "Állj be gépkocsival a legmélyebb közúti aluljáróba, amíg a felhőszakadás eláll."
     ],
     "correct_index": 1,
     "explanation": "Minél gyorsabban el kell jutni a magasabban fekvő, biztonságos területekre, és kerülni kell az aluljárókat, pincéket.",
@@ -423,9 +423,9 @@
     "id": "Q-036",
     "question": "Mi a teendő, ha autózás közben hatalmas jégeső lep meg?",
     "options": [
-      "Teljes gázzal továbbhajtani, hogy mielőbb átérjünk rajta.",
-      "Lassítani, majd ha lehetséges, a forgalmat nem akadályozó biztonságos helyen megállni, távol fáktól és vezetékektől.",
-      "Kiugrani a kocsiból és kézzel védeni a szélvédőt."
+      "Gyorsíts fel, hogy minél rövidebb ideig tartózkodj a jégveréssel érintett zónában.",
+      "Lassíts, és állj meg biztonságos helyen, fáktól távol.",
+      "Állj meg hirtelen a belső sávban vagy közvetlenül egy út menti fasor árnyékában."
     ],
     "correct_index": 1,
     "explanation": "Ne állj meg forgalmi sávban vagy híd alatt úgy, hogy másokat veszélyeztetsz. Maradj a járműben, amíg biztonságosan tovább lehet indulni.",
@@ -435,9 +435,9 @@
     "id": "Q-037",
     "question": "Mit jelent a másodfokú (narancs) riasztás zivatar és felhőszakadás esetén?",
     "options": [
-      "Semmi különös, ez egy átlagos nyári nap.",
+      "Csendes, veszélytelen nyári záport jelent, amely nem igényel semmilyen óvintézkedést.",
       "Fokozott veszélyt jelez; figyelni kell a friss előrejelzéseket és felkészülni a heves időjárás hatásaira.",
-      "Országos kijárási tilalom lép életbe."
+      "Kötelező érvényű országos kijárási és közlekedési tilalom automatikus életbelépését."
     ],
     "correct_index": 1,
     "explanation": "A narancssárga jelzés veszélyes időjárást jelez, de önmagában nem jelent kijárási tilalmat.",
@@ -448,8 +448,8 @@
     "question": "Hová menj, ha túrázás közben meghallod a mennydörgést?",
     "options": [
       "Magas fa teteje vagy egy magányos fa töve.",
-      "Mielőbb zárt, stabil épületbe vagy zárt, keménytetős autóba; a fa, sátor és árok nem biztosít villámvédelmet.",
-      "Feküdjünk hanyatt a fűben."
+      "Menj stabil épületbe vagy zárt, keménytetős gépkocsiba.",
+      "Maradj a hegytetőn felállított túrasátorban a fém sátorrudak mellé kuporodva."
     ],
     "correct_index": 1,
     "explanation": "Szabadban nincs villámbiztos hely. A guggolás nem teszi biztonságossá a helyzetet.",
@@ -459,9 +459,9 @@
     "id": "Q-039",
     "question": "Mi az elsődleges veszélyforrás egy tartós, heves téli hófúvás (blizzard) során?",
     "options": [
-      "A túl sok fagylalt.",
-      "A kihűlés (hipotermia), a magányos utakon elakadás és a fűtés/áramkimaradás.",
-      "A leégett napozókrém."
+      "A hirtelen megemelkedő légnedvesség miatti nyári hőpangás és napszúrás.",
+      "A kihűlés, az utakon való elakadás és az áramkimaradás.",
+      "A talajvíz azonnali felforrósodása és a felszíni UV-sugárzás megugrása."
     ],
     "correct_index": 1,
     "explanation": "A kihűlés (hipotermia), a magányos utakon elakadás és a fűtés/áramkimaradás.",
@@ -471,9 +471,9 @@
     "id": "Q-040",
     "question": "Mit kell tenni, ha lakóhelyeden hirtelen bekövetkező, extrém vihar miatt elmegy az áram és a fűtés?",
     "options": [
-      "Nyitva hagyni az összes ablakot, hogy szellőzzön a lakás.",
+      "Szellőztess ki egyszerre minden szobát, hogy kiegyenlítsd a külső-belső hőmérsékletet.",
       "Meleg ruhát ölteni, lezárni a kihűlő helyiségeket, és bekapcsolni az elemes rádiót a friss információkért.",
-      "Befűteni a nappaliban egy nyitott gázsütővel."
+      "Kapcsold be a konyhai gázsütőt nyitott ajtóval, hogy befűtse az egész lakást."
     ],
     "correct_index": 1,
     "explanation": "Öltözz melegen, tartsd meg a hőt és figyeld a hivatalos híreket. Beltérben ne használj kültéri égésű eszközt vagy áramfejlesztőt.",
@@ -484,8 +484,8 @@
     "question": "Mit jelez a meteorológiában a 'szupercella' kifejezés?",
     "options": [
       "Egy óriási felhőkarcolót Budapesten.",
-      "Tartósan forgó feláramlással rendelkező zivatart; jégesőt, károkozó szelet és néha tornádót okozhat.",
-      "Egy speciális időjárás-előrejelző műholdat."
+      "Forgó feláramlású heves zivatar; nagy jégesőt és orkánt okozhat.",
+      "A meteorológiai radarállomások legújabb generációs napelemes mérőegysége."
     ],
     "correct_index": 1,
     "explanation": "Nem minden szupercella okoz tornádót. A veszélyjelzéseket kell követni, nem egy felhő látványából dönteni.",
@@ -495,9 +495,9 @@
     "id": "Q-042",
     "question": "Mi a teendő erdőtűz esetén, ha észreveszed a lángokat a kirándulás során?",
     "options": [
-      "Megpróbálni elfújni a tüzet.",
-      "Biztonságos útvonalon távolodni a tűztől és füsttől, 112-t hívni, majd követni a mentők utasításait.",
-      "Fotózni egy szelfit a lángok előtt."
+      "Futva indulj el a széllel megegyező irányba a sűrű fenyves belseje felé.",
+      "Távolodj el biztonságos irányba, hívd a 112-t és kövesd az utasítást.",
+      "Menj egészen közel a lángokhoz fotót készíteni, mielőtt bejelentenéd a tüzet."
     ],
     "correct_index": 1,
     "explanation": "A szél és a terep gyorsan változtathatja a tűz terjedését; egyetlen általános irányszabály nem garantál menekülést.",
@@ -507,9 +507,9 @@
     "id": "Q-043",
     "question": "Mely tünetek utalhatnak hőgutára?",
     "options": [
-      "Hidegrázás és fogvacogás.",
+      "Enyhe torokkaparás, tüsszögés és normális, 36,5 °C körüli testhőmérséklet.",
       "Nagyon magas testhőmérséklet, zavartság, rossz koordináció, eszméletvesztés; a bőr lehet száraz vagy verejtékes.",
-      "Fokozott energiaszint és öröm."
+      "Fokozott éhségérzet, élénk koncentráció és lassú, nyugodt szívverés pihenéskor."
     ],
     "correct_index": 1,
     "explanation": "Hőguta gyanújánál azonnali segélyhívás és hűtés szükséges. Ne várj arra, hogy magától rendeződjön.",
@@ -520,8 +520,8 @@
     "question": "Mi a helyes döntés, ha elöntött útszakaszhoz érsz autóval?",
     "options": [
       "Maradj benne üvöltve, amíg el nem apad.",
-      "Ne hajts a vízbe; fordulj vissza és keress más útvonalat. Ha csapdába kerültél, kérj segítséget a 112-n.",
-      "Nyiss ablakot és kezdj el horgászni."
+      "Ne hajts a vízbe; fordulj vissza és keress biztonságos kerülőutat.",
+      "Kövesd szorosan az előtted haladó teherautót a mély vízzel borított útszakaszon."
     ],
     "correct_index": 1,
     "explanation": "Ne alapozd a biztonságot a kerék vagy küszöb magasságára. A víz mélysége, sodrása és az út állapota kívülről nem ítélhető meg.",
@@ -531,9 +531,9 @@
     "id": "Q-045",
     "question": "Hogyan védekezzünk az UV-sugárzás ellen nyári napokon szabadtéren?",
     "options": [
-      "Ne igyunk vizet napközben.",
-      "Árnyék, megfelelő ruházat, fejfedő, napszemüveg és megfelelő fényvédő; erős UV idején kerülni kell a tűző napot.",
-      "Feküdjünk ki délben a napra kendő nélkül."
+      "Déli órákban vizes bőrrel napozz árnyék nélkül, mert a víz kiszűri a sugarakat.",
+      "Keress árnyékot, viselj fejfedőt, napszemüveget és használj naptejet.",
+      "Csak borult időben használj szemvédelmet, kánikulában kerüld a folyadékpótlást."
     ],
     "correct_index": 1,
     "explanation": "Árnyék, megfelelő ruházat, fejfedő, napszemüveg és megfelelő fényvédő; erős UV idején kerülni kell a tűző napot.",
@@ -543,9 +543,9 @@
     "id": "Q-046",
     "question": "Mi a teendő szén-monoxid mérgezés gyanúja esetén otthon?",
     "options": [
-      "Gyújtsunk gyertyát, hogy lássunk.",
+      "Zárd be az ablakokat, feküdj le pihenni, és várj, amíg a fejfájás magától elmúlik.",
       "Azonnal kijutni a friss levegőre, másokat is figyelmeztetni és biztonságos helyről 112-t hívni.",
-      "Igyunk egy pohár hideg vizet és aludjunk tovább."
+      "Gyújts meg egy öngyújtót a kazán mellett, hogy ellenőrizd az oxigénszintet."
     ],
     "correct_index": 1,
     "explanation": "Ne késleltesd a kijutást a berendezés keresésével vagy szellőztetéssel, és ne menj vissza a veszélyes térbe.",
@@ -556,8 +556,8 @@
     "question": "Mi a lakosság feladata súlyos időjárási veszélyjelzéskor?",
     "options": [
       "Bezárja az összes boltot és bankot.",
-      "Figyelni a hivatalos tájékoztatást, kerülni a felesleges utazást és követni a hatóságok utasításait.",
-      "Szünetelteti az internetet."
+      "Figyelni a hivatalos híreket és kerülni a felesleges utazást.",
+      "Kimenni a szabadba megfigyelni és közelről videózni az érkező viharfrontot."
     ],
     "correct_index": 1,
     "explanation": "A meteorológiai piros jelzés és a szociális vörös kód nem azonos. Az intézkedések az adott eseménytől függnek.",
@@ -567,9 +567,9 @@
     "id": "Q-048",
     "question": "Mikor kell figyelni a heves zivatarok veszélyére Magyarországon?",
     "options": [
-      "December és január",
-      "Különösen a meleg évszakban, de mindig az aktuális hivatalos veszélyjelzés alapján.",
-      "Október és november"
+      "Kizárólag a téli fagyos hónapokban, december közepe és február vége között.",
+      "Főként a meleg évszakban, de mindig a veszélyjelzés alapján.",
+      "Csak páros évek tavaszán, amikor a folyók vízállása tartósan alacsony marad."
     ],
     "correct_index": 1,
     "explanation": "A naptári hónap önmagában nem zárja ki a heves zivatar lehetőségét.",
@@ -579,9 +579,9 @@
     "id": "Q-049",
     "question": "Melyik tünet utalhat kezdődő kihűlésre?",
     "options": [
-      "Izzadás és fáradtság.",
+      "Hirtelen kipirult, forró arcbőr, bőséges izzadás és szokatlanul élénk beszéd.",
       "Remegés, hideg bőr és romló kézügyesség; súlyosbodáskor zavartság és beszédzavar is jelentkezhet.",
-      "Magas vérnyomás."
+      "Erős szomjúságérzet, szapora pislogás és a testhőmérséklet gyors emelkedése."
     ],
     "correct_index": 1,
     "explanation": "A hipotermia kihűlést jelent, nem eleve halált. Súlyos gyanú esetén 112 és kíméletes védelem a további hővesztéstől.",
@@ -592,8 +592,8 @@
     "question": "Mi a helyes eljárás, ha fagyos időben beszakad valaki alatt a jég a tavon?",
     "options": [
       "Rohanva odafutni a lék szélére.",
-      "Hívni a 112-t; a partról nyújtott biztonságos segítséget keresni, a bizonytalan jégre nem kimenni.",
-      "Kiabálni vele, hogy ússzon ki."
+      "Hívd a 112-t, és a partról nyújts biztonságos segítséget.",
+      "Dobálj nehéz köveket a jégre a bajbajutott mellé, hogy nagyobb legyen a nyílás."
     ],
     "correct_index": 1,
     "explanation": "A hason csúszás sem garantálja a jég teherbírását. Ne válj második áldozattá.",
@@ -603,9 +603,9 @@
     "id": "Q-051",
     "question": "Mi az a 'száraz villám'?",
     "options": [
-      "Olyan villámcsapás, ami vízből indul ki.",
-      "Olyan villámlással járó zivatarjelenség, amikor kevés vagy semennyi eső nem jut a felszínre; tüzet is okozhat.",
-      "Egy internetes mém."
+      "Olyan különleges téli villámlás, amely csak befagyott tavak felett jöhet létre.",
+      "Villámlás, amikor a csapadék nem éri el a felszínt; tüzet okozhat.",
+      "Elektromos kisülés, amely teljesen hangtalan és soha nem jelent tűzveszélyt."
     ],
     "correct_index": 1,
     "explanation": "Az eső hiánya nem zárja ki a villámcsapást. Az erdőtüzek okai területenként eltérnek; nem állítjuk, hogy mindenütt ez a fő ok.",
@@ -615,9 +615,9 @@
     "id": "Q-052",
     "question": "Mit kell tenni erős földrengés alatt zárt térben?",
     "options": [
-      "Rohanni az erkélyre és leugrani.",
+      "Azonnal szaladj ki az erkélyre vagy hívd a liftet, hogy lejuss a földszintre.",
       "Leguggolni, fedezékbe húzódni és kapaszkodni; védeni a fejet, kerülni az ablakokat és a liftet.",
-      "Liftbe szállni és gyorsan lemenni."
+      "Állj közvetlenül a legnagyobb üvegablak vagy egy magas könyvespolc elé."
     ],
     "correct_index": 1,
     "explanation": "Stabil asztal alatt védd a fejed, és kapaszkodj. Ne rohanj a rázkódás közben a kijárathoz.",
@@ -628,8 +628,8 @@
     "question": "Mit tartalmazzon egy jól összeállított 72 órás vészhelyzeti hátizsák (Bug-out bag)?",
     "options": [
       "Csak divatos ruhákat és egy tabletet.",
-      "Ivóvizet, tartós élelmiszert, elsősegélycsomagot, zseblámpát, elemes rádiót, iratmásolatot és gyógyszereket.",
-      "Játékokat és konzolokat."
+      "Vizet, tartós ételt, elsősegélyt, lámpát, rádiót és gyógyszert.",
+      "Friss tejet, fagyasztott húst és hálózati hosszabbítót elemek és ivóvíz nélkül."
     ],
     "correct_index": 1,
     "explanation": "Ivóvizet, tartós élelmiszert, elsősegélycsomagot, zseblámpát, elemes rádiót, iratmásolatot és gyógyszereket.",
@@ -639,9 +639,9 @@
     "id": "Q-054",
     "question": "Hogyan kell vízhez jutni a vadonban, ha kifogytál az ivóvízből?",
     "options": [
-      "Bármilyen álló pocsolyából nyugodtan inni.",
-      "Lehetőleg ismert biztonságos ivóvizet keresni; a természetes vizet megfelelő módszerrel kezelni, nem a tisztaságára hagyatkozni.",
-      "Tengervizet inni a szomjúság ellen."
+      "Igyál bátran bármilyen erdei pocsolyából, ha a víz szabad szemmel átlátszónak tűnik.",
+      "Keress biztonságos forrást; a természetes vizet mindig kezeld.",
+      "Fogyassz sós vizet vagy olvasztott útszéli havat szűrés és forralás nélkül."
     ],
     "correct_index": 1,
     "explanation": "A forralás a kórokozók ellen segíthet, de a vegyi szennyeződést nem távolítja el. Nem minden szűrő távolít el minden kórokozót.",
@@ -651,9 +651,9 @@
     "id": "Q-055",
     "question": "Mit tegyél jelentős külső vérzés esetén, ha a helyszín biztonságos?",
     "options": [
-      "Leülni és sírni.",
+      "Hagyd szabadon vérezni a sebet, hogy a szennyeződés magától kimosódjon belőle.",
       "Erős, közvetlen nyomást gyakorolni a sebre tiszta kötszerrel, segítséget hívni és követni a 112 utasításait.",
-      "Lefotózni a sebet Instagramra."
+      "Húzd ki azonnal a sebbe ékelődött idegentestet, majd szórj hintőport a nyílásba."
     ],
     "correct_index": 1,
     "explanation": "Az elsődleges cél a vérveszteség csökkentése. Beékelődött tárgyat nem húzunk ki; körülötte alkalmazunk nyomást.",
@@ -664,8 +664,8 @@
     "question": "Hogyan jelölheted meg a tartózkodási helyedet, ha segítséget vársz a mentőktől az erdőben?",
     "options": [
       "Elégetni az összes fát.",
-      "Síppal, zseblámpával vagy jól látható ruhával jelezni, és a helyzetedet megadni a segélyhívásban.",
-      "Csendben megbújni a bokrok között."
+      "Jelezz síppal, lámpával vagy élénk ruhával, és hívd a 112-t.",
+      "Bújj el mozdulatlanul egy sűrű bokor alatt sötét ruhában, és kapcsold ki a telefont."
     ],
     "correct_index": 1,
     "explanation": "Jelzés céljából se gyújts tüzet, ha az veszélyes vagy tiltott; a fény és hang biztonságosabb jelzőeszköz lehet.",
@@ -675,9 +675,9 @@
     "id": "Q-057",
     "question": "Mi a helyes öltözködési elv túrázáskor vagy hűvös időben (a hagyma-elv)?",
     "options": [
-      "Egyetlen vastag bundakabát viselése póló nélkül.",
-      "Réteges öltözködés: nedvességelvezető alsó réteg, hőtartó középső réteg és szél-/vízálló külső héj.",
-      "Minél kevesebb ruha, hogy eddzük a testet."
+      "Egyetlen vastag pamutpóló és rávett nehéz télikabát köztes szigetelőréteg nélkül.",
+      "Réteges öltözék: izzadságelvezető alap, hőtartó közép és szélálló héj.",
+      "Szoros, nem szellőző műanyag esőruha közvetlenül a meztelen bőrre felvéve."
     ],
     "correct_index": 1,
     "explanation": "Réteges öltözködés: nedvességelvezető alsó réteg, hőtartó középső réteg és szél-/vízálló külső héj.",
@@ -700,8 +700,8 @@
     "question": "Hány lakástűz köthető évente Magyarországon az adventi koszorúkhoz a katasztrófavédelem adatai szerint?",
     "options": [
       "Kevesebb mint 5",
-      "Átlagosan 50–70 eset",
-      "Több mint 500 eset"
+      "Átlagosan évi 50–70 lakástűz.",
+      "Több mint 600 súlyos lakástűz indul ki koszorúkból minden decemberben."
     ],
     "correct_index": 1,
     "explanation": "Évente átlagosan 50–70 lakástűz indul ki adventi koszorúról, jellemzően felügyelet nélkül hagyott gyertya vagy hiányzó alátét miatt.",
@@ -711,9 +711,9 @@
     "id": "Q-060",
     "question": "Mire kell mindenképpen figyelni az adventi koszorú elhelyezésekor?",
     "options": [
-      "Közvetlenül a függöny elé tegyük",
-      "Tűzálló alátétre helyezzük, és legyen alatta fém gyertyatartó tüske",
-      "Csak műanyag tálcára szabad tenni"
+      "Közvetlenül a csipkefüggöny mellé, száraz fenyőágakkal körberakva tegyük le.",
+      "Tűzálló alátétre helyezzük, és legyen alatta fém gyertyatüske.",
+      "Vékony dekorációs műanyag tálcára vagy fonott vesszőkosárba állítsuk tüske nélkül."
     ],
     "correct_index": 1,
     "explanation": "A leégő kanóc átégetheti a száraz koszorúalapot; a fém gyertyatartó tüske és a nem éghető alátét megakadályozza a tűz továbbterjedését.",
@@ -724,7 +724,7 @@
     "question": "Mi a legfontosabb szabály, ha elhagyod azt a helyiséget, ahol ég az adventi gyertya?",
     "options": [
       "Csak akkor kell elfújni, ha 1 óránál tovább vagy távol",
-      "Mindig fújd el a gyertyát, még akkor is, ha csak pár percre mész ki",
+      "Mindig fújd el a gyertyát, még akkor is, ha csak néhány percre hagyod el a szobát.",
       "Elég, ha becsukod a szobaajtót"
     ],
     "correct_index": 1,
@@ -736,8 +736,8 @@
     "question": "Milyen távolságra kell elhelyezni az égő gyertyát a függönytől, terítőtől vagy más éghető anyagtól?",
     "options": [
       "Legalább 10 cm-re",
-      "Legalább 50–100 cm-re, biztonságos távolságra",
-      "Nincs távolsági szabály, ha víz van a közelben"
+      "Legalább 50–100 cm távolságra minden éghető anyagtól.",
+      "Nincs szükség semmilyen védőtávolságra, ha egy pohár vizet teszel az asztalra."
     ],
     "correct_index": 1,
     "explanation": "A huzat vagy a levegő áramlása könnyen a lángba sodorhatja a függönyt, a papírszalvétát vagy a száraz gallyakat.",
@@ -747,9 +747,9 @@
     "id": "Q-063",
     "question": "Mit tegyél, ha a kiszáradt adventi koszorú vagy a terítő meggyullad?",
     "options": [
-      "Próbáld meg kézzel lesöpörni az asztalról",
-      "Takard le egy vastag, nedves textíliával vagy használj tűzoltó készüléket",
-      "Nyisd ki az összes ablakot, hogy kimenjen a füst"
+      "Próbáld meg puszta kézzel felkapni, és kiszaladni az égő koszorúval a lépcsőházba.",
+      "Takard le vastag nedves textíliával, vagy használj tűzoltó készüléket.",
+      "Tárd ki azonnal az összes ablakot, hogy az erős huzat kifújja a szobából a füstöt."
     ],
     "correct_index": 1,
     "explanation": "A letakarás elzárja az oxigént a tűztől, míg az ablaknyitás huzatot kelt és táplálja a lángokat.",
@@ -759,9 +759,9 @@
     "id": "Q-064",
     "question": "Mire figyelj a karácsonyi fényfüzérek vásárlásakor és használatakor?",
     "options": [
-      "Olcsó, jelöletlen piaci füzért is nyugodtan használhatsz kültéren",
+      "Bármilyen jelöletlen beltéri égősort nyugodtan felszerelhetsz a havas kerti fákra is.",
       "Csak magyar nyelvű használati utasítással és CE jelöléssel ellátott terméket vegyél, és éjszakára húzd ki",
-      "A megtört vezetékeket elég celluxszal leragasztani"
+      "A megsérült szigetelésű vezetékeket elegendő átlátszó irodai ragasztószalaggal betekerni."
     ],
     "correct_index": 1,
     "explanation": "A hibás, túlmelegedő égősorok zárlatot okoznak; beltéri fényfüzért pedig szigorúan tilos kültéren használni.",
@@ -772,8 +772,8 @@
     "question": "Mi a biztonságos megoldás kisgyermekes vagy háziállatos háztartásban gyertyagyújtás helyett?",
     "options": [
       "Magas polcra tett hagyományos teamécses",
-      "LED-es elemes gyertya vagy mécses használata",
-      "Illatgyertya üvegpohárban a dohányzóasztalon"
+      "LED-es elemes gyertya vagy mécses használata.",
+      "Illatgyertya nyitott tálkában a szőnyegre vagy az alacsony dohányzóasztalra helyezve."
     ],
     "correct_index": 1,
     "explanation": "Egy kíváncsi háziállat egyetlen mozdulattal leverheti az égő gyertyát – a LED-es gyertya teljesen tűzbiztos.",
@@ -783,9 +783,9 @@
     "id": "Q-066",
     "question": "Használható-e csillagszóró a karácsonyfán vagy az adventi koszorú felett?",
     "options": [
-      "Igen, ha vizes vödör van a fa mellett",
-      "Nem, a csillagszóró 1000–1600 °C-os szikrái azonnal meggyújtják a száraz tűleveleket",
-      "Igen, de csak egyszerre egy darab"
+      "Igen, nyugodtan felakasztható a fára, ha előtte befújjuk a tűleveleket hajlakkal.",
+      "Nem, az 1000–1600 °C-os szikrák azonnal lángra lobbantják a száraz fát.",
+      "Igen, egyszerre akár több csillagszóró is meggyújtható a száraz fenyőágak között."
     ],
     "correct_index": 1,
     "explanation": "A csillagszóró szikrája rendkívül forró, a száraz fenyőág pedig szinte robbanásszerűen, másodpercek alatt lángra kap tőle.",
@@ -795,9 +795,9 @@
     "id": "Q-067",
     "question": "Hogyan kell elhelyezni a karácsonyfát a lakásban tűzvédelmi szempontból?",
     "options": [
-      "Közvetlenül a radiátor vagy a kandalló mellé",
+      "Közvetlenül a forró radiátor, cserépkályha vagy a bejárati ajtó elé állítva.",
       "Hőforrástól (kályhától, radiátortól) és menekülési útvonaltól (bejárati ajtótól) távol",
-      "A nappali közepén, hosszabbító kábelekkel körbevéve"
+      "Az egyetlen kijárat elé helyezve, több egymásba dugott elosztóval körbevezetve."
     ],
     "correct_index": 1,
     "explanation": "A fűtőtestek kiszárítják a fát, ami így sokkal gyúlékonyabbá válik; az ajtó közelében álló égő fa pedig elzárhatja a menekülési utat.",
@@ -807,9 +807,9 @@
     "id": "Q-068",
     "question": "Mit ne tegyél SOHA, ha a konyhában az ünnepi sütés-főzés közben meggyullad a forró olaj a serpenyőben?",
     "options": [
-      "Ne önts rá vizet!",
+      "Soha ne önts rá vizet!",
       "Ne tegyél rá fém fedőt",
-      "Ne kapcsold le a tűzhelyet"
+      "Ne zárd el alatta a gázt vagy a főzőlapot, amíg a láng magától el nem alszik!"
     ],
     "correct_index": 0,
     "explanation": "A víz az égő olajba öntve azonnal gőzzé válik, és hatalmas tűzgömbként szétveti a lángoló zsiradékot – fedővel kell elfojtani.",
@@ -819,9 +819,9 @@
     "id": "Q-069",
     "question": "Mit jelent a meteorológiai szolgálat által kiadott „vörös” (harmadfokú) riasztás hófúvás vagy ónos eső esetén?",
     "options": [
-      "Csak a teherautóknak tilos közlekedni",
-      "Halaszthatatlan utazáson kívül senki ne induljon útnak, mert a közlekedés életveszélyes",
-      "Csak hólánccal lehet behajtani a városokba"
+      "Kizárólag a 7,5 tonna feletti tehergépjárművek számára korlátozza az előzést az utakon.",
+      "Halaszthatatlan eseten kívül senki ne induljon útnak: életveszélyes.",
+      "Csak annyit jelent, hogy a hegyvidéki szakaszokon ajánlott a téli szélvédőmosó használata."
     ],
     "correct_index": 1,
     "explanation": "A legmagasabb, piros fokozatú riasztásnál a közlekedési infrastruktúra megbénulhat, és az elakadt járművek mentése is akadályozott.",
@@ -844,8 +844,8 @@
     "question": "Mire kell kiemelten figyelni, ha a hóban elakadt autóban járatod a motort a fűtés miatt?",
     "options": [
       "Semmire, a modern autók teljesen biztonságosak",
-      "Rendszeresen ellenőrizd és tisztítsd meg a kipufogócsövet a hótól, és résnyire húzd le az ablakot",
-      "Kapcsold be a belső levegőkeringtetést és zárd le teljesen az ablakokat"
+      "Tisztítsd meg a kipufogót a hótól, és résnyire húzd le az ablakot.",
+      "Zárd fel szorosan az összes ablakot, és kapcsold be folyamatosan a belső keringtetést."
     ],
     "correct_index": 1,
     "explanation": "A hóval eltömődött kipufogóból a szén-monoxid visszaáramlik az utastérbe, ami percek alatt halálos mérgezést okozhat.",
@@ -855,9 +855,9 @@
     "id": "Q-072",
     "question": "Milyen alapvető felszerelést érdemes télen az autóban tartani egy váratlan elakadás esetére?",
     "options": [
-      "Csak egy jégkaparót és tartalék ablaktörlőt",
-      "Meleg takarót, tartalék ruhát, elemlámpát, feltöltött powerbankot, ivóvizet és energiadús élelmet",
-      "Nyári hűtőtáskát és napernyőt"
+      "Elegendő egy vékony műanyag jégkaparó és egy kis flakon illatosított utastér-tisztító.",
+      "Meleg takarót, pót-ruhát, lámpát, powerbankot, vizet és élelmet.",
+      "Csak nyári keréknyomásmérőt, napellenzőt és egy üres műanyag kannát a csomagtartóban."
     ],
     "correct_index": 1,
     "explanation": "Hótorlasz vagy útlezárás esetén akár órákat is várakozni kell a mentésre, amikor a testhő megtartása és a telefon feltöltöttsége életmentő.",
@@ -867,9 +867,9 @@
     "id": "Q-073",
     "question": "Mit jelent a szociális ellátórendszerben elrendelt „Vörös kód”?",
     "options": [
-      "Áramszünet várható az országban",
+      "Országos tervszerű áramszünetet jelent a nagyfeszültségű távvezetékek jegesedése miatt.",
       "Extrém hideg miatt minden szociális intézmény köteles befogadni a hajléktalan vagy bajba jutott embereket",
-      "Tilos szabadtéren tüzet gyújtani"
+      "Teljes körű tüzelési tilalmat rendel el a családi házak vegyestüzelésű kazánjaira."
     ],
     "correct_index": 1,
     "explanation": "A Vörös kód figyelmezteti a társadalmat a rendkívüli hidegre, és kötelezővé teszi a krízisellátást minden fenntartó számára.",
@@ -880,8 +880,8 @@
     "question": "Mi a helyes teendő, ha közterületen egy kihűlés veszélyének kitett, magatehetetlen embert látsz?",
     "options": [
       "Adj neki alkoholt, hogy átmelegedjen",
-      "Azonnal hívd a 112-t, és ha biztonságos, maradj vele a mentők kiérkezéséig",
-      "Takard be hóval, mert az szigetel"
+      "Hívd a 112-t, és maradj mellette a mentők kiérkezéséig.",
+      "Dörzsöld be erősen fagyott hóval az arcát és a végtagjait a keringés serkentésére."
     ],
     "correct_index": 1,
     "explanation": "Az alkohol tágítja a perifériás ereket, így valójában gyorsítja a test hővesztését és a kihűlést.",
@@ -891,9 +891,9 @@
     "id": "Q-075",
     "question": "Mi a legfontosabb szabály, ha befagyott természetes víz (tó, folyó, csatorna) jegére lépnél?",
     "options": [
-      "Ha a jég vastagabb 2 cm-nél, már biztonságos",
-      "Csak kijelölt, hatóságilag engedélyezett helyen és nappal szabad a jégre menni; folyóvíz jegére soha",
-      "Ha többen mentek egyszerre, biztonságosabb"
+      "Ha a part mentén 2–3 centiméteresnek látszik a jégréteg, bárhol biztonságosan korcsolyázhatsz.",
+      "Csak kijelölt helyen és nappal menj jégre; folyóvíz jegére soha.",
+      "Minél nagyobb csoportban, szorosan egymás mellett haladva menj rá a természetes folyóvízre."
     ],
     "correct_index": 1,
     "explanation": "A folyók és csatornák jege az áramlás miatt kiszámíthatatlanul vékonyodik, és a jég alá szorulás szinte azonnal végzetes.",
@@ -903,9 +903,9 @@
     "id": "Q-076",
     "question": "Mit tegyél, ha beszakad alattad a jég?",
     "options": [
-      "Próbálj azonnal felfelé kapaszkodni a jég peremére a könyököddel",
+      "Kapálózz erőteljesen függőleges testhelyzetben, és könyökkel törd magad előtt a vékony jeget.",
       "Hasalj rá a jégre, terjeszd szét a súlyodat, és hason csúszva kússz vissza arra, amerről jöttél",
-      "Merülj le a jég alá és keress másik léket"
+      "Merülj a jégpáncél alá, és a víz alatt úszva próbálj meg egy másik kijáratot keresni."
     ],
     "correct_index": 1,
     "explanation": "A jég széle letörik, ha függőlegesen próbálsz kimászni; hason fekve oszlik el a testsúly, és arra a legbiztosabb a jég, amerre korábban elbírt.",
@@ -916,8 +916,8 @@
     "question": "Hogyan közlekedj gyalogosan és autóval ónos eső idején?",
     "options": [
       "A megszokott sebességgel, csak nagyobb követési távolsággal",
-      "Ónos esőben a jégréteg miatt még a téli gumi és a sózás sem véd azonnal – csak végszükség esetén indulj el, nagyon lassan",
-      "A bicikliút ilyenkor biztonságosabb, mint a járda"
+      "Csak végszükség esetén indulj el, rendkívül lassan és óvatosan.",
+      "Kerékpárral vagy elektromos rollerrel közlekedj, mert két keréken kisebb a megcsúszás esélye."
     ],
     "correct_index": 1,
     "explanation": "Az ónos eső azonnal tükörjéggé fagy a hideg burkolaton, amin a járművek irányíthatatlanná válnak.",
@@ -927,9 +927,9 @@
     "id": "Q-078",
     "question": "Hogyan előzheted meg a vízvezetékek elfagyását fűtetlen nyaralóban vagy melléképületben?",
     "options": [
-      "Hagyj égve egy villanykörtét a fürdőszobában",
-      "Zárd el a főcsapot, és víztelenítsd a teljes csőhálózatot, valamint a bojlert",
-      "Tekerd körbe a csöveket újságpapírral"
+      "Hagyj felkapcsolva egy kis teljesítményű LED-lámpát a pincében egész télre fűtés helyett.",
+      "Zárd el a főcsapot, és víztelenítsd a teljes csőhálózatot és a bojlert.",
+      "Tekerd körbe vékony selyempapírral a kerti csapot, miközben nyomás alatt hagyod a rendszert."
     ],
     "correct_index": 1,
     "explanation": "A megfagyó víz térfogata megnő, így szétrepeszti a csöveket és a szerelvényeket, ami olvadáskor súlyos vízkárt okoz.",
@@ -939,9 +939,9 @@
     "id": "Q-079",
     "question": "Mi a különbség a hagyományos folyami árvíz és a villámárvíz között?",
     "options": [
-      "Nincs különbség, csak a víz színe más",
+      "Csak elnevezésbeli különbség van, mindkettő hetek alatt, lassan emelkedő síkvidéki áradás.",
       "A villámárvíz heves felhőszakadás után percek vagy órák alatt, előjelzés nélkül csap le, főleg domb- és hegyvidéken",
-      "A villámárvíz kizárólag télen alakul ki"
+      "A villámárvíz kizárólag a téli hóolvadáskor, nagy folyók alsó szakaszán alakulhat ki."
     ],
     "correct_index": 1,
     "explanation": "A villámárvizek rendkívül gyors lefolyásúak és nagy sodrásúak, ezért a menekülésre és a védekezésre csupán percek állnak rendelkezésre.",
@@ -952,8 +952,8 @@
     "question": "Milyen magasságú vízborítás képes már elsodorni egy felnőtt embert áramló árvíz esetén?",
     "options": [
       "Csak a mellkasig érő víz",
-      "Már 15–20 cm-es gyorsan áramló víz is ledönthet a lábadról",
-      "Legalább 1 méteres víz szükséges hozzá"
+      "Már 15–20 cm-es gyors folyású víz is elsodorhat.",
+      "Áramló vízben csak akkor veszélyes a gyaloglás, ha a vízszint meghaladja a vállmagasságot."
     ],
     "correct_index": 1,
     "explanation": "A mozgó víztömeg ereje hatalmas: már bokáig-lábszárközépig érő sodrás is könnyen elsodor egy felnőttet.",
@@ -963,9 +963,9 @@
     "id": "Q-081",
     "question": "Mikor válik irányíthatatlanná és sodródik el egy személyautó elárasztott útszakaszon?",
     "options": [
-      "Csak ha a tetőig ér a víz",
-      "Már 30–50 cm-es áramló víz felúszást okoz és elsodorja a járművet",
-      "Soha, az autó súlya megtartja az úton"
+      "Csak akkor úszik fel az autó, ha a vízszint már teljesen ellepi a szélvédőt és a motorháztetőt.",
+      "Már 30–50 cm-es áramló víz felúsztatja és elsodorja az autót.",
+      "Egy személygépkocsi több mint egytonnás tömege miatt semmilyen áradásban nem sodródhat el."
     ],
     "correct_index": 1,
     "explanation": "Soha ne hajts be elárasztott útszakaszra vagy aluljáróba: az úttest alámosódhat, a felhajtóerő pedig felemeli az autót.",
@@ -988,8 +988,8 @@
     "question": "Hogyan kell helyesen rakni a homokzsákokat védmű építésekor?",
     "options": [
       "Függőlegesen egymás mellé állítva",
-      "Kötésben (mint a téglafalat), a zsákok száját a vízfolyás irányával ellentétesen behajtva, és megtaposva",
-      "Csak félig megtöltve, egymásra dobálva"
+      "Kötésben (mint a téglafalat), kb. kétharmadig töltve, a szájukat behajtva és megtaposva.",
+      "Töltsd meg őket színültig száraz kaviccsal, és kötözés nélkül dobáld egymás tetejére."
     ],
     "correct_index": 1,
     "explanation": "A kötésben rakott, kb. kétharmadig töltött és jól tömörített zsákok zárnak vízzáróan, és nem csúsznak szét a víznyomás alatt.",
@@ -999,9 +999,9 @@
     "id": "Q-084",
     "question": "Miért veszélyes az árvíz levonulása után azonnal visszatérni a megrongálódott épületbe hatósági engedély nélkül?",
     "options": [
-      "Mert még vizes a padló",
-      "Az átázott falak és alapok statikailag meggyengülhettek, és fertőzésveszélyes szennyvíz maradt vissza",
-      "Mert nincs térerő"
+      "Csak azért kellemetlen, mert a nedves burkolatok felszáradása több napot is igénybe vehet.",
+      "Az átázott falak statikailag meggyengülhettek, és fertőző szennyvíz maradhatott.",
+      "Mert a levonuló ár után az épületekben átmenetileg gyengébb lehet a mobiltelefon-térerő."
     ],
     "correct_index": 1,
     "explanation": "A víz alámoshatja az alapozást és a közművezetékeket; a visszaköltözést statikai és közegészségügyi ellenőrzésnek kell megelőznie.",
@@ -1011,9 +1011,9 @@
     "id": "Q-085",
     "question": "Mit tegyél az ivóvízzel és az élelmiszerekkel elöntéssel érintett területen?",
     "options": [
-      "Forralás nélkül is fogyasztható a csapvíz",
+      "Nyugodtan fogyasztható a vezetékes csapvíz és az ásott kút vize mindenféle forralás nélkül.",
       "Csak palackozott vagy hatóságilag bevizsgált ivóvizet fogyassz, és dobd ki az árvízzel érintkezett élelmiszert",
-      "Elég megmosni a zöldségeket a kerti kútból"
+      "Az árvízzel érintkezett kerti zöldségeket és felbontott élelmiszereket elég hideg vízzel leöblíteni."
     ],
     "correct_index": 1,
     "explanation": "Az árvíz emésztőgödröket és vegyszertárolókat is elönthet, így a vezetékes és kútvíz is súlyosan szennyeződhet.",
@@ -1024,8 +1024,8 @@
     "question": "Hogyan védekezhetsz otthonodban a csatornarendszeren keresztül visszatorlódó szennyvíz ellen árvíz idején?",
     "options": [
       "Semmit nem lehet tenni",
-      "Visszacsapó szelep beépítésével, illetve a padlóösszefolyók ideiglenes lezárásával, lesúlyozásával",
-      "Folyamatos vízengedéssel a csapokból"
+      "Visszacsapó szeleppel, illetve az összefolyók lezárásával és lesúlyozásával.",
+      "Sajnos semmilyen műszaki vagy ideiglenes védekezési módszer nem létezik visszatorlódás ellen."
     ],
     "correct_index": 1,
     "explanation": "A megemelkedett vízszint a csatornahálózaton át a pincékben és földszinti helyiségekben törhet fel, ha nincs visszacsapó szelep.",
@@ -1035,9 +1035,9 @@
     "id": "Q-087",
     "question": "Mit vigyél magaddal mindenképp, ha a hatóságok elrendelik a lakóhelyed kitelepítését (evakuálását)?",
     "options": [
-      "Csak a tévét és a konyhai kisgépeket",
-      "Személyi okmányokat, rendszeresen szedett gyógyszereket, ivóvizet, meleg ruhát és feltöltött telefont",
-      "Csak a lakáskulcsot"
+      "Elsősorban a nagyméretű televíziót, a mikrohullámú sütőt és a kerti szerszámkészletet.",
+      "Okmányokat, szedett gyógyszereket, vizet, meleg ruhát és töltött telefont.",
+      "Semmit nem szabad összekészíteni, elegendő egy szál nyári ruhában, iratok nélkül elindulni."
     ],
     "correct_index": 1,
     "explanation": "A kész előre összekészített vészhelyzeti csomag (túlélőcsomag) percekkel rövidíti le az elindulást, és biztosítja az ellátást a befogadóhelyen.",
@@ -1047,9 +1047,9 @@
     "id": "Q-088",
     "question": "Mi a belvíz fő jellemzője és kialakulásának oka?",
     "options": [
-      "A hegyekből lezúduló sárlavina",
+      "Hirtelen lezúduló hegyvidéki sárlavina, amely sziklákat és kidőlt fákat sodor a völgybe.",
       "Síkvidéki területeken a telített talaj, az olvadó hó és a csapadék miatt a felszínen összegyűlő, elszivárogni nem tudó víz",
-      "A tengeri dagály"
+      "A folyók felső szakaszán kialakuló jégtorlasz, amely percek alatt átszakítja a magaspartot."
     ],
     "correct_index": 1,
     "explanation": "A belvíz lassabban alakul ki, mint a villámárvíz, de hetekig tartó elöntéssel áztatja alá az épületeket és teszi tönkre a termést.",
@@ -1060,8 +1060,8 @@
     "question": "Szabad-e belterületen (kertben) avart és kerti zöldhulladékot égetni Magyarországon?",
     "options": [
       "Igen, bármikor korlátozás nélkül",
-      "Alapesetben tilos, kivéve ha a helyi önkormányzat rendelete meghatározott napokon kifejezetten engedélyezi",
-      "Csak vasárnap délután szabad"
+      "Alapesetben tilos; csak ott szabad, ahol önkormányzati rendelet engedélyezi.",
+      "Minden hétvégén és munkaszüneti napon sötétedés után külön engedély nélkül is megengedett."
     ],
     "correct_index": 1,
     "explanation": "Az országos szabályozás tiltja a belterületi avarégetést; kizárólag ott és akkor szabad, ahol ezt helyi önkormányzati rendelet szabályozza.",
@@ -1071,9 +1071,9 @@
     "id": "Q-090",
     "question": "Mit jelent az Országos Tűzgyújtási Tilalom elrendelése?",
     "options": [
-      "Csak a lakásban tilos gyertyát gyújtani",
-      "Tilos tüzet gyújtani az erdőkben, fásításokban és azok 200 méteres körzetében – még a kijelölt tűzrakóhelyeken is",
-      "Csak szalonnasütésre vonatkozik"
+      "Kizárólag a belvárosi társasházak erkélyén történő elektromos grillezést tiltja meg.",
+      "Erdőkben és 200 méteres körzetükben még a kijelölt tűzrakóhelyen is tilos tüzet gyújtani.",
+      "A kijelölt erdei szalonnasütő helyeken ilyenkor is korlátozás nélkül szabad tüzet rakni."
     ],
     "correct_index": 1,
     "explanation": "Fokozott tűzveszély idején a kijelölt erdei tűzrakóhelyek használata is szigorúan tilos a száraz aljnövényzet miatt.",
@@ -1085,7 +1085,7 @@
     "options": [
       "Csak szóbeli figyelmeztetés jár érte",
       "Akár 100 000 és 3 000 000 Ft közötti tűzvédelmi bírsággal, plusz a tűzoltás költségeivel",
-      "Maximum 5 000 Ft helyszíni bírsággal"
+      "Egységesen legfeljebb 5 000 forintos helyszíni bírsággal, egyéb költségtérítés nélkül."
     ],
     "correct_index": 1,
     "explanation": "A szabadtéri tüzek hatalmas természeti és anyagi kárt okoznak, ezért a hatóság magas bírságot szab ki, és behajtja a vonulási költségeket is.",
@@ -1096,8 +1096,8 @@
     "question": "Mire kell figyelni, ha a saját kertedben grillezel vagy bográcsozol?",
     "options": [
       "Elég, ha a tűz meggyújtása után bemész a házba",
-      "A tüzet soha nem szabad őrizetlenül hagyni, és mindig legyen kéznél oltóanyag (pl. vödör víz, kerti slag vagy homok)",
-      "Szeles időben még jobban ég a parázs, olyankor érdemes"
+      "Ne hagyd őrizetlenül a tüzet, és legyen kéznél oltóanyag (víz, slag, homok).",
+      "Erős, viharos szélben érdemes begyújtani a faszenet, mert a huzat gyorsabban izzítja át."
     ],
     "correct_index": 1,
     "explanation": "Egyetlen hirtelen széllökés is parazsat fújhat a száraz fűbe vagy a szomszédos tujasorba – az azonnali oltóanyag életmentő.",
@@ -1107,9 +1107,9 @@
     "id": "Q-093",
     "question": "Hogyan kell helyesen eloltani a szabadtéri tüzet a program végén?",
     "options": [
-      "Elég rárúgni egy kis száraz füvet",
-      "Bő vízzel vagy földdel teljesen le kell hűteni a parazsat, amíg már egyáltalán nem füstöl és nem izzik",
-      "Meg kell várni, amíg magától kialszik másnapra"
+      "Szórj a még izzó parázsra száraz faleveleket és gallyakat, majd hagyd ott a tűzrakóhelyet.",
+      "Bő vízzel vagy földdel teljesen le kell hűteni a parazsat, amíg nem füstöl.",
+      "Hagyd szabadon parázslani éjszakára, mert a hajnali harmat minden esetben magától eloltja."
     ],
     "correct_index": 1,
     "explanation": "A hamu alatt megbújó parázs órákkal később, a szél feltámadásával újra lángra lobbanhat.",
@@ -1119,9 +1119,9 @@
     "id": "Q-094",
     "question": "Miért különösen veszélyes a tavaszi száraz fű és nádas felgyújtása (tarlóégetés)?",
     "options": [
-      "Mert füstös lesz a ruha",
+      "Csak esztétikai problémát okoz, mert a fekete pernye összekoszolja a kerti bútorokat.",
       "A száraz növényzetben a tűz futótűzként, akár 30–40 km/h sebességgel terjed, és pillanatok alatt elérheti a lakóházakat és erdőket",
-      "Mert elriasztja a madarakat"
+      "Hasznos eljárás, mert elpusztítja a kártevőket és semmilyen veszélyt nem jelent a környezetre."
     ],
     "correct_index": 1,
     "explanation": "A tarló- és nádaségetés tilos és életveszélyes: a szélirány megváltozása a tűzgyújtót is körbezárhatja.",
@@ -1132,8 +1132,8 @@
     "question": "Miért okozhat erdőtüzet egy eldobott üvegpalack vagy üvegszilánk a természetben?",
     "options": [
       "Mert megvágja az állatokat",
-      "A napsugarakat összegyűjtve nagyítóként (gyújtólencseként) működik, és meggyújtja a száraz avart",
-      "Mert vegyi reakcióba lép az esővízzel"
+      "A napsugarakat gyújtólencseként összegyűjtve meggyújtja a száraz avart.",
+      "Mert az esővízzel érintkező üvegszilánk hőtermelő kémiai reakcióba lép a termőtalajjal."
     ],
     "correct_index": 1,
     "explanation": "Az üvegben megtörő napfény könnyedén eléri a száraz levelek és fűszálak gyulladási hőmérsékletét.",
@@ -1143,9 +1143,9 @@
     "id": "Q-096",
     "question": "Hogyan szabad megszabadulni a cigarettacsikktől autóban vagy kirándulás közben?",
     "options": [
-      "Ki kell dobni az autó ablakán az út szélére",
-      "Csak teljesen elnyomva, hamutartóban vagy zárt fém tárolóban szabad elhelyezni – soha ne dobd el a természetben",
-      "Elég a cipőtalppal rálépni az erdei ösvényen"
+      "Kidobhatod az autó ablakán menet közben, mert a menetszél azonnal eloltja a parazsat.",
+      "Csak teljesen elnyomva, zárt hamutartóban; a természetben soha ne dobd el.",
+      "Erdőszélen elegendő száraz fűcsomóba ejteni és egyetlen gyors mozdulattal rálépni."
     ],
     "correct_index": 1,
     "explanation": "Az út menti száraz gaz és az erdei avar az eldobott, még parázsló csikkektől gyullad meg leggyakrabban.",
@@ -1155,9 +1155,9 @@
     "id": "Q-097",
     "question": "Mit tegyél azonnal, ha szabadtéri tüzet (füstöt vagy lángokat) észlelsz a határban vagy az erdőben?",
     "options": [
-      "Menj közel és készíts videót a közösségi médiára",
+      "Szaladj a lángok elé szélirányba, hogy közelről készíthess felvételt a közösségi oldalakra.",
       "Távolodj el biztonságos irányba (széliránnyal szemben vagy oldalirányba), és azonnal hívd a 112-t a pontos helyszín megadásával",
-      "Próbáld meg egyedül megállítani a több méteres lángfalat"
+      "Próbáld meg egyedül, kabáttal csapkodva megállítani a gyorsan terjedő magas lángfalat."
     ],
     "correct_index": 1,
     "explanation": "A gyors jelzés kulcsfontosságú, hogy a tűzoltók még a tűz továbbterjedése előtt beavatkozhassanak.",
@@ -1167,9 +1167,9 @@
     "id": "Q-098",
     "question": "Hogyan teheted tűzbiztosabbá a házad környékét tavasszal és nyáron?",
     "options": [
-      "Hagyj magasra nőtt száraz gazt a kerítés mellett",
-      "Tartsd rendben és nyírd rendszeresen a füvet az épület körül, távolítsd el a száraz gallyakat és az ereszcsatornában felgyűlt avart",
-      "Tárolj tűzifát közvetlenül a nyitott terasz alatt"
+      "Tárolj száraz tűzifát közvetlenül a terasz alatt.",
+      "Nyírd a füvet, és távolítsd el a száraz ágakat, avart a ház körül és az ereszből.",
+      "Hagyd megnőni a derékig érő száraz gazt a kerítés mentén, mert az felfogja a szálló pernyét."
     ],
     "correct_index": 1,
     "explanation": "Az épület körüli védőzóna megakadályozza, hogy egy esetleges szomszédos vegetációtűz átterjedjen a tetőszerkezetre.",

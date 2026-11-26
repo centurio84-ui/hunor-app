@@ -47,6 +47,8 @@ class QuizEvent {
     required this.questionCount,
     required this.minScore,
     required this.createdAt,
+    this.rewardEnabled = true,
+    this.rewardName = 'Ajándék nyeremény',
     this.staffPin = '1234',
     this.startedCount = 0,
     this.completedCount = 0,
@@ -61,6 +63,8 @@ class QuizEvent {
   final bool isActive;
   final int questionCount;
   final int minScore;
+  final bool rewardEnabled;
+  final String rewardName;
   final String staffPin;
   final DateTime createdAt;
 
@@ -92,6 +96,8 @@ class QuizEvent {
       isActive: isActive,
       questionCount: questionCount,
       minScore: minScore,
+      rewardEnabled: rewardEnabled,
+      rewardName: rewardName,
       staffPin: staffPin,
       createdAt: createdAt,
       startedCount: startedCount,
@@ -110,6 +116,8 @@ class QuizEvent {
             .toList()
         : <String>[];
 
+    final rawRewardName = (json['reward_name'] ?? '').toString().trim();
+
     return QuizEvent(
       id: (json['id'] ?? '').toString(),
       slug: (json['slug'] ?? '').toString(),
@@ -119,6 +127,9 @@ class QuizEvent {
       isActive: json['is_active'] != false,
       questionCount: (json['question_count'] as num?)?.toInt() ?? 10,
       minScore: (json['min_score'] as num?)?.toInt() ?? 8,
+      rewardEnabled: json['reward_enabled'] != false,
+      rewardName:
+          rawRewardName.isEmpty ? 'Ajándék nyeremény' : rawRewardName,
       staffPin: (json['staff_pin'] ?? '1234').toString(),
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'].toString()) ?? DateTime.now()

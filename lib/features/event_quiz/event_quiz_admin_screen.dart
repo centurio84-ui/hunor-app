@@ -290,7 +290,7 @@ class _EventQuizAdminScreenState extends State<EventQuizAdminScreen> {
                   ),
                   SizedBox(height: 2),
                   Text(
-                    'Rendezvény kvízek & Kürtőskalács kuponok',
+                    'Rendezvény kvízek',
                     style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
                   ),
                 ],
@@ -366,9 +366,9 @@ class _EventQuizAdminScreenState extends State<EventQuizAdminScreen> {
                   SizedBox(
                     width: itemWidth,
                     child: _SummaryMetricTile(
-                      label: 'Beváltott kürtöskalács',
+                      label: 'Nyeremény beváltása',
                       value: '$totalRedeemed',
-                      icon: Icons.bakery_dining_rounded,
+                      icon: Icons.redeem_rounded,
                       accent: const Color(0xFFF43F5E),
                     ),
                   ),
@@ -631,7 +631,9 @@ class _EventQuizAdminScreenState extends State<EventQuizAdminScreen> {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        'Kérdésszám: ${ev.questionCount} db • Nyereményhatár: min. ${ev.minScore} pont • Személyzeti PIN: ${ev.staffPin}',
+                        ev.rewardEnabled
+                            ? 'Kérdésszám: ${ev.questionCount} db • Nyeremény: ${ev.rewardName} (min. ${ev.minScore} pont) • Személyzeti PIN: ${ev.staffPin}'
+                            : 'Kérdésszám: ${ev.questionCount} db • Nyeremény: kikapcsolva',
                         style: const TextStyle(
                           fontSize: 12,
                           color: HunorColors.muted,
@@ -699,7 +701,7 @@ class _EventQuizAdminScreenState extends State<EventQuizAdminScreen> {
                   const Color(0xFFA78BFA),
                 ),
                 _pillMetric(
-                  'Beváltott kürtöskalács',
+                  'Nyeremény beváltása',
                   '${ev.redeemedCount}',
                   const Color(0xFFF43F5E),
                 ),
@@ -877,8 +879,10 @@ class _QuizEventFormDialogState extends State<_QuizEventFormDialog> {
   late final TextEditingController _slug;
   late final TextEditingController _qCount;
   late final TextEditingController _minScore;
+  late final TextEditingController _rewardName;
   late final TextEditingController _staffPin;
   late final Set<String> _selectedCategories;
+  late bool _rewardEnabled;
   late bool _isActive;
   bool _slugManuallyEdited = false;
   bool _saving = false;
@@ -901,10 +905,14 @@ class _QuizEventFormDialogState extends State<_QuizEventFormDialog> {
     _slug = TextEditingController(text: initialSlug);
     _qCount = TextEditingController(text: '${src?.questionCount ?? 10}');
     _minScore = TextEditingController(text: '${src?.minScore ?? 8}');
+    _rewardName = TextEditingController(
+      text: src?.rewardName ?? 'Ajándék nyeremény',
+    );
     _staffPin = TextEditingController(text: src?.staffPin ?? '1234');
     _selectedCategories = src != null && src.selectedCategories.isNotEmpty
         ? src.selectedCategories.toSet()
         : {'altalanos'};
+    _rewardEnabled = src?.rewardEnabled ?? true;
     _isActive = e?.isActive ?? true;
     _slugManuallyEdited = e != null;
   }
@@ -915,6 +923,7 @@ class _QuizEventFormDialogState extends State<_QuizEventFormDialog> {
     _slug.dispose();
     _qCount.dispose();
     _minScore.dispose();
+    _rewardName.dispose();
     _staffPin.dispose();
     super.dispose();
   }
@@ -987,7 +996,9 @@ class _QuizEventFormDialogState extends State<_QuizEventFormDialog> {
 
     try {
       final qCount = int.parse(_qCount.text.trim());
-      final minScore = int.parse(_minScore.text.trim());
+      final minScore = _rewardEnabled
+          ? int.parse(_minScore.text.trim())
+          : (int.tryParse(_minScore.text.trim()) ?? qCount).clamp(0, qCount);
       final orderedCats = [
         for (final s in _effectiveStats)
           if (_selectedCategories.contains(s.category)) s.category,
@@ -1002,6 +1013,8 @@ class _QuizEventFormDialogState extends State<_QuizEventFormDialog> {
           selectedCategories: orderedCats,
           questionCount: qCount,
           minScore: minScore,
+          rewardEnabled: _rewardEnabled,
+          rewardName: _rewardName.text.trim(),
           staffPin: _staffPin.text.trim(),
           isActive: _isActive,
         );
@@ -1013,6 +1026,8 @@ class _QuizEventFormDialogState extends State<_QuizEventFormDialog> {
           selectedCategories: orderedCats,
           questionCount: qCount,
           minScore: minScore,
+          rewardEnabled: _rewardEnabled,
+          rewardName: _rewardName.text.trim(),
           staffPin: _staffPin.text.trim(),
           isActive: _isActive,
         );
@@ -1163,61 +1178,91 @@ class _QuizEventFormDialogState extends State<_QuizEventFormDialog> {
                   ),
 
                 const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _qCount,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          labelText: 'Kérdések száma *',
-                        ),
-                        validator: (v) {
-                          final n = int.tryParse((v ?? '').trim());
-                          if (n == null || n < 1) {
-                            return 'Min. 1 kérdés';
-                          }
-                          if (poolCount > 0 && n > poolCount) {
-                            return 'Max. $poolCount kérdés';
-                          }
-                          return null;
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: TextFormField(
-                        controller: _minScore,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          labelText: 'Min. pont kürtőskalácshoz *',
-                        ),
-                        validator: (v) {
-                          final n = int.tryParse((v ?? '').trim());
-                          final maxQ = int.tryParse(_qCount.text.trim()) ?? 10;
-                          if (n == null || n < 0 || n > maxQ) {
-                            return '0–$maxQ közötti';
-                          }
-                          return null;
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
                 TextFormField(
-                  controller: _staffPin,
+                  controller: _qCount,
                   keyboardType: TextInputType.number,
                   decoration: const InputDecoration(
-                    labelText: 'Személyzeti PIN kód (staff_pin) *',
-                    helperText:
-                        '4 jegyű PIN kód a kürtőskalács kupon helyszíni beváltásához.',
+                    labelText: 'Kérdések száma *',
                   ),
-                  validator: (v) => (v == null || v.trim().isEmpty)
-                      ? 'Add meg a személyzeti PIN kódot!'
-                      : null,
+                  validator: (v) {
+                    final n = int.tryParse((v ?? '').trim());
+                    if (n == null || n < 1) {
+                      return 'Min. 1 kérdés';
+                    }
+                    if (poolCount > 0 && n > poolCount) {
+                      return 'Max. $poolCount kérdés';
+                    }
+                    return null;
+                  },
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
+                const Divider(),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  value: _rewardEnabled,
+                  title: const Text(
+                    'Nyeremény engedélyezése',
+                    style: TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                  subtitle: const Text(
+                    'Ki- és bekapcsolható: ha aktív, a sikeres kitöltők beváltható nyereménykódot kapnak.',
+                    style: TextStyle(fontSize: 12),
+                  ),
+                  onChanged: (v) => setState(() => _rewardEnabled = v),
+                ),
+                if (_rewardEnabled) ...[
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    controller: _rewardName,
+                    decoration: const InputDecoration(
+                      labelText: 'Nyeremény megnevezése (szabadon begépelhető) *',
+                      hintText: 'pl. egy üdítő, egy strandbelépő, ajándékcsomag',
+                    ),
+                    validator: (v) =>
+                        (_rewardEnabled && (v == null || v.trim().isEmpty))
+                            ? 'Add meg, mi legyen a nyeremény!'
+                            : null,
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _minScore,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                            labelText: 'Min. pont nyereményhez *',
+                          ),
+                          validator: (v) {
+                            if (!_rewardEnabled) return null;
+                            final n = int.tryParse((v ?? '').trim());
+                            final maxQ =
+                                int.tryParse(_qCount.text.trim()) ?? 10;
+                            if (n == null || n < 0 || n > maxQ) {
+                              return '0–$maxQ közötti';
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _staffPin,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                            labelText: 'Személyzeti PIN kód *',
+                          ),
+                          validator: (v) =>
+                              (_rewardEnabled && (v == null || v.trim().isEmpty))
+                                  ? 'Add meg a PIN kódot!'
+                                  : null,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+                const Divider(),
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
                   value: _isActive,
@@ -1349,43 +1394,31 @@ class _PrintableQrPosterDialogState extends State<_PrintableQrPosterDialog> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // HUNOR Header
+                    // Quiz Poster Header
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 18,
                         vertical: 14,
                       ),
                       color: const Color(0xFFB42530),
-                      child: Row(
+                      child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Container(
-                            width: 38,
-                            height: 38,
-                            padding: const EdgeInsets.all(3),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Image.asset(
-                              'assets/images/hunor_badge.png',
-                              fit: BoxFit.contain,
-                              errorBuilder: (_, __, ___) => const Icon(
-                                Icons.shield,
-                                color: Color(0xFFB42530),
-                              ),
-                            ),
+                          Icon(
+                            Icons.quiz_rounded,
+                            color: Colors.white,
+                            size: 28,
                           ),
-                          const SizedBox(width: 10),
-                          const Flexible(
+                          SizedBox(width: 10),
+                          Flexible(
                             child: Text(
-                              'HUNOR • VÉSZHELYZETI KVÍZ',
+                              'VÉSZHELYZETI KVÍZ',
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 color: Colors.white,
-                                fontSize: 18,
+                                fontSize: 20,
                                 fontWeight: FontWeight.w900,
-                                letterSpacing: 1.2,
+                                letterSpacing: 1.4,
                               ),
                             ),
                           ),
@@ -1436,10 +1469,12 @@ class _PrintableQrPosterDialogState extends State<_PrintableQrPosterDialog> {
                                       width: 1.5,
                                     ),
                                   ),
-                                  child: const Text(
-                                    'Olvasd be, töltsd ki a kvízt, és nyerj egy friss kürtöskalácsot!',
+                                  child: Text(
+                                    widget.event.rewardEnabled
+                                        ? 'Olvasd be, töltsd ki a kvízt, és nyereményed: ${widget.event.rewardName}!'
+                                        : 'Olvasd be a QR-kódot, töltsd ki a kvízt, és tedd próbára a tudásodat!',
                                     textAlign: TextAlign.left,
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                       color: Color(0xFF78350F),
                                       fontSize: 13.5,
                                       fontWeight: FontWeight.w800,
@@ -1482,7 +1517,9 @@ class _PrintableQrPosterDialogState extends State<_PrintableQrPosterDialog> {
                           const SizedBox(height: 12),
 
                           Text(
-                            'Minimum ${widget.event.minScore} / ${widget.event.questionCount} helyes válasz = azonnali kürtőskalács kupon!',
+                            widget.event.rewardEnabled
+                                ? 'Minimum ${widget.event.minScore} / ${widget.event.questionCount} helyes válasz esetén nyeremény: ${widget.event.rewardName}!'
+                                : '${widget.event.questionCount} gyors kérdés azonnali magyarázattal – regisztráció nélkül!',
                             textAlign: TextAlign.center,
                             style: const TextStyle(
                               color: Color(0xFFB42530),

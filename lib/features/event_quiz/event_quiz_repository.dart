@@ -146,7 +146,7 @@ class EventQuizRepository {
         }
       }
 
-      final bool won = score >= event.minScore;
+      final bool won = event.rewardEnabled && score >= event.minScore;
       String? rewardCode;
       final completedIso = DateTime.now().toUtc().toIso8601String();
 
@@ -209,18 +209,18 @@ class EventQuizRepository {
     }
   }
 
-  /// Generates a clean, memorable Kürtőskalács coupon code (e.g. `HUNOR-742`).
+  /// Generates a clean, memorable reward coupon code (e.g. `KUPON-742`).
   String _generateRewardCode(int attempt) {
     if (attempt < 6) {
-      final numPart = 100 + _rng.nextInt(900); // 100..999 -> e.g. HUNOR-742
-      return 'HUNOR-$numPart';
+      final numPart = 100 + _rng.nextInt(900); // 100..999 -> e.g. KUPON-742
+      return 'KUPON-$numPart';
     }
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     final suffix = List.generate(
       4,
       (_) => chars[_rng.nextInt(chars.length)],
     ).join();
-    return 'HUNOR-$suffix';
+    return 'KUPON-$suffix';
   }
 
   /// Validates the 4-digit `event.staff_pin` and marks `is_redeemed = true` in Supabase.
@@ -417,7 +417,9 @@ class EventQuizRepository {
 
     final subRows = await _client
         .from('quiz_event_submissions')
-        .select('id,event_id,started_at,completed_at,score,is_redeemed');
+        .select(
+          'id,event_id,started_at,completed_at,score,reward_code,is_redeemed',
+        );
 
     final Map<String, List<Map<String, dynamic>>> subsByEvent = {};
     for (final raw in subRows) {
@@ -446,7 +448,9 @@ class EventQuizRepository {
       if (s['completed_at'] != null) {
         completed++;
         final sc = (s['score'] as num?)?.toInt() ?? 0;
-        if (sc >= ev.minScore) {
+        final hasCode =
+            s['reward_code'] != null && s['reward_code'].toString().isNotEmpty;
+        if (hasCode || (ev.rewardEnabled && sc >= ev.minScore)) {
           winners++;
         }
       }
@@ -469,11 +473,15 @@ class EventQuizRepository {
     required List<String> selectedCategories,
     required int questionCount,
     required int minScore,
+    required bool rewardEnabled,
+    required String rewardName,
     required String staffPin,
     bool isActive = true,
   }) async {
     final cats =
         selectedCategories.isEmpty ? const ['altalanos'] : selectedCategories;
+    final cleanRewardName =
+        rewardName.trim().isEmpty ? 'Ajándék nyeremény' : rewardName.trim();
     final row = await _client
         .from('quiz_events')
         .insert({
@@ -483,6 +491,8 @@ class EventQuizRepository {
           'is_active': isActive,
           'question_count': questionCount,
           'min_score': minScore,
+          'reward_enabled': rewardEnabled,
+          'reward_name': cleanRewardName,
           'staff_pin': staffPin.trim().isEmpty ? '1234' : staffPin.trim(),
         })
         .select()
@@ -497,11 +507,15 @@ class EventQuizRepository {
     required List<String> selectedCategories,
     required int questionCount,
     required int minScore,
+    required bool rewardEnabled,
+    required String rewardName,
     required String staffPin,
     required bool isActive,
   }) async {
     final cats =
         selectedCategories.isEmpty ? const ['altalanos'] : selectedCategories;
+    final cleanRewardName =
+        rewardName.trim().isEmpty ? 'Ajándék nyeremény' : rewardName.trim();
     final row = await _client
         .from('quiz_events')
         .update({
@@ -511,6 +525,8 @@ class EventQuizRepository {
           'is_active': isActive,
           'question_count': questionCount,
           'min_score': minScore,
+          'reward_enabled': rewardEnabled,
+          'reward_name': cleanRewardName,
           'staff_pin': staffPin.trim().isEmpty ? '1234' : staffPin.trim(),
         })
         .eq('id', id)
