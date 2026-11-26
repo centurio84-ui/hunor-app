@@ -526,6 +526,23 @@ class EventQuizRepository {
   }
 
   Future<void> deleteEvent(String id) async {
-    await _client.from('quiz_events').delete().eq('id', id);
+    final deleted = await _client
+        .from('quiz_events')
+        .delete()
+        .eq('id', id)
+        .select('id');
+
+    if (deleted.isNotEmpty) return;
+
+    // Fallback to SECURITY DEFINER RPC if direct table RLS returned 0 rows
+    final ok = await _client.rpc(
+      'delete_quiz_event',
+      params: {'p_event_id': id},
+    );
+    if (ok != true) {
+      throw StateError(
+        'Az esemény törlése nem sikerült (nincs jogosultság vagy már törölték).',
+      );
+    }
   }
 }

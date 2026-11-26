@@ -14,6 +14,8 @@ import 'device_hash_helper.dart';
 import 'event_quiz_models.dart';
 import 'event_quiz_repository.dart';
 
+enum _EventStatusFilter { all, active, inactive }
+
 class EventQuizAdminScreen extends StatefulWidget {
   const EventQuizAdminScreen({
     super.key,
@@ -36,6 +38,7 @@ class _EventQuizAdminScreenState extends State<EventQuizAdminScreen> {
   String? _error;
   List<QuizEvent> _events = [];
   List<QuizCategoryStat> _categoryStats = [];
+  _EventStatusFilter _statusFilter = _EventStatusFilter.all;
   Timer? _pollTimer;
   RealtimeChannel? _realtimeChannel;
 
@@ -104,22 +107,28 @@ class _EventQuizAdminScreenState extends State<EventQuizAdminScreen> {
     }
   }
 
-  Future<void> _openCreateOrEditDialog([QuizEvent? existing]) async {
+  Future<void> _openCreateOrEditDialog({
+    QuizEvent? existing,
+    QuizEvent? templateFrom,
+  }) async {
     final stats = _categoryStats.isNotEmpty
         ? _categoryStats
         : await _repo.fetchCategoryStats();
     if (!mounted) return;
 
-    final saved = await showDialog<bool>(
+    final result = await showDialog<String>(
       context: context,
       builder: (_) => _QuizEventFormDialog(
         repository: _repo,
         categoryStats: stats,
         existing: existing,
+        templateFrom: templateFrom,
       ),
     );
-    if (saved == true) {
+    if (result == 'saved') {
       await _loadAll();
+    } else if (result == 'request_delete' && existing != null) {
+      await _confirmDelete(existing);
     }
   }
 
@@ -139,19 +148,26 @@ class _EventQuizAdminScreenState extends State<EventQuizAdminScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Rendezvénykvíz törlése'),
+        title: const Row(
+          children: [
+            Icon(Icons.delete_forever_rounded, color: HunorColors.red),
+            SizedBox(width: 8),
+            Expanded(child: Text('Esemény végleges törlése')),
+          ],
+        ),
         content: Text(
-          'Biztosan törlöd a(z) „${ev.title}” (${ev.slug}) rendezvényt az összes eddigi kitöltéssel együtt?',
+          'Biztosan törlöd a(z) „${ev.title}” (${ev.slug}) rendezvénykvízt az összes eddigi kitöltéssel (${ev.startedCount} db) és kuponkóddal együtt?\n\nA többi párhuzamosan futó eseményt a törlés nem érinti.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
             child: const Text('Mégse'),
           ),
-          FilledButton(
+          FilledButton.icon(
             style: FilledButton.styleFrom(backgroundColor: HunorColors.red),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Törlés'),
+            icon: const Icon(Icons.delete_forever_rounded, size: 18),
+            label: const Text('Esemény törlése'),
           ),
         ],
       ),
@@ -159,7 +175,17 @@ class _EventQuizAdminScreenState extends State<EventQuizAdminScreen> {
     if (ok != true) return;
     try {
       await _repo.deleteEvent(ev.id);
-      await _loadAll();
+      if (!mounted) return;
+      setState(() {
+        _events = _events.where((x) => x.id != ev.id).toList();
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('✓ A(z) „${ev.title}” esemény sikeresen törölve.'),
+          backgroundColor: const Color(0xFF15803D),
+        ),
+      );
+      await _loadAll(silent: true);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -219,6 +245,14 @@ class _EventQuizAdminScreenState extends State<EventQuizAdminScreen> {
       );
       return widget.embedded ? denied : Scaffold(body: denied);
     }
+
+    final activeEventsCount = _events.where((e) => e.isActive).length;
+    final inactiveEventsCount = _events.length - activeEventsCount;
+    final visibleEvents = switch (_statusFilter) {
+      _EventStatusFilter.all => _events,
+      _EventStatusFilter.active => _events.where((e) => e.isActive).toList(),
+      _EventStatusFilter.inactive => _events.where((e) => !e.isActive).toList(),
+    };
 
     final totalStarted =
         _events.fold<int>(0, (sum, e) => sum + e.startedCount);
@@ -342,7 +376,91 @@ class _EventQuizAdminScreenState extends State<EventQuizAdminScreen> {
               );
             },
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 18),
+
+          // Multi-Event Simultaneous Status Banner & Filter Bar
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: HunorColors.surface,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: activeEventsCount > 0
+                    ? const Color(0xFF4ADE80).withValues(alpha: 0.4)
+                    : Colors.white12,
+              ),
+            ),
+            child: Wrap(
+              spacing: 12,
+              runSpacing: 10,
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.hub_outlined,
+                      size: 20,
+                      color: activeEventsCount > 0
+                          ? const Color(0xFF4ADE80)
+                          : HunorColors.muted,
+                    ),
+                    const SizedBox(width: 10),
+                    Flexible(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Párhuzamosan futó (aktív) események: $activeEventsCount db',
+                            style: const TextStyle(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const Text(
+                            'Egyszerre több rendezvénykvíz is futtatható külön QR-kóddal, saját PIN-nel és független statisztikával.',
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              color: HunorColors.muted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    ChoiceChip(
+                      label: Text('Összes (${_events.length})'),
+                      selected: _statusFilter == _EventStatusFilter.all,
+                      onSelected: (_) => setState(
+                        () => _statusFilter = _EventStatusFilter.all,
+                      ),
+                    ),
+                    ChoiceChip(
+                      label: Text('Futó / Aktív ($activeEventsCount)'),
+                      selected: _statusFilter == _EventStatusFilter.active,
+                      onSelected: (_) => setState(
+                        () => _statusFilter = _EventStatusFilter.active,
+                      ),
+                    ),
+                    ChoiceChip(
+                      label: Text('Szünetel ($inactiveEventsCount)'),
+                      selected: _statusFilter == _EventStatusFilter.inactive,
+                      onSelected: (_) => setState(
+                        () => _statusFilter = _EventStatusFilter.inactive,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
 
           if (_loading)
             const Padding(
@@ -388,7 +506,7 @@ class _EventQuizAdminScreenState extends State<EventQuizAdminScreen> {
                     ),
                     const SizedBox(height: 6),
                     const Text(
-                      'Hozz létre egy eseményt (pl. Barcsi Adventi Vásár 2026), válaszd ki a kérdéskategóriákat, és töltsd le a nyomtatható QR-kódos plakátot!',
+                      'Hozz létre egy vagy több párhuzamosan futó eseményt (pl. Barcsi Adventi Vásár 2026), válaszd ki a kérdéskategóriákat, és töltsd le a nyomtatható QR-kódos plakátokat!',
                       textAlign: TextAlign.center,
                       style: TextStyle(color: HunorColors.muted),
                     ),
@@ -402,8 +520,22 @@ class _EventQuizAdminScreenState extends State<EventQuizAdminScreen> {
                 ),
               ),
             )
+          else if (visibleEvents.isEmpty)
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Center(
+                  child: Text(
+                    _statusFilter == _EventStatusFilter.active
+                        ? 'Jelenleg nincs aktív (futó) esemény ebben a szűrésben.'
+                        : 'Nincs szüneteltetett esemény ebben a szűrésben.',
+                    style: const TextStyle(color: HunorColors.muted),
+                  ),
+                ),
+              ),
+            )
           else
-            for (final ev in _events) ...[
+            for (final ev in visibleEvents) ...[
               _buildEventCard(ev),
               const SizedBox(height: 12),
             ],
@@ -598,16 +730,31 @@ class _EventQuizAdminScreenState extends State<EventQuizAdminScreen> {
                   label: const Text('QR kód & Nyomtatható plakát'),
                 ),
                 OutlinedButton.icon(
-                  onPressed: () => _openCreateOrEditDialog(ev),
+                  onPressed: () => _openCreateOrEditDialog(templateFrom: ev),
+                  icon: const Icon(Icons.control_point_duplicate_rounded, size: 16),
+                  label: const Text('Másolás'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () => _openCreateOrEditDialog(existing: ev),
                   icon: const Icon(Icons.edit_outlined, size: 16),
                   label: const Text('Szerkesztés'),
                 ),
-                IconButton(
-                  tooltip: 'Törlés',
+                OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: HunorColors.red,
+                    side: BorderSide(
+                      color: HunorColors.red.withValues(alpha: 0.6),
+                    ),
+                  ),
                   onPressed: () => _confirmDelete(ev),
                   icon: const Icon(
-                    Icons.delete_outline,
+                    Icons.delete_forever_rounded,
+                    size: 18,
                     color: HunorColors.red,
+                  ),
+                  label: const Text(
+                    'Esemény törlése',
+                    style: TextStyle(fontWeight: FontWeight.w700),
                   ),
                 ),
               ],
@@ -712,11 +859,13 @@ class _QuizEventFormDialog extends StatefulWidget {
     required this.repository,
     required this.categoryStats,
     this.existing,
+    this.templateFrom,
   });
 
   final EventQuizRepository repository;
   final List<QuizCategoryStat> categoryStats;
   final QuizEvent? existing;
+  final QuizEvent? templateFrom;
 
   @override
   State<_QuizEventFormDialog> createState() => _QuizEventFormDialogState();
@@ -740,13 +889,21 @@ class _QuizEventFormDialogState extends State<_QuizEventFormDialog> {
   void initState() {
     super.initState();
     final e = widget.existing;
-    _title = TextEditingController(text: e?.title ?? '');
-    _slug = TextEditingController(text: e?.slug ?? '');
-    _qCount = TextEditingController(text: '${e?.questionCount ?? 10}');
-    _minScore = TextEditingController(text: '${e?.minScore ?? 8}');
-    _staffPin = TextEditingController(text: e?.staffPin ?? '1234');
-    _selectedCategories = e != null && e.selectedCategories.isNotEmpty
-        ? e.selectedCategories.toSet()
+    final t = widget.templateFrom;
+    final src = e ?? t;
+    final initialTitle = e != null
+        ? e.title
+        : (t != null ? '${t.title} – 2. helyszín' : '');
+    final initialSlug = e != null
+        ? e.slug
+        : (t != null ? _slugify(initialTitle) : '');
+    _title = TextEditingController(text: initialTitle);
+    _slug = TextEditingController(text: initialSlug);
+    _qCount = TextEditingController(text: '${src?.questionCount ?? 10}');
+    _minScore = TextEditingController(text: '${src?.minScore ?? 8}');
+    _staffPin = TextEditingController(text: src?.staffPin ?? '1234');
+    _selectedCategories = src != null && src.selectedCategories.isNotEmpty
+        ? src.selectedCategories.toSet()
         : {'altalanos'};
     _isActive = e?.isActive ?? true;
     _slugManuallyEdited = e != null;
@@ -861,7 +1018,7 @@ class _QuizEventFormDialogState extends State<_QuizEventFormDialog> {
         );
       }
       if (!mounted) return;
-      Navigator.pop(context, true);
+      Navigator.pop(context, 'saved');
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -1082,8 +1239,16 @@ class _QuizEventFormDialogState extends State<_QuizEventFormDialog> {
         ),
       ),
       actions: [
+        if (editing)
+          TextButton.icon(
+            style: TextButton.styleFrom(foregroundColor: HunorColors.red),
+            onPressed:
+                _saving ? null : () => Navigator.pop(context, 'request_delete'),
+            icon: const Icon(Icons.delete_forever_rounded, size: 18),
+            label: const Text('Esemény törlése'),
+          ),
         TextButton(
-          onPressed: _saving ? null : () => Navigator.pop(context, false),
+          onPressed: _saving ? null : () => Navigator.pop(context, 'cancel'),
           child: const Text('Mégse'),
         ),
         FilledButton(

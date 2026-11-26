@@ -189,6 +189,32 @@ DROP POLICY IF EXISTS "Authenticated delete quiz submissions" ON public.quiz_eve
 CREATE POLICY "Authenticated delete quiz submissions" ON public.quiz_event_submissions
   FOR DELETE TO authenticated USING (true);
 
+-- Biztonságos eseménytörlő RPC (a hozzátartozó kitöltésekkel együtt törli a kiválasztott eseményt)
+CREATE OR REPLACE FUNCTION public.delete_quiz_event(p_event_id uuid)
+RETURNS boolean
+LANGUAGE plpgsql
+VOLATILE
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  v_deleted uuid;
+BEGIN
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'UNAUTHORIZED' USING ERRCODE = '42501';
+  END IF;
+
+  DELETE FROM public.quiz_events
+  WHERE id = p_event_id
+  RETURNING id INTO v_deleted;
+
+  RETURN v_deleted IS NOT NULL;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.delete_quiz_event(uuid) FROM public, anon;
+GRANT EXECUTE ON FUNCTION public.delete_quiz_event(uuid) TO authenticated;
+
 -- ============================================================================
 -- 4. 40 ÚJ KVÍZKÉRDÉS BETÖLTÉSE (4 ÚJ KATEGÓRIÁBAN, DUPLIKÁCIÓMENTESEN)
 -- ============================================================================
