@@ -35,5 +35,6 @@ flutter:
   assets:
     - assets/images/
     - assets/launcher_icons/
+    - assets/quiz/quiz_questions_seed_98.json
     - portal/kiosk/questions.json
 

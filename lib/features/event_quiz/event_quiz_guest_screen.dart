@@ -8,8 +8,7 @@ import 'event_quiz_repository.dart';
 
 enum _GuestStage {
   loading,
-  notFound,
-  inactive,
+  inactiveOrInvalid,
   intro,
   playing,
   result,
@@ -19,11 +18,11 @@ enum _GuestStage {
 class EventQuizGuestScreen extends StatefulWidget {
   const EventQuizGuestScreen({
     super.key,
-    required this.eventSlug,
+    this.eventSlug,
     this.repository,
   });
 
-  final String eventSlug;
+  final String? eventSlug;
   final EventQuizRepository? repository;
 
   @override
@@ -38,6 +37,7 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
   String? _errorMessage;
   String _deviceHash = '';
 
+  bool _isStandardPublicMode = false;
   QuizEvent? _event;
   QuizEventSubmission? _submission;
 
@@ -47,7 +47,7 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
   int? _selectedChoice;
   bool _answered = false;
   bool _busy = false;
-  bool _savedResultBanner = false;
+  bool _alreadyCompletedLock = false;
 
   @override
   void initState() {
@@ -56,23 +56,24 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
   }
 
   Future<void> _bootstrap() async {
+    final rawSlug = widget.eventSlug?.trim().toLowerCase() ?? '';
+    if (rawSlug.isEmpty) {
+      await _enterStandardPublicIntro();
+      return;
+    }
+
     setState(() {
+      _isStandardPublicMode = false;
       _stage = _GuestStage.loading;
       _errorMessage = null;
     });
-
-    final slug = widget.eventSlug.trim().toLowerCase();
-    if (slug.isEmpty) {
-      setState(() => _stage = _GuestStage.notFound);
-      return;
-    }
 
     try {
       final hash = await getDeterministicDeviceHash();
       _deviceHash = hash;
 
       final state = await _repo.fetchPublicEventState(
-        slug: slug,
+        slug: rawSlug,
         deviceHash: hash,
       );
 
@@ -80,30 +81,40 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
       final ev = state.event;
       final sub = state.submission;
 
-      if (ev == null) {
-        setState(() => _stage = _GuestStage.notFound);
+      // Invalid slug or inactive event -> show Hungarian inactive screen + standard quiz button
+      if (ev == null || !ev.isActive) {
+        _event = ev;
+        _submission = sub;
+        // If already completed before deactivation, still allow viewing saved result/coupon
+        if (ev != null && sub != null && sub.isCompleted) {
+          setState(() {
+            _score = sub.score ?? 0;
+            _alreadyCompletedLock = true;
+            _stage = _GuestStage.result;
+          });
+          return;
+        }
+        setState(() => _stage = _GuestStage.inactiveOrInvalid);
         return;
       }
 
       _event = ev;
       _submission = sub;
 
-      // If this device has already completed this event quiz, show saved result & reward_code immediately!
+      // One-attempt device lock: if already completed on this device, show saved result & coupon!
       if (sub != null && sub.isCompleted) {
         setState(() {
           _score = sub.score ?? 0;
-          _savedResultBanner = true;
+          _alreadyCompletedLock = true;
           _stage = _GuestStage.result;
         });
         return;
       }
 
-      if (!ev.isActive) {
-        setState(() => _stage = _GuestStage.inactive);
-        return;
-      }
-
-      setState(() => _stage = _GuestStage.intro);
+      setState(() {
+        _alreadyCompletedLock = false;
+        _stage = _GuestStage.intro;
+      });
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -113,38 +124,74 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
     }
   }
 
+  Future<void> _enterStandardPublicIntro() async {
+    setState(() {
+      _isStandardPublicMode = true;
+      _event = null;
+      _submission = null;
+      _alreadyCompletedLock = false;
+      _stage = _GuestStage.intro;
+    });
+  }
+
   Future<void> _onStartQuiz() async {
-    final ev = _event;
-    if (ev == null || _busy) return;
+    if (_busy) return;
     setState(() => _busy = true);
 
     try {
-      // Insert row with started_at to track drop-off rates (started_at vs completed_at)
+      if (_isStandardPublicMode) {
+        // Standard public quiz: 10 random questions across ALL 5 categories (98 total questions)
+        final loaded = await _repo.loadRandomizedQuestions(
+          categories: null,
+          count: 10,
+        );
+        if (!mounted) return;
+        setState(() {
+          _questions = loaded;
+          _currentIndex = 0;
+          _score = 0;
+          _selectedChoice = null;
+          _answered = false;
+          _busy = false;
+          _stage = _GuestStage.playing;
+        });
+        return;
+      }
+
+      final ev = _event;
+      if (ev == null) {
+        setState(() => _busy = false);
+        return;
+      }
+
+      // Upsert started_at = now() for drop-off telemetry
       final sub = await _repo.startQuiz(
         eventId: ev.id,
         deviceHash: _deviceHash,
       );
 
-      // Double-check if completed in another tab
       if (sub.isCompleted) {
         if (!mounted) return;
         setState(() {
           _submission = sub;
           _score = sub.score ?? 0;
-          _savedResultBanner = true;
-          _stage = _GuestStage.result;
+          _alreadyCompletedLock = true;
           _busy = false;
+          _stage = _GuestStage.result;
         });
         return;
       }
 
-      final loadedQuestions =
-          await _repo.loadRandomizedQuestions(ev.questionCount);
+      // Event quiz: filter questions where category = ANY(event.selected_categories)
+      final loaded = await _repo.loadRandomizedQuestions(
+        categories: ev.selectedCategories,
+        count: ev.questionCount,
+      );
 
       if (!mounted) return;
       setState(() {
         _submission = sub;
-        _questions = loadedQuestions;
+        _questions = loaded;
         _currentIndex = 0;
         _score = 0;
         _selectedChoice = null;
@@ -183,13 +230,17 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
       return;
     }
 
-    // Complete quiz in Supabase (generates unique 6-char alphanumeric reward_code if score >= min_score)
+    if (_isStandardPublicMode) {
+      setState(() => _stage = _GuestStage.result);
+      return;
+    }
+
     final ev = _event;
     if (ev == null) return;
     setState(() => _busy = true);
     try {
       final completedSub = await _repo.completeQuiz(
-        eventId: ev.id,
+        event: ev,
         deviceHash: _deviceHash,
         score: _score,
       );
@@ -197,7 +248,7 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
       setState(() {
         _submission = completedSub;
         _score = completedSub.score ?? _score;
-        _savedResultBanner = false;
+        _alreadyCompletedLock = false;
         _busy = false;
         _stage = _GuestStage.result;
       });
@@ -211,8 +262,14 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
   }
 
   Future<void> _promptRedeemStaffPin() async {
+    final ev = _event;
     final sub = _submission;
-    if (sub == null || sub.isRedeemed || sub.rewardCode == null) return;
+    if (ev == null ||
+        sub == null ||
+        sub.isRedeemed ||
+        sub.rewardCode == null) {
+      return;
+    }
 
     final pinController = TextEditingController();
     String? dialogError;
@@ -227,7 +284,12 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
             children: [
               Icon(Icons.verified_user_outlined, color: Color(0xFFF59E0B)),
               SizedBox(width: 8),
-              Expanded(child: Text('Nyeremény beváltása (Staff Only)')),
+              Expanded(
+                child: Text(
+                  'Kürtőskalács kupon beváltása',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                ),
+              ),
             ],
           ),
           content: SizedBox(
@@ -236,8 +298,17 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                Text(
+                  'Kuponkód: ${sub.rewardCode}',
+                  style: const TextStyle(
+                    fontFamily: 'monospace',
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFFFBBF24),
+                  ),
+                ),
+                const SizedBox(height: 8),
                 const Text(
-                  'Kérjük, add át a készüléket a HUNOR stand személyzetének a nyeremény jóváhagyásához!',
+                  'Add át a készüléket a HUNOR stand személyzetének! A 4 jegyű személyzeti PIN kód megadásával a kupon beváltásra kerül.',
                   style: TextStyle(fontSize: 13, color: HunorColors.muted),
                 ),
                 const SizedBox(height: 16),
@@ -245,9 +316,11 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
                   controller: pinController,
                   obscureText: true,
                   autofocus: true,
-                  keyboardType: TextInputType.visiblePassword,
+                  maxLength: 12,
+                  keyboardType: TextInputType.number,
                   decoration: InputDecoration(
-                    labelText: 'Személyzeti PIN kód (Staff PIN)',
+                    labelText: 'Személyzeti PIN kód (4 jegyű)',
+                    counterText: '',
                     prefixIcon: const Icon(Icons.lock_outline),
                     errorText: dialogError,
                   ),
@@ -277,7 +350,8 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
                       });
                       try {
                         final res = await _repo.redeemPrize(
-                          submissionId: sub.id,
+                          event: ev,
+                          submission: sub,
                           deviceHash: _deviceHash,
                           staffPin: pin,
                         );
@@ -307,7 +381,7 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.check_circle_outline),
-              label: const Text('Nyeremény kiadása'),
+              label: const Text('Beváltás jóváhagyása'),
             ),
           ],
         ),
@@ -319,6 +393,7 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
         _submission = QuizEventSubmission(
           id: sub.id,
           eventId: sub.eventId,
+          deviceHash: sub.deviceHash,
           startedAt: sub.startedAt,
           completedAt: sub.completedAt,
           score: sub.score,
@@ -328,7 +403,7 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
       });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('🎉 Nyeremény sikeresen beváltva!'),
+          content: Text('🥨 Kürtőskalács kupon sikeresen BEVÁLTVA!'),
           backgroundColor: Color(0xFF15803D),
         ),
       );
@@ -356,29 +431,8 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
                             color: Color(0xFFF59E0B),
                           ),
                         ),
-                      _GuestStage.notFound => _buildStatusCard(
-                          icon: Icons.qr_code_scanner_rounded,
-                          title: 'Esemény nem található',
-                          subtitle:
-                              'A megadott QR-kódhoz (${widget.eventSlug}) nem tartozik kvíz-esemény.',
-                        ),
-                      _GuestStage.inactive => _buildStatusCard(
-                          icon: Icons.pause_circle_outline_rounded,
-                          title: _event?.title ?? 'Kvíz lezárva',
-                          subtitle:
-                              'Ez a rendezvény-kvíz jelenleg nem aktív. Köszönjük az érdeklődést!',
-                        ),
-                      _GuestStage.error => _buildStatusCard(
-                          icon: Icons.wifi_off_rounded,
-                          title: 'Kapcsolódási hiba',
-                          subtitle:
-                              _errorMessage ?? 'Nem sikerült betölteni a kvízt.',
-                          action: FilledButton.icon(
-                            onPressed: _bootstrap,
-                            icon: const Icon(Icons.refresh),
-                            label: const Text('Újrapróbálás'),
-                          ),
-                        ),
+                      _GuestStage.inactiveOrInvalid => _buildInactiveCard(),
+                      _GuestStage.error => _buildErrorCard(),
                       _GuestStage.intro => _buildIntroCard(),
                       _GuestStage.playing => _buildPlayingCard(),
                       _GuestStage.result => _buildResultCard(),
@@ -400,8 +454,12 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
   }
 
   Widget _buildHeader() {
+    final headerTitle = _isStandardPublicMode
+        ? 'HUNOR Lakossági Vészhelyzeti Kvíz'
+        : (_event?.title ?? 'HUNOR Rendezvénykvíz');
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: const Color(0xFF17253B),
         borderRadius: BorderRadius.circular(16),
@@ -410,19 +468,20 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
       child: Row(
         children: [
           Container(
-            width: 40,
-            height: 40,
+            width: 42,
+            height: 42,
+            padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: HunorColors.red,
+              color: const Color(0xFF0F1A2C),
               borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.white12),
             ),
-            alignment: Alignment.center,
-            child: const Text(
-              'H',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w900,
-                color: Colors.white,
+            child: Image.asset(
+              'assets/images/hunor_badge.png',
+              fit: BoxFit.contain,
+              errorBuilder: (_, __, ___) => const Icon(
+                Icons.shield_outlined,
+                color: Color(0xFFFBBF24),
               ),
             ),
           ),
@@ -431,21 +490,23 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'HUNOR • ESEMÉNY QR KVÍZ',
-                  style: TextStyle(
-                    fontSize: 11,
+                Text(
+                  _isStandardPublicMode
+                      ? 'HUNOR • NYILVÁNOS TUDÁSPRÓBA (5 TÉMAKÖR)'
+                      : 'HUNOR • RENDEZVÉNY QR KVÍZ',
+                  style: const TextStyle(
+                    fontSize: 10.5,
                     fontWeight: FontWeight.w800,
-                    letterSpacing: 1.2,
+                    letterSpacing: 1.1,
                     color: Color(0xFFF59E0B),
                   ),
                 ),
                 Text(
-                  _event?.title ?? 'Vészhelyzeti Tudáspróba',
+                  headerTitle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 16,
+                    fontSize: 15.5,
                     fontWeight: FontWeight.w800,
                     color: Colors.white,
                   ),
@@ -458,12 +519,86 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
     );
   }
 
-  Widget _buildStatusCard({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    Widget? action,
-  }) {
+  Widget _buildMascotAvatar({double height = 110}) {
+    return Image.asset(
+      'assets/images/mad_chief.png',
+      height: height,
+      fit: BoxFit.contain,
+      errorBuilder: (_, __, ___) => const Icon(
+        Icons.engineering_rounded,
+        size: 64,
+        color: Color(0xFFF59E0B),
+      ),
+    );
+  }
+
+  Widget _buildInactiveCard() {
+    return Center(
+      child: SingleChildScrollView(
+        child: Container(
+          padding: const EdgeInsets.all(28),
+          decoration: BoxDecoration(
+            color: const Color(0xFF17253B),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.white12),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildMascotAvatar(height: 115),
+              const SizedBox(height: 14),
+              const Text(
+                'Ez a rendezvénykvíz jelenleg nem aktív',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                _event != null
+                    ? 'A(z) „${_event!.title}” kvíz jelenleg le van zárva, de addig is próbára teheted a tudásodat a teljes, 98 kérdéses nyilvános kvízünkben!'
+                    : 'A beolvasott QR-kódhoz tartozó rendezvénykvíz nem található vagy lezárult. Próbáld ki helyette az általános lakossági kvízt!',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 14,
+                  height: 1.45,
+                  color: Colors.white70,
+                ),
+              ),
+              const SizedBox(height: 22),
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: HunorColors.red,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  onPressed: () async {
+                    await _enterStandardPublicIntro();
+                    await _onStartQuiz();
+                  },
+                  icon: const Icon(Icons.play_arrow_rounded, size: 24),
+                  label: const Text(
+                    'Általános lakossági kvíz indítása',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorCard() {
     return Center(
       child: Container(
         padding: const EdgeInsets.all(28),
@@ -475,12 +610,16 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 54, color: const Color(0xFFF59E0B)),
+            const Icon(
+              Icons.wifi_off_rounded,
+              size: 54,
+              color: Color(0xFFF59E0B),
+            ),
             const SizedBox(height: 16),
-            Text(
-              title,
+            const Text(
+              'Kapcsolódási hiba',
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w800,
                 color: Colors.white,
@@ -488,14 +627,27 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              subtitle,
+              _errorMessage ?? 'Nem sikerült betölteni a kvízt.',
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 14, color: Colors.white70),
             ),
-            if (action != null) ...[
-              const SizedBox(height: 20),
-              action,
-            ],
+            const SizedBox(height: 20),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              alignment: WrapAlignment.center,
+              children: [
+                FilledButton.icon(
+                  onPressed: _bootstrap,
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Újrapróbálás'),
+                ),
+                OutlinedButton(
+                  onPressed: _enterStandardPublicIntro,
+                  child: const Text('Általános lakossági kvíz'),
+                ),
+              ],
+            ),
           ],
         ),
       ),
@@ -503,6 +655,74 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
   }
 
   Widget _buildIntroCard() {
+    if (_isStandardPublicMode) {
+      return SingleChildScrollView(
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: const Color(0xFF17253B),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.white12),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(child: _buildMascotAvatar(height: 120)),
+              const SizedBox(height: 12),
+              const Text(
+                'Tudnád, mit tegyél vészhelyzetben?',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 25,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                '10 véletlenszerű kérdés mind az 5 veszélyhelyzeti témakörből (98 kérdéses tudásbázis) azonnali szakmai magyarázattal, regisztráció nélkül!',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  height: 1.5,
+                  color: Colors.white70,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                alignment: WrapAlignment.center,
+                children: [
+                  for (final key in kDefaultCategoryOrder)
+                    _categoryPill(quizCategoryLabel(key)),
+                ],
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                height: 54,
+                child: FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: HunorColors.red,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  onPressed: _busy ? null : _onStartQuiz,
+                  icon: const Icon(Icons.play_arrow_rounded, size: 26),
+                  label: const Text(
+                    'KVÍZ INDÍTÁSA →',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     final ev = _event!;
     return SingleChildScrollView(
       child: Container(
@@ -515,43 +735,69 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(999),
-              ),
-              child: const Text(
-                '🎯 REGISZTRÁCIÓ NÉLKÜLI GYORS KIHÍVÁS',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFFFBBF24),
+            Row(
+              children: [
+                _buildMascotAvatar(height: 105),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0F1A2C),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: const Color(0xFFF59E0B).withValues(alpha: 0.4),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'MAD CHIEF ÜZENETE',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.0,
+                            color: Color(0xFFFBBF24),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Válaszolj helyesen legalább ${ev.minScore} kérdésre a ${ev.questionCount}-ből, és nyerj egy friss kürtöskalácsot! 🥨',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            height: 1.38,
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
             const SizedBox(height: 18),
             Text(
               ev.title,
               textAlign: TextAlign.center,
               style: const TextStyle(
-                fontSize: 26,
+                fontSize: 25,
                 fontWeight: FontWeight.w900,
                 color: Colors.white,
               ),
             ),
             const SizedBox(height: 10),
-            const Text(
-              'Tedd próbára a veszélyhelyzeti tudásodat! Ha eléred a nyereményhatárt, a végén egyedi nyereménykódot kapsz, amit a HUNOR standnál azonnal beválthatsz.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                height: 1.5,
-                color: Colors.white70,
-              ),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              alignment: WrapAlignment.center,
+              children: [
+                for (final cat in ev.selectedCategories)
+                  _categoryPill(quizCategoryLabel(cat)),
+              ],
             ),
-            const SizedBox(height: 22),
+            const SizedBox(height: 20),
             Row(
               children: [
                 Expanded(
@@ -564,9 +810,9 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: _infoTile(
-                    Icons.emoji_events_outlined,
+                    Icons.bakery_dining_rounded,
                     'Min. ${ev.minScore} pont',
-                    'Nyereményhatár',
+                    'Kürtőskalács kupon',
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -579,7 +825,7 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 26),
+            const SizedBox(height: 24),
             SizedBox(
               height: 54,
               child: FilledButton.icon(
@@ -602,12 +848,31 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
                       )
                     : const Icon(Icons.play_arrow_rounded, size: 26),
                 label: const Text(
-                  'KVÍZ INDÍTÁSA (START QUIZ)',
+                  'KVÍZ INDÍTÁSA →',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
                 ),
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _categoryPill(String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F1A2C),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.white12),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          color: Color(0xFFBAE6FD),
         ),
       ),
     );
@@ -623,12 +888,12 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
       ),
       child: Column(
         children: [
-          Icon(icon, color: const Color(0xFF38BDF8), size: 22),
+          Icon(icon, color: const Color(0xFFFBBF24), size: 22),
           const SizedBox(height: 6),
           Text(
             value,
             style: const TextStyle(
-              fontSize: 15,
+              fontSize: 14.5,
               fontWeight: FontWeight.w800,
               color: Colors.white,
             ),
@@ -645,6 +910,15 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
   }
 
   Widget _buildPlayingCard() {
+    if (_questions.isEmpty) {
+      return Center(
+        child: FilledButton(
+          onPressed: _bootstrap,
+          child: const Text('Újratöltés'),
+        ),
+      );
+    }
+
     final q = _questions[_currentIndex];
     final total = _questions.length;
 
@@ -677,7 +951,7 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Text(
-                    'Pontszám: $_score',
+                    'Pontszám: $_score / $total',
                     style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w800,
@@ -698,16 +972,11 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
               ),
             ),
             const SizedBox(height: 14),
-            Text(
-              q.category.toUpperCase(),
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.8,
-                color: Colors.white54,
-              ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: _categoryPill(q.categoryLabel),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 10),
             Text(
               q.question,
               style: const TextStyle(
@@ -718,7 +987,7 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
               ),
             ),
             const SizedBox(height: 18),
-            for (var i = 0; i < q.choices.length; i++) ...[
+            for (var i = 0; i < q.options.length; i++) ...[
               _buildChoiceButton(q, i),
               const SizedBox(height: 10),
             ],
@@ -744,7 +1013,7 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
                     Text(
                       _selectedChoice == q.correctIndex
                           ? '✓ Helyes válasz!'
-                          : '✕ Helyes válasz: ${q.choices[q.correctIndex]}',
+                          : '✕ Helyes válasz: ${q.options[q.correctIndex]}',
                       style: const TextStyle(
                         fontWeight: FontWeight.w800,
                         color: Colors.white,
@@ -788,7 +1057,7 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
                       : const Icon(Icons.arrow_forward_rounded),
                   label: Text(
                     _currentIndex + 1 == total
-                        ? 'EREDMÉNY ÉS NYEREMÉNYKÓD →'
+                        ? 'EREDMÉNY MEGTEKINTÉSE →'
                         : 'KÖVETKEZŐ KÉRDÉS →',
                     style: const TextStyle(fontWeight: FontWeight.w900),
                   ),
@@ -846,7 +1115,7 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                q.choices[i],
+                q.options[i],
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -861,10 +1130,72 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
   }
 
   Widget _buildResultCard() {
+    // Standard Public Quiz result (repeatable practice mode)
+    if (_isStandardPublicMode) {
+      final total = _questions.isEmpty ? 10 : _questions.length;
+      final pct = total > 0 ? ((_score / total) * 100).round() : 0;
+      return SingleChildScrollView(
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: const Color(0xFF17253B),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.white12),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(child: _buildMascotAvatar(height: 120)),
+              const SizedBox(height: 12),
+              const Text(
+                'Szép munka!',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Elért eredmény: $_score / $total helyes válasz ($pct%)',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFFFBBF24),
+                ),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                height: 50,
+                child: FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: HunorColors.red,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  onPressed: _onStartQuiz,
+                  icon: const Icon(Icons.replay_rounded),
+                  label: const Text(
+                    'Új gyakorlókör indítása',
+                    style: TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Event Quiz result (with one-attempt lock + Kürtőskalács coupon & Staff PIN redemption)
     final ev = _event!;
     final sub = _submission;
     final score = sub?.score ?? _score;
-    final total = ev.questionCount;
+    final total = _questions.isNotEmpty ? _questions.length : ev.questionCount;
     final won = score >= ev.minScore && (sub?.rewardCode?.isNotEmpty ?? false);
     final isRedeemed = sub?.isRedeemed == true;
 
@@ -874,46 +1205,64 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
         decoration: BoxDecoration(
           color: const Color(0xFF17253B),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.white12),
+          border: Border.all(
+            color: won
+                ? const Color(0xFFFBBF24).withValues(alpha: 0.5)
+                : Colors.white12,
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (_savedResultBanner)
+            if (_alreadyCompletedLock)
               Container(
                 margin: const EdgeInsets.only(bottom: 16),
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0284C7).withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(10),
+                  color: const Color(0xFF0284C7).withValues(alpha: 0.22),
+                  borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                      color: const Color(0xFF38BDF8).withValues(alpha: 0.5)),
+                    color: const Color(0xFF38BDF8).withValues(alpha: 0.55),
+                  ),
                 ),
-                child: const Text(
-                  'ℹ️ Ezen a készüléken már teljesítetted ezt a rendezvény-kvízt. Alább látod a mentett eredményedet.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 12, color: Color(0xFFBAE6FD)),
+                child: const Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline_rounded,
+                      color: Color(0xFF7DD3FC),
+                      size: 20,
+                    ),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Ezt a rendezvénykvízt ezen az eszközön már kitöltötted!',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFFE0F2FE),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            Icon(
-              won ? Icons.emoji_events_rounded : Icons.school_rounded,
-              size: 62,
-              color: won ? const Color(0xFFFBBF24) : const Color(0xFF38BDF8),
-            ),
-            const SizedBox(height: 12),
+            Center(child: _buildMascotAvatar(height: 130)),
+            const SizedBox(height: 10),
             Text(
-              won ? 'Gratulálunk, nyertél!' : 'Köszönjük a részvételt!',
+              won
+                  ? '🎉 Gratulálunk! Nyertél egy friss kürtöskalácsot!'
+                  : 'Köszönjük a részvételt!',
               textAlign: TextAlign.center,
               style: const TextStyle(
-                fontSize: 26,
+                fontSize: 24,
                 fontWeight: FontWeight.w900,
                 color: Colors.white,
               ),
             ),
             const SizedBox(height: 6),
             Text(
-              'Elért eredmény: $score / $total pont (nyereményhatár: ${ev.minScore} pont)',
+              'Elért pontszám: $score / $total pont (nyereményhatár: ${ev.minScore} pont)',
               textAlign: TextAlign.center,
               style: const TextStyle(
                 fontSize: 15,
@@ -921,15 +1270,25 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
                 color: Colors.white70,
               ),
             ),
-            const SizedBox(height: 22),
+            const SizedBox(height: 20),
             if (won) ...[
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: isRedeemed
-                      ? const Color(0xFF14532D).withValues(alpha: 0.45)
-                      : const Color(0xFF0F1A2C),
-                  borderRadius: BorderRadius.circular(16),
+                  gradient: LinearGradient(
+                    colors: isRedeemed
+                        ? [
+                            const Color(0xFF14532D).withValues(alpha: 0.55),
+                            const Color(0xFF0F1A2C),
+                          ]
+                        : [
+                            const Color(0xFF451A03).withValues(alpha: 0.75),
+                            const Color(0xFF0F1A2C),
+                          ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(18),
                   border: Border.all(
                     color: isRedeemed
                         ? const Color(0xFF4ADE80)
@@ -941,12 +1300,13 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
                   children: [
                     Text(
                       isRedeemed
-                          ? '✓ NYEREMÉNY BEVÁLTVA (REDEEMED)'
-                          : 'EGYEDI NYEREMÉNYKÓDOD',
+                          ? 'KÜRTŐSKALÁCS KUPON'
+                          : '🥨 EGYEDI KÜRTŐSKALÁCS KUPONKÓDOD',
+                      textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w900,
-                        letterSpacing: 1.4,
+                        letterSpacing: 1.2,
                         color: isRedeemed
                             ? const Color(0xFF86EFAC)
                             : const Color(0xFFFBBF24),
@@ -955,10 +1315,11 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
                     const SizedBox(height: 10),
                     SelectableText(
                       sub!.rewardCode!,
+                      textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 38,
+                        fontSize: 36,
                         fontWeight: FontWeight.w900,
-                        letterSpacing: 6,
+                        letterSpacing: 3.5,
                         fontFamily: 'monospace',
                         color: Colors.white,
                         decoration:
@@ -968,46 +1329,67 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
                     const SizedBox(height: 8),
                     Text(
                       isRedeemed
-                          ? 'Ezt a nyereményt a személyzet már kiadta.'
-                          : 'Mutasd fel ezt a képernyőt a HUNOR standnál a nyeremény átvételéhez!',
+                          ? 'Ezt a kürtőskalács kupont már beváltották.'
+                          : 'Mutasd fel ezt a képernyőt a HUNOR standnál! A gombot kizárólag a személyzet kezelheti.',
                       textAlign: TextAlign.center,
                       style:
-                          const TextStyle(fontSize: 12, color: Colors.white70),
+                          const TextStyle(fontSize: 12.5, color: Colors.white70),
                     ),
                   ],
                 ),
               ),
               const SizedBox(height: 18),
-              SizedBox(
-                height: 52,
-                child: FilledButton.icon(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: isRedeemed
-                        ? Colors.white12
-                        : const Color(0xFFF59E0B),
-                    foregroundColor:
-                        isRedeemed ? Colors.white54 : const Color(0xFF0F172A),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+              if (isRedeemed)
+                Container(
+                  height: 54,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF15803D),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: const Color(0xFF86EFAC),
+                      width: 1.8,
                     ),
                   ),
-                  onPressed: isRedeemed ? null : _promptRedeemStaffPin,
-                  icon: Icon(
-                    isRedeemed
-                        ? Icons.verified_rounded
-                        : Icons.lock_person_rounded,
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.verified_rounded, color: Colors.white),
+                      SizedBox(width: 8),
+                      Text(
+                        'BEVÁLTVA',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.8,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
                   ),
-                  label: Text(
-                    isRedeemed
-                        ? 'Nyeremény már beváltva'
-                        : 'Redeem Prize (Staff Only)',
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w900,
+                )
+              else
+                SizedBox(
+                  height: 54,
+                  child: FilledButton.icon(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFFF59E0B),
+                      foregroundColor: const Color(0xFF0F172A),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    onPressed: _promptRedeemStaffPin,
+                    icon: const Icon(Icons.lock_person_rounded),
+                    label: const Text(
+                      'Nyeremény beváltása (Személyzet kezeli)',
+                      style: TextStyle(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
                   ),
                 ),
-              ),
             ] else ...[
               Container(
                 padding: const EdgeInsets.all(16),
@@ -1016,14 +1398,27 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(color: Colors.white12),
                 ),
-                child: Text(
-                  'A nyereménykódhoz legalább ${ev.minScore} helyes válasz szükséges. Köszönjük, hogy játszottál velünk – látogass el a HUNOR standhoz is!',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 13.5,
-                    height: 1.45,
-                    color: Colors.white70,
-                  ),
+                child: Column(
+                  children: [
+                    Text(
+                      'A kürtőskalács kuponhoz legalább ${ev.minScore} helyes válasz szükséges. Köszönjük, hogy velünk játszottál – látogass el a HUNOR standhoz is!',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 13.5,
+                        height: 1.45,
+                        color: Colors.white70,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    OutlinedButton.icon(
+                      onPressed: () async {
+                        await _enterStandardPublicIntro();
+                        await _onStartQuiz();
+                      },
+                      icon: const Icon(Icons.school_outlined, size: 18),
+                      label: const Text('Gyakorlás az általános kvízzel'),
+                    ),
+                  ],
                 ),
               ),
             ],

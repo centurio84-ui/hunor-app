@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
+import '../features/event_quiz/event_quiz_admin_screen.dart';
 import '../models/member.dart';
 import '../services/app_store.dart';
 import '../theme/hunor_theme.dart';
@@ -86,8 +87,12 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
     final currentOrg = store.currentOrganization;
     final coin = store.coinBalance;
     final canExcon = store.canAccessExcon;
+    final canManageEventQuiz = store.isAuthenticated && !store.isGuest;
 
     if (!canExcon && (index == 4 || index == 5 || index == 6)) {
+      index = 0;
+    }
+    if (!canManageEventQuiz && index == 10) {
       index = 0;
     }
 
@@ -105,6 +110,10 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
         onOrganizationChanged: () => store.loadData(),
       ),
       const ChatPage(),
+      if (canManageEventQuiz)
+        const EventQuizAdminScreen(embedded: true)
+      else
+        const SizedBox.shrink(),
     ];
 
     return Scaffold(
@@ -331,6 +340,25 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
                 onTap: () {
                   Navigator.pop(context);
                   setState(() => index = 6);
+                },
+              ),
+            ],
+            if (canManageEventQuiz) ...[
+              if (!store.canAccessExcon) const Divider(color: HunorColors.border),
+              ListTile(
+                leading: const Icon(Icons.qr_code_2_rounded, color: Color(0xFFF59E0B)),
+                title: const Text(
+                  'Rendezvény kvízek',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+                subtitle: const Text(
+                  'QR plakát, 5 kategória & kürtőskalács kuponok',
+                  style: TextStyle(fontSize: 11, color: HunorColors.muted),
+                ),
+                selected: index == 10,
+                onTap: () {
+                  Navigator.pop(context);
+                  setState(() => index = 10);
                 },
               ),
             ],

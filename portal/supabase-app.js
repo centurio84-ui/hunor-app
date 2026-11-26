@@ -3603,11 +3603,8 @@
     let admin=document.querySelector('#navQuizAdmin');
     if(phAdmin()&&nav&&!admin){admin=document.createElement('button');admin.id='navQuizAdmin';admin.dataset.page='quizadmin';admin.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg><span class="nt-title">Lakossági kvíz</span>';admin.onclick=()=>window.setPage('quizadmin');(document.querySelector('#navLogout')||nav.lastElementChild)?.before(admin);}
     if(admin){admin.hidden=!phAdmin();admin.style.display=admin.hidden?'none':'';}
-    let qrAdmin=document.querySelector('#navEventQrQuizAdmin');
-    if(phAdmin()&&nav&&!qrAdmin){qrAdmin=document.createElement('button');qrAdmin.id='navEventQrQuizAdmin';qrAdmin.type='button';qrAdmin.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM18 18h3v3h-3zM14 19h2M19 14v2"/></svg><span class="nt-title">Rendezvény QR Kvíz</span>';qrAdmin.onclick=()=>location.assign('/planning/?mode=quiz_admin');(document.querySelector('#navLogout')||nav.lastElementChild)?.before(qrAdmin);}
-    if(qrAdmin){qrAdmin.hidden=!phAdmin();qrAdmin.style.display=qrAdmin.hidden?'none':'';}
   }
-  function lqShell(admin=false){return `${!user?'<nav class="lq-public-nav" aria-label="Vendégoldal"><button class="secondary" onclick="setPage(\'events\')">Hírek</button><button class="secondary" onclick="setPage(\'quiz\')">Vészhelyzeti kvíz</button><button class="text-btn" onclick="openAuth(\'login\')">Tagi belépés</button></nav>':''}<section class="lq"><header class="lq-head"><div><div class="eyebrow">${admin?'HUNOR · ADMINISZTRÁCIÓ':'RESCUE COINS · LAKOSSÁGI KIHÍVÁS'}</div><h1>${admin?'Lakossági kvíz':'Tudnád, mit tegyél vészhelyzetben?'}</h1><p>${admin?'Védett kérdésbank, önálló LRC-ranglista és önkéntes kutatás.':'Válaszolj a kérdésekre, tanulj életmentő ismereteket, gyűjts Rescue Coint!'}</p></div><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">${admin?'<button type="button" class="pill-btn" onclick="location.assign(\'/planning/?mode=quiz_admin\')">🎯 Rendezvény QR Kvíz &amp; Nyereménykódok →</button>':''}<div class="lq-emblem" aria-hidden="true">LRC</div></div></header>${!lqMeta?.enabled?'<p class="lq-preview"><strong>Előnézet · még nem nyilvános játék.</strong> A kérdések szakmai jóváhagyása és az adatkezelés beállítása folyamatban van. Az admin próbajátéka nem kerül a nyilvános ranglistára.</p>':''}<nav class="lq-tabs" aria-label="${admin?'Kvíz adminisztráció':'Kvíz menü'}">${(admin?[['overview','Áttekintés'],['questions','Kérdésbank'],['moderation','Ranglista moderálás'],['research','Kutatási elemzések'],['export','Export'],['instrument','Kutatási tételek'],['privacy','Adatkezelési kérések'],['config','Beállítások'],['preview','Próbajáték']]:[['play','Játék'],['rank','Ranglista'],['help','Hogyan működik?'],['privacy','Adatkezelés']]).map(([key,label])=>`<button type="button" class="${(admin?lqAdminTab:lqTab)===key?'active':''}" onclick="${admin?'lqAdminGo':'lqGo'}('${key}')">${label}</button>`).join('')}</nav><div id="lqBody" aria-live="polite"></div>${lqWarning}</section>`;}
+  function lqShell(admin=false){return `${!user?'<nav class="lq-public-nav" aria-label="Vendégoldal"><button class="secondary" onclick="setPage(\'events\')">Hírek</button><button class="secondary" onclick="setPage(\'quiz\')">Vészhelyzeti kvíz</button><button class="text-btn" onclick="openAuth(\'login\')">Tagi belépés</button></nav>':''}<section class="lq"><header class="lq-head"><div><div class="eyebrow">${admin?'HUNOR · ADMINISZTRÁCIÓ':'RESCUE COINS · LAKOSSÁGI KIHÍVÁS'}</div><h1>${admin?'Lakossági kvíz':'Tudnád, mit tegyél vészhelyzetben?'}</h1><p>${admin?'Védett kérdésbank, önálló LRC-ranglista és önkéntes kutatás.':'Válaszolj a kérdésekre, tanulj életmentő ismereteket, gyűjts Rescue Coint!'}</p></div><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">${admin?'<button type="button" class="pill-btn" onclick="location.assign(\'/planning/?mode=quiz_admin\')">🥨 Rendezvény kvízek →</button>':''}<div class="lq-emblem" aria-hidden="true">LRC</div></div></header>${!lqMeta?.enabled?'<p class="lq-preview"><strong>Előnézet · még nem nyilvános játék.</strong> A kérdések szakmai jóváhagyása és az adatkezelés beállítása folyamatban van. Az admin próbajátéka nem kerül a nyilvános ranglistára.</p>':''}<nav class="lq-tabs" aria-label="${admin?'Kvíz adminisztráció':'Kvíz menü'}">${(admin?[['overview','Áttekintés'],['questions','Kérdésbank'],['moderation','Ranglista moderálás'],['research','Kutatási elemzések'],['export','Export'],['instrument','Kutatási tételek'],['privacy','Adatkezelési kérések'],['config','Beállítások'],['preview','Próbajáték']]:[['play','Játék'],['rank','Ranglista'],['help','Hogyan működik?'],['privacy','Adatkezelés']]).map(([key,label])=>`<button type="button" class="${(admin?lqAdminTab:lqTab)===key?'active':''}" onclick="${admin?'lqAdminGo':'lqGo'}('${key}')">${label}</button>`).join('')}</nav><div id="lqBody" aria-live="polite"></div>${lqWarning}</section>`;}
   function lqError(error){const b=document.querySelector('#lqBody');if(b)b.innerHTML=`<section class="panel"><h2>A művelet nem sikerült</h2><p role="alert">${esc(error.message)}</p><button class="secondary" onclick="${page==='quizadmin'?'lqAdminGo':'lqGo'}('${page==='quizadmin'?lqAdminTab:lqTab}')">Újrapróbálás</button></section>`;}
   async function lqRender(){const generation=++lqGeneration;try{lqMeta=await lqApi('metadata',{preview:phAdmin()});lqThemes.splice(0,lqThemes.length,...Array.from(new Set((lqMeta.categories||[]).map(c=>c.name).filter(n=>typeof n==='string'&&n.trim()))));if(generation!==lqGeneration||!['quiz','quizadmin'].includes(page))return;content.innerHTML=lqShell(page==='quizadmin');if(page==='quizadmin')await lqAdminRender();else await lqRenderTab();}catch(e){content.innerHTML=lqShell(page==='quizadmin');lqError(e);}}
   window.lqGo=async tab=>{if(lqBusy)return;lqTab=tab;lqResearch=false;if(page!=='quiz')return window.setPage('quiz');content.innerHTML=lqShell();try{await lqRenderTab();}catch(e){lqError(e);}};
@@ -3758,7 +3755,7 @@
   const ntRow=route=>ntRows.find(r=>ntRoute(r)===route);
   const ntAllowed=route=>ntReady&&ntApproved&&(ntAdmin||Boolean(ntRow(route)?.is_visible&&(!ntParents[route]||ntAllowed(ntParents[route]))));
   const ntRequested=()=>{const route=(location.hash?location.hash.replace(/^#\/?/,''):location.pathname.replace(/^\/|\/$/g,''));return ntRoutes.has(route)||route==='navigation-settings'?route:null;};
-  function ntStop(){ntEpoch++;ntRows=[];ntReady=false;ntAdmin=false;ntApproved=false;ntActor=null;ntLoading=null;if(ntChannel){sb.removeChannel(ntChannel);ntChannel=null;}document.querySelector('#navMenuSettings')?.remove();document.querySelector('#navPlanning')?.remove();}
+  function ntStop(){ntEpoch++;ntRows=[];ntReady=false;ntAdmin=false;ntApproved=false;ntActor=null;ntLoading=null;if(ntChannel){sb.removeChannel(ntChannel);ntChannel=null;}document.querySelector('#navMenuSettings')?.remove();document.querySelector('#navPlanning')?.remove();document.querySelector('#navEventQuizManager')?.remove();}
   function ntDeny(route,message='A funkció jelenleg fejlesztés alatt áll.'){ntBlocked=route;page='feature-unavailable';stopTeamChatRealtime();document.querySelector('#headerAction').style.display='none';document.querySelector('#crumb').textContent='A funkció nem elérhető';history.replaceState(null,'','#feature-unavailable');content.innerHTML=`<section class="panel nt-unavailable"><span aria-hidden="true">◈</span><h1>A funkció nem elérhető</h1><p role="status">${esc(message)}</p><button class="secondary" id="ntRetry">Újrapróbálás</button><button class="secondary" onclick="logoutHunor()">Kijelentkezés</button></section>`;document.querySelector('#ntRetry').onclick=()=>window.setPage(ntBlocked||'home');ntApply();}
   function ntRoleAllowed(route){if(!ntApproved)return false;if(['navigation-settings','approvals','quizadmin'].includes(route))return ntAdmin;if(route==='excon')return ntAdmin||Boolean(user?.canAccessExcon)||(events||[]).some(e=>e.myParticipationRole==='excon'||(Array.isArray(e.exconRegistrants)&&e.exconRegistrants.includes(user?.name)));return true;}
   function ntCanOpenPlanning() {
@@ -3767,16 +3764,28 @@
   }
   function ntApplyPlanning(nav) {
     let button=nav.querySelector('#navPlanning');
-    if(!ntCanOpenPlanning()){button?.remove();return;}
-    if(button)return;
-    button=document.createElement('button');
-    button.id='navPlanning';
-    button.type='button';
-    button.innerHTML='<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4m8-4v4M4 10h16m-11 5h6m-3-3v6"/></svg>Gyakorlat tervezés';
-    button.addEventListener('click',()=>{
-      if(ntCanOpenPlanning())location.assign('/planning/');
-    });
-    nav.append(button);
+    let eqButton=nav.querySelector('#navEventQuizManager');
+    if(!ntCanOpenPlanning()){button?.remove();eqButton?.remove();return;}
+    if(!button){
+      button=document.createElement('button');
+      button.id='navPlanning';
+      button.type='button';
+      button.innerHTML='<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4m8-4v4M4 10h16m-11 5h6m-3-3v6"/></svg>Gyakorlat tervezés';
+      button.addEventListener('click',()=>{
+        if(ntCanOpenPlanning())location.assign('/planning/');
+      });
+      nav.append(button);
+    }
+    if(!eqButton){
+      eqButton=document.createElement('button');
+      eqButton.id='navEventQuizManager';
+      eqButton.type='button';
+      eqButton.innerHTML='<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM18 18h3v3h-3zM14 19h2M19 14v2"/></svg>Rendezvény kvízek';
+      eqButton.addEventListener('click',()=>{
+        if(ntCanOpenPlanning())location.assign('/planning/?mode=quiz_admin');
+      });
+      nav.append(eqButton);
+    }
   }
   function ntApply(){
     const nav=document.querySelector('#nav');if(!nav)return;

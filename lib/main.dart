@@ -160,8 +160,8 @@ class HunorApp extends StatelessWidget {
     launchUrl(Uri.base.resolve('/#home'), webOnlyWindowName: '_self');
   }
 
-  /// Extracts `/quiz?event=<slug>` or `/#/quiz?event=<slug>` from either `Uri.base` or route settings.
-  static String? _resolveEventQuizSlug([String? routeName]) {
+  /// Resolves `/quiz?event=<slug>`, `/#/quiz?event=<slug>`, or standard `/quiz` (no `event` param).
+  static ({bool matched, String? slug}) _resolveQuizRoute([String? routeName]) {
     if (routeName != null && routeName.isNotEmpty) {
       final parsed = Uri.tryParse(routeName);
       if (parsed != null &&
@@ -169,17 +169,25 @@ class HunorApp extends StatelessWidget {
               parsed.path.endsWith('/quiz') ||
               parsed.queryParameters['mode'] == 'quiz')) {
         final slug = parsed.queryParameters['event']?.trim();
-        if (slug != null && slug.isNotEmpty) return slug;
+        return (
+          matched: true,
+          slug: (slug != null && slug.isNotEmpty) ? slug : null,
+        );
       }
     }
-    if (!kIsWeb) return null;
+    if (!kIsWeb) return (matched: false, slug: null);
     final base = Uri.base;
-    final directEvent = base.queryParameters['event']?.trim();
-    if (directEvent != null &&
-        directEvent.isNotEmpty &&
-        (base.path.contains('/quiz') ||
-            base.queryParameters['mode'] == 'quiz')) {
-      return directEvent;
+    if (base.path == '/quiz' ||
+        base.path.endsWith('/quiz') ||
+        base.path.endsWith('/quiz/') ||
+        base.queryParameters['mode'] == 'quiz') {
+      final directEvent = base.queryParameters['event']?.trim();
+      return (
+        matched: true,
+        slug: (directEvent != null && directEvent.isNotEmpty)
+            ? directEvent
+            : null,
+      );
     }
     final frag = base.fragment;
     if (frag.isNotEmpty) {
@@ -190,10 +198,13 @@ class HunorApp extends StatelessWidget {
               fragUri.path.endsWith('/quiz') ||
               fragUri.queryParameters['mode'] == 'quiz')) {
         final fSlug = fragUri.queryParameters['event']?.trim();
-        if (fSlug != null && fSlug.isNotEmpty) return fSlug;
+        return (
+          matched: true,
+          slug: (fSlug != null && fSlug.isNotEmpty) ? fSlug : null,
+        );
       }
     }
-    return null;
+    return (matched: false, slug: null);
   }
 
   static bool _isQuizEventsAdminUrl([String? routeName]) {
@@ -224,7 +235,7 @@ class HunorApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final themeController = Provider.of<ThemeController?>(context);
     final theme = themeController?.currentTheme ?? HunorTheme.dark;
-    final initialQuizSlug = _resolveEventQuizSlug();
+    final initialQuiz = _resolveQuizRoute();
     final initialQuizAdmin = _isQuizEventsAdminUrl();
 
     return MaterialApp(
@@ -232,12 +243,12 @@ class HunorApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: theme,
       onGenerateRoute: (settings) {
-        final slug = _resolveEventQuizSlug(settings.name);
-        if (slug != null) {
+        final quizRoute = _resolveQuizRoute(settings.name);
+        if (quizRoute.matched) {
           // Guest bypass: load EventQuizGuestScreen directly without requiring login!
           return MaterialPageRoute<void>(
             settings: settings,
-            builder: (_) => EventQuizGuestScreen(eventSlug: slug),
+            builder: (_) => EventQuizGuestScreen(eventSlug: quizRoute.slug),
           );
         }
         if (_isQuizEventsAdminUrl(settings.name)) {
@@ -252,6 +263,7 @@ class HunorApp extends StatelessWidget {
       },
       routes: {
         '/planning': (context) => const ExercisePlanningScreen(),
+        '/quiz': (context) => const EventQuizGuestScreen(),
         '/quiz-events': (context) =>
             const EventQuizAdminScreen(onReturnToPortal: _returnToPortal),
         '/excon': (context) => const Scaffold(body: ExconScreen()),
@@ -259,8 +271,8 @@ class HunorApp extends StatelessWidget {
         '/t0': (context) => const Scaffold(body: T0Screen()),
         '/t1': (context) => const Scaffold(body: T1Screen()),
       },
-      home: initialQuizSlug != null
-          ? EventQuizGuestScreen(eventSlug: initialQuizSlug)
+      home: initialQuiz.matched
+          ? EventQuizGuestScreen(eventSlug: initialQuiz.slug)
           : Consumer<AppStore>(
               builder: (context, store, _) {
                 if (!store.initialized) {

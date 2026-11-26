@@ -35,7 +35,7 @@ class AdminPage extends StatelessWidget {
             Expanded(child: _MetricCard(Icons.warning_amber_rounded, s.alerts.where((a) => a.status == 'active').length.toString(), 'Aktív')),
           ]),
           const SizedBox(height: 18),
-          _SectionHeader('RENDEZVÉNY QR KVÍZ', Icons.qr_code_2_rounded),
+          _SectionHeader('RENDEZVÉNY KVÍZEK', Icons.qr_code_2_rounded),
           Card(
             child: ListTile(
               contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
@@ -49,11 +49,11 @@ class AdminPage extends StatelessWidget {
                 child: const Icon(Icons.qr_code_scanner_rounded, color: Color(0xFFF59E0B)),
               ),
               title: const Text(
-                'Event QR Kvíz & Nyereménykód Kezelő',
+                'Rendezvény kvízek',
                 style: TextStyle(fontWeight: FontWeight.w800),
               ),
               subtitle: const Text(
-                'Rendezvény-kvízek létrehozása, élő statisztika és nyomtatható QR-kód generálás',
+                '5 témakör, élő statisztika, kürtőskalács kuponok és nyomtatható QR plakát',
                 style: TextStyle(color: HunorColors.muted, fontSize: 12),
               ),
               trailing: const Icon(Icons.chevron_right, color: HunorColors.muted),

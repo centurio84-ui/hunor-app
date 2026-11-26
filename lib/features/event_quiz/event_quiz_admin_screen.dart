@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -34,26 +35,47 @@ class _EventQuizAdminScreenState extends State<EventQuizAdminScreen> {
   bool _loading = true;
   String? _error;
   List<QuizEvent> _events = [];
+  List<QuizCategoryStat> _categoryStats = [];
   Timer? _pollTimer;
+  RealtimeChannel? _realtimeChannel;
 
   @override
   void initState() {
     super.initState();
-    _loadMetrics();
-    // Auto-refresh live metrics every 10 seconds
+    _loadAll();
+    _subscribeRealtime();
     _pollTimer = Timer.periodic(
-      const Duration(seconds: 10),
-      (_) => _loadMetrics(silent: true),
+      const Duration(seconds: 8),
+      (_) => _loadAll(silent: true),
     );
+  }
+
+  void _subscribeRealtime() {
+    try {
+      _realtimeChannel = Supabase.instance.client
+          .channel('quiz_event_submissions_live')
+          .onPostgresChanges(
+            event: PostgresChangeEvent.all,
+            schema: 'public',
+            table: 'quiz_event_submissions',
+            callback: (_) => _loadAll(silent: true),
+          )
+          .subscribe();
+    } catch (_) {}
   }
 
   @override
   void dispose() {
     _pollTimer?.cancel();
+    if (_realtimeChannel != null) {
+      try {
+        Supabase.instance.client.removeChannel(_realtimeChannel!);
+      } catch (_) {}
+    }
     super.dispose();
   }
 
-  Future<void> _loadMetrics({bool silent = false}) async {
+  Future<void> _loadAll({bool silent = false}) async {
     if (!silent) {
       setState(() {
         _loading = true;
@@ -61,10 +83,14 @@ class _EventQuizAdminScreenState extends State<EventQuizAdminScreen> {
       });
     }
     try {
-      final list = await _repo.listEventsWithMetrics();
+      final results = await Future.wait([
+        _repo.listEventsWithMetrics(),
+        _repo.fetchCategoryStats(),
+      ]);
       if (!mounted) return;
       setState(() {
-        _events = list;
+        _events = results[0] as List<QuizEvent>;
+        _categoryStats = results[1] as List<QuizCategoryStat>;
         _loading = false;
       });
     } catch (e) {
@@ -79,22 +105,28 @@ class _EventQuizAdminScreenState extends State<EventQuizAdminScreen> {
   }
 
   Future<void> _openCreateOrEditDialog([QuizEvent? existing]) async {
+    final stats = _categoryStats.isNotEmpty
+        ? _categoryStats
+        : await _repo.fetchCategoryStats();
+    if (!mounted) return;
+
     final saved = await showDialog<bool>(
       context: context,
       builder: (_) => _QuizEventFormDialog(
         repository: _repo,
+        categoryStats: stats,
         existing: existing,
       ),
     );
     if (saved == true) {
-      await _loadMetrics();
+      await _loadAll();
     }
   }
 
   Future<void> _toggleActive(QuizEvent ev, bool next) async {
     try {
       await _repo.toggleEventActive(ev.id, next);
-      await _loadMetrics(silent: true);
+      await _loadAll(silent: true);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -107,9 +139,9 @@ class _EventQuizAdminScreenState extends State<EventQuizAdminScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Kvíz-esemény törlése'),
+        title: const Text('Rendezvénykvíz törlése'),
         content: Text(
-          'Biztosan törlöd a(z) „${ev.title}” (${ev.slug}) eseményt az összes eddigi kitöltéssel együtt?',
+          'Biztosan törlöd a(z) „${ev.title}” (${ev.slug}) rendezvényt az összes eddigi kitöltéssel együtt?',
         ),
         actions: [
           TextButton(
@@ -127,7 +159,7 @@ class _EventQuizAdminScreenState extends State<EventQuizAdminScreen> {
     if (ok != true) return;
     try {
       await _repo.deleteEvent(ev.id);
-      await _loadMetrics();
+      await _loadAll();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -139,14 +171,18 @@ class _EventQuizAdminScreenState extends State<EventQuizAdminScreen> {
   void _openQrPosterDialog(QuizEvent ev) {
     showDialog<void>(
       context: context,
-      builder: (_) => _PrintableQrDialog(event: ev),
+      builder: (_) => _PrintableQrPosterDialog(event: ev),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final store = context.watch<AppStore?>();
-    if (store != null && store.initialized && !store.isAdmin) {
+    final hasSession =
+        Supabase.instance.client.auth.currentSession != null ||
+            (store != null && store.isAuthenticated && !store.isGuest);
+
+    if (store != null && store.initialized && !hasSession) {
       final denied = Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 440),
@@ -160,12 +196,12 @@ class _EventQuizAdminScreenState extends State<EventQuizAdminScreen> {
                   const Icon(Icons.lock_outline_rounded, size: 44),
                   const SizedBox(height: 12),
                   const Text(
-                    'Csak adminisztrátoroknak',
+                    'Szervezői bejelentkezés szükséges',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    'A Rendezvény QR Kvíz kezelőfelületéhez adminisztrátori jogosultság szükséges.',
+                    'A Rendezvény kvízek kezeléséhez jelentkezz be szervezőként.',
                     textAlign: TextAlign.center,
                   ),
                   if (widget.onReturnToPortal != null) ...[
@@ -188,14 +224,15 @@ class _EventQuizAdminScreenState extends State<EventQuizAdminScreen> {
         _events.fold<int>(0, (sum, e) => sum + e.startedCount);
     final totalCompleted =
         _events.fold<int>(0, (sum, e) => sum + e.completedCount);
-    final totalDropOff = (totalStarted - totalCompleted).clamp(0, totalStarted);
-    final totalDropRate =
-        totalStarted <= 0 ? 0.0 : (totalDropOff / totalStarted) * 100.0;
+    final totalAbandoned =
+        _events.fold<int>(0, (sum, e) => sum + e.abandonedCount);
+    final totalWinners =
+        _events.fold<int>(0, (sum, e) => sum + e.winnersCount);
     final totalRedeemed =
         _events.fold<int>(0, (sum, e) => sum + e.redeemedCount);
 
     final content = RefreshIndicator(
-      onRefresh: _loadMetrics,
+      onRefresh: _loadAll,
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 36),
         children: [
@@ -209,7 +246,7 @@ class _EventQuizAdminScreenState extends State<EventQuizAdminScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'RENDEZVÉNY QR KVÍZ KEZELŐ',
+                    'SZERVEZŐI KEZELŐFELÜLET',
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
@@ -219,7 +256,7 @@ class _EventQuizAdminScreenState extends State<EventQuizAdminScreen> {
                   ),
                   SizedBox(height: 2),
                   Text(
-                    'Event Quiz Manager & Élő Analitika',
+                    'Rendezvény kvízek & Kürtőskalács kuponok',
                     style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
                   ),
                 ],
@@ -228,7 +265,7 @@ class _EventQuizAdminScreenState extends State<EventQuizAdminScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   OutlinedButton.icon(
-                    onPressed: _loading ? null : _loadMetrics,
+                    onPressed: _loading ? null : _loadAll,
                     icon: const Icon(Icons.refresh, size: 18),
                     label: const Text('Frissítés'),
                   ),
@@ -236,7 +273,7 @@ class _EventQuizAdminScreenState extends State<EventQuizAdminScreen> {
                   FilledButton.icon(
                     onPressed: () => _openCreateOrEditDialog(),
                     icon: const Icon(Icons.add),
-                    label: const Text('Új QR Kvíz-esemény'),
+                    label: const Text('Új rendezvénykvíz'),
                   ),
                 ],
               ),
@@ -244,10 +281,12 @@ class _EventQuizAdminScreenState extends State<EventQuizAdminScreen> {
           ),
           const SizedBox(height: 18),
 
-          // Live Summary Metrics Row
+          // Live Aggregated Event Statistics (5 counters)
           LayoutBuilder(
             builder: (context, constraints) {
-              final cols = constraints.maxWidth >= 760 ? 4 : 2;
+              final cols = constraints.maxWidth >= 960
+                  ? 5
+                  : (constraints.maxWidth >= 640 ? 3 : 2);
               final itemWidth =
                   (constraints.maxWidth - (cols - 1) * 10) / cols;
               return Wrap(
@@ -257,7 +296,7 @@ class _EventQuizAdminScreenState extends State<EventQuizAdminScreen> {
                   SizedBox(
                     width: itemWidth,
                     child: _SummaryMetricTile(
-                      label: 'Elindított (Started)',
+                      label: 'Elkezdte (Megnyitások)',
                       value: '$totalStarted',
                       icon: Icons.play_circle_outline,
                       accent: const Color(0xFF38BDF8),
@@ -266,7 +305,7 @@ class _EventQuizAdminScreenState extends State<EventQuizAdminScreen> {
                   SizedBox(
                     width: itemWidth,
                     child: _SummaryMetricTile(
-                      label: 'Befejezett (Completed)',
+                      label: 'Befejezte',
                       value: '$totalCompleted',
                       icon: Icons.task_alt_rounded,
                       accent: const Color(0xFF4ADE80),
@@ -275,9 +314,8 @@ class _EventQuizAdminScreenState extends State<EventQuizAdminScreen> {
                   SizedBox(
                     width: itemWidth,
                     child: _SummaryMetricTile(
-                      label: 'Lemorzsolódás (Drop-off)',
-                      value: '${totalDropRate.toStringAsFixed(1)}%',
-                      subtitle: '$totalDropOff félbehagyott',
+                      label: 'Félbehagyta',
+                      value: '$totalAbandoned',
                       icon: Icons.trending_down_rounded,
                       accent: const Color(0xFFF59E0B),
                     ),
@@ -285,9 +323,18 @@ class _EventQuizAdminScreenState extends State<EventQuizAdminScreen> {
                   SizedBox(
                     width: itemWidth,
                     child: _SummaryMetricTile(
-                      label: 'Beváltott díj (Redeemed)',
+                      label: 'Nyertesek',
+                      value: '$totalWinners',
+                      icon: Icons.emoji_events_outlined,
+                      accent: const Color(0xFFA78BFA),
+                    ),
+                  ),
+                  SizedBox(
+                    width: itemWidth,
+                    child: _SummaryMetricTile(
+                      label: 'Beváltott kürtöskalács',
                       value: '$totalRedeemed',
-                      icon: Icons.redeem_rounded,
+                      icon: Icons.bakery_dining_rounded,
                       accent: const Color(0xFFF43F5E),
                     ),
                   ),
@@ -309,13 +356,13 @@ class _EventQuizAdminScreenState extends State<EventQuizAdminScreen> {
                 child: Column(
                   children: [
                     Text(
-                      'Hiba a kvíz-események betöltésekor:\n$_error',
+                      'Hiba a rendezvénykvízek betöltésekor:\n$_error',
                       textAlign: TextAlign.center,
                       style: const TextStyle(color: HunorColors.muted),
                     ),
                     const SizedBox(height: 12),
                     FilledButton(
-                      onPressed: _loadMetrics,
+                      onPressed: _loadAll,
                       child: const Text('Újrapróbálás'),
                     ),
                   ],
@@ -335,13 +382,13 @@ class _EventQuizAdminScreenState extends State<EventQuizAdminScreen> {
                     ),
                     const SizedBox(height: 12),
                     const Text(
-                      'Még nincs létrehozott QR kvíz-esemény.',
+                      'Még nincs létrehozott rendezvénykvíz.',
                       style:
                           TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
                     ),
                     const SizedBox(height: 6),
                     const Text(
-                      'Hozz létre egy eseményt (pl. nyílt nap, fesztivál, konferencia), és töltsd le hozzá a nyomtatható nagy felbontású QR-kódot!',
+                      'Hozz létre egy eseményt (pl. Barcsi Adventi Vásár 2026), válaszd ki a kérdéskategóriákat, és töltsd le a nyomtatható QR-kódos plakátot!',
                       textAlign: TextAlign.center,
                       style: TextStyle(color: HunorColors.muted),
                     ),
@@ -349,7 +396,7 @@ class _EventQuizAdminScreenState extends State<EventQuizAdminScreen> {
                     FilledButton.icon(
                       onPressed: () => _openCreateOrEditDialog(),
                       icon: const Icon(Icons.add),
-                      label: const Text('Első esemény létrehozása'),
+                      label: const Text('Első rendezvénykvíz létrehozása'),
                     ),
                   ],
                 ),
@@ -368,7 +415,7 @@ class _EventQuizAdminScreenState extends State<EventQuizAdminScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Rendezvény QR Kvíz Kezelő'),
+        title: const Text('Rendezvény kvízek'),
         leading: widget.onReturnToPortal == null
             ? null
             : IconButton(
@@ -450,13 +497,40 @@ class _EventQuizAdminScreenState extends State<EventQuizAdminScreen> {
                           color: Color(0xFF38BDF8),
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 6),
                       Text(
-                        'Kérdésszám: ${ev.questionCount} db • Nyereményhatár: min. ${ev.minScore} pont • Staff PIN: ${ev.staffPin}',
+                        'Kérdésszám: ${ev.questionCount} db • Nyereményhatár: min. ${ev.minScore} pont • Személyzeti PIN: ${ev.staffPin}',
                         style: const TextStyle(
                           fontSize: 12,
                           color: HunorColors.muted,
                         ),
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: [
+                          for (final cat in ev.selectedCategories)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 9,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.07),
+                                borderRadius: BorderRadius.circular(999),
+                                border: Border.all(color: Colors.white12),
+                              ),
+                              child: Text(
+                                quizCategoryLabel(cat),
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFFBAE6FD),
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                     ],
                   ),
@@ -472,19 +546,31 @@ class _EventQuizAdminScreenState extends State<EventQuizAdminScreen> {
               spacing: 10,
               runSpacing: 8,
               children: [
-                _pillMetric('Elindult', '${ev.startedCount}',
-                    const Color(0xFF38BDF8)),
-                _pillMetric('Befejezett', '${ev.completedCount}',
-                    const Color(0xFF4ADE80)),
                 _pillMetric(
-                  'Drop-off arány',
-                  '${ev.dropOffRatePercent.toStringAsFixed(1)}% (${ev.dropOffCount})',
+                  'Elkezdte (Megnyitások)',
+                  '${ev.startedCount}',
+                  const Color(0xFF38BDF8),
+                ),
+                _pillMetric(
+                  'Befejezte',
+                  '${ev.completedCount}',
+                  const Color(0xFF4ADE80),
+                ),
+                _pillMetric(
+                  'Félbehagyta',
+                  '${ev.abandonedCount}',
                   const Color(0xFFF59E0B),
                 ),
-                _pillMetric('Nyertes kód', '${ev.qualifiedCount}',
-                    const Color(0xFFA78BFA)),
-                _pillMetric('Beváltott díj', '${ev.redeemedCount}',
-                    const Color(0xFFF43F5E)),
+                _pillMetric(
+                  'Nyertesek',
+                  '${ev.winnersCount}',
+                  const Color(0xFFA78BFA),
+                ),
+                _pillMetric(
+                  'Beváltott kürtöskalács',
+                  '${ev.redeemedCount}',
+                  const Color(0xFFF43F5E),
+                ),
               ],
             ),
             const Divider(height: 24),
@@ -498,7 +584,9 @@ class _EventQuizAdminScreenState extends State<EventQuizAdminScreen> {
                     await Clipboard.setData(ClipboardData(text: ev.qrDeepLink));
                     if (!mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Kvíz link vágólapra másolva!')),
+                      const SnackBar(
+                        content: Text('Kvíz link vágólapra másolva!'),
+                      ),
                     );
                   },
                   icon: const Icon(Icons.copy, size: 16),
@@ -507,7 +595,7 @@ class _EventQuizAdminScreenState extends State<EventQuizAdminScreen> {
                 FilledButton.tonalIcon(
                   onPressed: () => _openQrPosterDialog(ev),
                   icon: const Icon(Icons.qr_code_2_rounded, size: 18),
-                  label: const Text('Nyomtatható QR kód'),
+                  label: const Text('QR kód & Nyomtatható plakát'),
                 ),
                 OutlinedButton.icon(
                   onPressed: () => _openCreateOrEditDialog(ev),
@@ -517,7 +605,10 @@ class _EventQuizAdminScreenState extends State<EventQuizAdminScreen> {
                 IconButton(
                   tooltip: 'Törlés',
                   onPressed: () => _confirmDelete(ev),
-                  icon: const Icon(Icons.delete_outline, color: HunorColors.red),
+                  icon: const Icon(
+                    Icons.delete_outline,
+                    color: HunorColors.red,
+                  ),
                 ),
               ],
             ),
@@ -562,19 +653,17 @@ class _SummaryMetricTile extends StatelessWidget {
     required this.value,
     required this.icon,
     required this.accent,
-    this.subtitle,
   });
 
   final String label;
   final String value;
-  final String? subtitle;
   final IconData icon;
   final Color accent;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: HunorColors.surface,
         borderRadius: BorderRadius.circular(14),
@@ -596,38 +685,37 @@ class _SummaryMetricTile extends StatelessWidget {
                   ),
                 ),
               ),
-              Icon(icon, size: 20, color: accent),
+              Icon(icon, size: 19, color: accent),
             ],
           ),
           const SizedBox(height: 8),
           Text(
             value,
             style: TextStyle(
-              fontSize: 26,
+              fontSize: 25,
               fontWeight: FontWeight.w900,
               color: accent,
             ),
           ),
-          if (subtitle != null) ...[
-            const SizedBox(height: 2),
-            Text(
-              subtitle!,
-              style: const TextStyle(fontSize: 11, color: HunorColors.muted),
-            ),
-          ],
         ],
       ),
     );
   }
 }
 
+// =============================================================================
+// CREATE / EDIT EVENT DIALOG WITH MULTI-SELECT 5-CATEGORY PICKER
+// =============================================================================
+
 class _QuizEventFormDialog extends StatefulWidget {
   const _QuizEventFormDialog({
     required this.repository,
+    required this.categoryStats,
     this.existing,
   });
 
   final EventQuizRepository repository;
+  final List<QuizCategoryStat> categoryStats;
   final QuizEvent? existing;
 
   @override
@@ -641,9 +729,12 @@ class _QuizEventFormDialogState extends State<_QuizEventFormDialog> {
   late final TextEditingController _qCount;
   late final TextEditingController _minScore;
   late final TextEditingController _staffPin;
+  late final Set<String> _selectedCategories;
   late bool _isActive;
+  bool _slugManuallyEdited = false;
   bool _saving = false;
   String? _saveError;
+  String? _categoryError;
 
   @override
   void initState() {
@@ -652,9 +743,13 @@ class _QuizEventFormDialogState extends State<_QuizEventFormDialog> {
     _title = TextEditingController(text: e?.title ?? '');
     _slug = TextEditingController(text: e?.slug ?? '');
     _qCount = TextEditingController(text: '${e?.questionCount ?? 10}');
-    _minScore = TextEditingController(text: '${e?.minScore ?? 7}');
+    _minScore = TextEditingController(text: '${e?.minScore ?? 8}');
     _staffPin = TextEditingController(text: e?.staffPin ?? '1234');
+    _selectedCategories = e != null && e.selectedCategories.isNotEmpty
+        ? e.selectedCategories.toSet()
+        : {'altalanos'};
     _isActive = e?.isActive ?? true;
+    _slugManuallyEdited = e != null;
   }
 
   @override
@@ -665,6 +760,27 @@ class _QuizEventFormDialogState extends State<_QuizEventFormDialog> {
     _minScore.dispose();
     _staffPin.dispose();
     super.dispose();
+  }
+
+  List<QuizCategoryStat> get _effectiveStats {
+    if (widget.categoryStats.isNotEmpty) return widget.categoryStats;
+    return const [
+      QuizCategoryStat(category: 'altalanos', count: 58),
+      QuizCategoryStat(category: 'advent', count: 10),
+      QuizCategoryStat(category: 'teli_idojaras', count: 10),
+      QuizCategoryStat(category: 'arviz_belviz', count: 10),
+      QuizCategoryStat(category: 'szabadteri_tuz', count: 10),
+    ];
+  }
+
+  int get _selectedPoolCount {
+    var sum = 0;
+    for (final stat in _effectiveStats) {
+      if (_selectedCategories.contains(stat.category)) {
+        sum += stat.count;
+      }
+    }
+    return sum;
   }
 
   String _slugify(String raw) {
@@ -686,20 +802,47 @@ class _QuizEventFormDialogState extends State<_QuizEventFormDialog> {
     return s;
   }
 
+  void _toggleCategory(String cat, bool selected) {
+    setState(() {
+      if (selected) {
+        _selectedCategories.add(cat);
+        _categoryError = null;
+      } else {
+        _selectedCategories.remove(cat);
+      }
+    });
+  }
+
   Future<void> _submit() async {
+    if (_selectedCategories.isEmpty) {
+      setState(() {
+        _categoryError = 'Válassz ki legalább 1 kérdéskategóriát!';
+      });
+      return;
+    }
     if (!(_formKey.currentState?.validate() ?? false) || _saving) return;
+
     setState(() {
       _saving = true;
       _saveError = null;
+      _categoryError = null;
     });
 
     try {
       final qCount = int.parse(_qCount.text.trim());
       final minScore = int.parse(_minScore.text.trim());
+      final orderedCats = [
+        for (final s in _effectiveStats)
+          if (_selectedCategories.contains(s.category)) s.category,
+        for (final c in _selectedCategories)
+          if (!_effectiveStats.any((s) => s.category == c)) c,
+      ];
+
       if (widget.existing == null) {
         await widget.repository.createEvent(
           slug: _slug.text.trim().toLowerCase(),
           title: _title.text.trim(),
+          selectedCategories: orderedCats,
           questionCount: qCount,
           minScore: minScore,
           staffPin: _staffPin.text.trim(),
@@ -710,6 +853,7 @@ class _QuizEventFormDialogState extends State<_QuizEventFormDialog> {
           id: widget.existing!.id,
           slug: _slug.text.trim().toLowerCase(),
           title: _title.text.trim(),
+          selectedCategories: orderedCats,
           questionCount: qCount,
           minScore: minScore,
           staffPin: _staffPin.text.trim(),
@@ -732,10 +876,14 @@ class _QuizEventFormDialogState extends State<_QuizEventFormDialog> {
   @override
   Widget build(BuildContext context) {
     final editing = widget.existing != null;
+    final poolCount = _selectedPoolCount;
+
     return AlertDialog(
-      title: Text(editing ? 'QR Kvíz-esemény szerkesztése' : 'Új QR Kvíz-esemény'),
+      title: Text(
+        editing ? 'Rendezvénykvíz szerkesztése' : 'Új rendezvénykvíz létrehozása',
+      ),
       content: SizedBox(
-        width: 440,
+        width: 520,
         child: Form(
           key: _formKey,
           child: SingleChildScrollView(
@@ -747,16 +895,16 @@ class _QuizEventFormDialogState extends State<_QuizEventFormDialog> {
                   controller: _title,
                   autofocus: true,
                   decoration: const InputDecoration(
-                    labelText: 'Rendezvény / Esemény neve *',
-                    hintText: 'pl. HUNOR Nyílt Nap 2026',
+                    labelText: 'Rendezvény neve *',
+                    hintText: 'pl. Barcsi Adventi Vásár 2026',
                   ),
                   onChanged: (v) {
-                    if (!editing && _slug.text.trim().isEmpty) {
+                    if (!_slugManuallyEdited) {
                       _slug.text = _slugify(v);
                     }
                   },
                   validator: (v) => (v == null || v.trim().isEmpty)
-                      ? 'Add meg az esemény nevét!'
+                      ? 'Add meg a rendezvény nevét!'
                       : null,
                 ),
                 const SizedBox(height: 12),
@@ -764,23 +912,100 @@ class _QuizEventFormDialogState extends State<_QuizEventFormDialog> {
                   controller: _slug,
                   decoration: InputDecoration(
                     labelText: 'URL azonosító (slug) *',
-                    hintText: 'pl. nyilt-nap-2026',
+                    hintText: 'pl. barcsi-adventi-vasar-2026',
                     suffixIcon: IconButton(
-                      tooltip: 'Generálás a névből',
+                      tooltip: 'Generálás a rendezvény nevéből',
                       icon: const Icon(Icons.auto_fix_high, size: 18),
-                      onPressed: () =>
-                          setState(() => _slug.text = _slugify(_title.text)),
+                      onPressed: () => setState(() {
+                        _slugManuallyEdited = false;
+                        _slug.text = _slugify(_title.text);
+                      }),
                     ),
                   ),
+                  onChanged: (_) => _slugManuallyEdited = true,
                   validator: (v) {
                     final s = (v ?? '').trim().toLowerCase();
                     if (!RegExp(r'^[a-z0-9][a-z0-9_-]{1,62}$').hasMatch(s)) {
-                      return 'Csak kisbetű, szám, kötőjel (min. 2 karakter).';
+                      return 'Csak kisbetű, szám és kötőjel (min. 2 karakter).';
                     }
                     return null;
                   },
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 18),
+
+                // Multi-Select Category Picker (selected_categories)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Kérdéskategóriák kiválasztása *',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0284C7).withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(
+                          color: const Color(0xFF38BDF8).withValues(alpha: 0.45),
+                        ),
+                      ),
+                      child: Text(
+                        'Kiválasztott kérdésbank: $poolCount kérdés',
+                        style: const TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFFBAE6FD),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final stat in _effectiveStats)
+                      FilterChip(
+                        selected: _selectedCategories.contains(stat.category),
+                        onSelected: (sel) => _toggleCategory(stat.category, sel),
+                        selectedColor:
+                            const Color(0xFFF59E0B).withValues(alpha: 0.28),
+                        checkmarkColor: const Color(0xFFFBBF24),
+                        label: Text(
+                          '${stat.label} (${stat.count})',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight:
+                                _selectedCategories.contains(stat.category)
+                                    ? FontWeight.w800
+                                    : FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                if (_categoryError != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: Text(
+                      _categoryError!,
+                      style: const TextStyle(
+                        color: HunorColors.red,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+
+                const SizedBox(height: 16),
                 Row(
                   children: [
                     Expanded(
@@ -792,8 +1017,11 @@ class _QuizEventFormDialogState extends State<_QuizEventFormDialog> {
                         ),
                         validator: (v) {
                           final n = int.tryParse((v ?? '').trim());
-                          if (n == null || n < 1 || n > 50) {
-                            return '1–50 közötti szám';
+                          if (n == null || n < 1) {
+                            return 'Min. 1 kérdés';
+                          }
+                          if (poolCount > 0 && n > poolCount) {
+                            return 'Max. $poolCount kérdés';
                           }
                           return null;
                         },
@@ -805,7 +1033,7 @@ class _QuizEventFormDialogState extends State<_QuizEventFormDialog> {
                         controller: _minScore,
                         keyboardType: TextInputType.number,
                         decoration: const InputDecoration(
-                          labelText: 'Min. pont díjhoz *',
+                          labelText: 'Min. pont kürtőskalácshoz *',
                         ),
                         validator: (v) {
                           final n = int.tryParse((v ?? '').trim());
@@ -822,10 +1050,11 @@ class _QuizEventFormDialogState extends State<_QuizEventFormDialog> {
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _staffPin,
+                  keyboardType: TextInputType.number,
                   decoration: const InputDecoration(
                     labelText: 'Személyzeti PIN kód (staff_pin) *',
                     helperText:
-                        'Ezzel a PIN kóddal váltja be a stand személyzete a nyereményt.',
+                        '4 jegyű PIN kód a kürtőskalács kupon helyszíni beváltásához.',
                   ),
                   validator: (v) => (v == null || v.trim().isEmpty)
                       ? 'Add meg a személyzeti PIN kódot!'
@@ -835,7 +1064,7 @@ class _QuizEventFormDialogState extends State<_QuizEventFormDialog> {
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
                   value: _isActive,
-                  title: const Text('Esemény aktív (fogad kitöltéseket)'),
+                  title: const Text('Rendezvénykvíz aktív (fogad kitöltéseket)'),
                   onChanged: (v) => setState(() => _isActive = v),
                 ),
                 if (_saveError != null)
@@ -843,7 +1072,8 @@ class _QuizEventFormDialogState extends State<_QuizEventFormDialog> {
                     padding: const EdgeInsets.only(top: 8),
                     child: Text(
                       _saveError!,
-                      style: const TextStyle(color: HunorColors.red, fontSize: 12),
+                      style:
+                          const TextStyle(color: HunorColors.red, fontSize: 12),
                     ),
                   ),
               ],
@@ -865,128 +1095,48 @@ class _QuizEventFormDialogState extends State<_QuizEventFormDialog> {
   }
 }
 
-class _PrintableQrDialog extends StatefulWidget {
-  const _PrintableQrDialog({required this.event});
+// =============================================================================
+// PRINTABLE QR POSTER DIALOG (USING RepaintBoundary + qr_flutter + MAD MASCOT)
+// =============================================================================
+
+class _PrintableQrPosterDialog extends StatefulWidget {
+  const _PrintableQrPosterDialog({required this.event});
 
   final QuizEvent event;
 
   @override
-  State<_PrintableQrDialog> createState() => _PrintableQrDialogState();
+  State<_PrintableQrPosterDialog> createState() =>
+      _PrintableQrPosterDialogState();
 }
 
-class _PrintableQrDialogState extends State<_PrintableQrDialog> {
+class _PrintableQrPosterDialogState extends State<_PrintableQrPosterDialog> {
+  final GlobalKey _posterBoundaryKey = GlobalKey();
   bool _exporting = false;
 
-  Future<void> _downloadHighResPng() async {
+  Future<void> _downloadPosterPng() async {
     if (_exporting) return;
     setState(() => _exporting = true);
     try {
-      final url = widget.event.qrDeepLink;
+      // Allow a frame settle so RepaintBoundary has painted all assets cleanly
+      await Future<void>.delayed(const Duration(milliseconds: 60));
 
-      // Render a crisp 2048×2480 printable poster PNG using QrPainter (from qr_flutter)
-      const double width = 2048;
-      const double height = 2480;
-      const double qrSize = 1560;
+      final boundary = _posterBoundaryKey.currentContext?.findRenderObject()
+          as RenderRepaintBoundary?;
+      if (boundary == null) {
+        throw StateError('A plakát előnézet nem érhető el.');
+      }
 
-      final recorder = ui.PictureRecorder();
-      final canvas = Canvas(recorder);
-
-      // White printable background
-      canvas.drawRect(
-        const Rect.fromLTWH(0, 0, width, height),
-        Paint()..color = Colors.white,
-      );
-
-      // Top red header bar
-      canvas.drawRect(
-        const Rect.fromLTWH(0, 0, width, 240),
-        Paint()..color = const Color(0xFFB42530),
-      );
-
-      _drawCenteredText(
-        canvas,
-        'HUNOR • VÉSZHELYZETI KVÍZ',
-        width / 2,
-        85,
-        const TextStyle(
-          color: Colors.white,
-          fontSize: 64,
-          fontWeight: FontWeight.w900,
-          letterSpacing: 3,
-        ),
-        width - 120,
-      );
-
-      _drawCenteredText(
-        canvas,
-        widget.event.title,
-        width / 2,
-        320,
-        const TextStyle(
-          color: Color(0xFF0F172A),
-          fontSize: 78,
-          fontWeight: FontWeight.w900,
-        ),
-        width - 160,
-      );
-
-      // High-res QR code via QrPainter from qr_flutter
-      final qrPainter = QrPainter(
-        data: url,
-        version: QrVersions.auto,
-        errorCorrectionLevel: QrErrorCorrectLevel.H,
-        gapless: true,
-        eyeStyle: const QrEyeStyle(
-          eyeShape: QrEyeShape.square,
-          color: Color(0xFF0F172A),
-        ),
-        dataModuleStyle: const QrDataModuleStyle(
-          dataModuleShape: QrDataModuleShape.square,
-          color: Color(0xFF0F172A),
-        ),
-      );
-
-      canvas.save();
-      canvas.translate((width - qrSize) / 2, 500);
-      qrPainter.paint(canvas, const Size(qrSize, qrSize));
-      canvas.restore();
-
-      _drawCenteredText(
-        canvas,
-        'Olvasd be a QR-kódot a játékhoz és a nyereménykódért!',
-        width / 2,
-        2140,
-        const TextStyle(
-          color: Color(0xFF1E293B),
-          fontSize: 52,
-          fontWeight: FontWeight.w700,
-        ),
-        width - 140,
-      );
-
-      _drawCenteredText(
-        canvas,
-        url,
-        width / 2,
-        2260,
-        const TextStyle(
-          color: Color(0xFF475569),
-          fontSize: 38,
-          fontFamily: 'monospace',
-          fontWeight: FontWeight.w600,
-        ),
-        width - 140,
-      );
-
-      final picture = recorder.endRecording();
-      final img = await picture.toImage(width.toInt(), height.toInt());
-      final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
-      if (byteData == null) throw StateError('PNG generálás sikertelen.');
+      final ui.Image image = await boundary.toImage(pixelRatio: 3.5);
+      final ByteData? byteData =
+          await image.toByteData(format: ui.ImageByteFormat.png);
+      if (byteData == null) {
+        throw StateError('A PNG képfájl előállítása nem sikerült.');
+      }
 
       final pngBytes = byteData.buffer.asUint8List();
       final ok = downloadPngBytes(
         pngBytes,
-        'hunor-qr-quiz-${widget.event.slug}.png',
+        'hunor-plakat-${widget.event.slug}.png',
       );
 
       if (!mounted) return;
@@ -994,78 +1144,204 @@ class _PrintableQrDialogState extends State<_PrintableQrDialog> {
         SnackBar(
           content: Text(
             ok
-                ? '✓ Nagy felbontású (2048×2480 px) QR plakát letöltve!'
-                : 'A PNG letöltés a webes felületen érhető el.',
+                ? '✓ Nyomtatható plakát letöltve (hunor-plakat-${widget.event.slug}.png)!'
+                : 'A PNG letöltés webes böngészőben érhető el.',
           ),
         ),
       );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('QR letöltési hiba: $e')),
+        SnackBar(content: Text('Plakát letöltési hiba: $e')),
       );
     } finally {
       if (mounted) setState(() => _exporting = false);
     }
   }
 
-  void _drawCenteredText(
-    Canvas canvas,
-    String text,
-    double centerX,
-    double topY,
-    TextStyle style,
-    double maxWidth,
-  ) {
-    final tp = TextPainter(
-      text: TextSpan(text: text, style: style),
-      textAlign: TextAlign.center,
-      textDirection: TextDirection.ltr,
-      maxLines: 2,
-      ellipsis: '…',
-    )..layout(maxWidth: maxWidth);
-    tp.paint(canvas, Offset(centerX - tp.width / 2, topY));
-  }
-
   @override
   Widget build(BuildContext context) {
     final url = widget.event.qrDeepLink;
+
     return AlertDialog(
-      title: Text('Nyomtatható QR-kód – ${widget.event.title}'),
-      content: SizedBox(
-        width: 380,
+      title: Text('Nyomtatható QR plakát – ${widget.event.title}'),
+      content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
+            // Print-ready card captured via RepaintBoundary
+            RepaintBoundary(
+              key: _posterBoundaryKey,
+              child: Container(
+                width: 420,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: const Color(0xFFCBD5E1), width: 2),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // HUNOR Header
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 18,
+                        vertical: 14,
+                      ),
+                      color: const Color(0xFFB42530),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 38,
+                            height: 38,
+                            padding: const EdgeInsets.all(3),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Image.asset(
+                              'assets/images/hunor_badge.png',
+                              fit: BoxFit.contain,
+                              errorBuilder: (_, __, ___) => const Icon(
+                                Icons.shield,
+                                color: Color(0xFFB42530),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          const Flexible(
+                            child: Text(
+                              'HUNOR • VÉSZHELYZETI KVÍZ',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 1.2,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(22, 18, 22, 20),
+                      child: Column(
+                        children: [
+                          // Event Title
+                          Text(
+                            widget.event.title,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Color(0xFF0F172A),
+                              fontSize: 22,
+                              fontWeight: FontWeight.w900,
+                              height: 1.2,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+
+                          // MAD Mascot + Callout
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Image.asset(
+                                'assets/images/mad_chief.png',
+                                height: 96,
+                                fit: BoxFit.contain,
+                                errorBuilder: (_, __, ___) => const Icon(
+                                  Icons.engineering_rounded,
+                                  size: 64,
+                                  color: Color(0xFFEA580C),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Flexible(
+                                child: Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFFFBEB),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: const Color(0xFFF59E0B),
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    'Olvasd be, töltsd ki a kvízt, és nyerj egy friss kürtöskalácsot!',
+                                    textAlign: TextAlign.left,
+                                    style: TextStyle(
+                                      color: Color(0xFF78350F),
+                                      fontSize: 13.5,
+                                      fontWeight: FontWeight.w800,
+                                      height: 1.3,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 14),
+
+                          // Large High-Res QR Code
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: const Color(0xFF0F172A),
+                                width: 2.5,
+                              ),
+                            ),
+                            child: QrImageView(
+                              data: url,
+                              version: QrVersions.auto,
+                              errorCorrectionLevel: QrErrorCorrectLevel.H,
+                              size: 240,
+                              backgroundColor: Colors.white,
+                              eyeStyle: const QrEyeStyle(
+                                eyeShape: QrEyeShape.square,
+                                color: Color(0xFF0F172A),
+                              ),
+                              dataModuleStyle: const QrDataModuleStyle(
+                                dataModuleShape: QrDataModuleShape.square,
+                                color: Color(0xFF0F172A),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+
+                          Text(
+                            'Minimum ${widget.event.minScore} / ${widget.event.questionCount} helyes válasz = azonnali kürtőskalács kupon!',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Color(0xFFB42530),
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            url,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Color(0xFF475569),
+                              fontSize: 10.5,
+                              fontFamily: 'monospace',
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              child: QrImageView(
-                data: url,
-                version: QrVersions.auto,
-                errorCorrectionLevel: QrErrorCorrectLevel.H,
-                size: 260,
-                backgroundColor: Colors.white,
-              ),
-            ),
-            const SizedBox(height: 14),
-            SelectableText(
-              url,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 12,
-                fontFamily: 'monospace',
-                color: Color(0xFF38BDF8),
-              ),
-            ),
-            const SizedBox(height: 6),
-            const Text(
-              'A letöltött PNG fájl 2048×2480 px nyomdai felbontású plakát fejléccel és felirattal.',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 11.5, color: HunorColors.muted),
             ),
           ],
         ),
@@ -1076,7 +1352,7 @@ class _PrintableQrDialogState extends State<_PrintableQrDialog> {
           child: const Text('Bezárás'),
         ),
         FilledButton.icon(
-          onPressed: _exporting ? null : _downloadHighResPng,
+          onPressed: _exporting ? null : _downloadPosterPng,
           icon: _exporting
               ? const SizedBox(
                   width: 16,
@@ -1084,7 +1360,7 @@ class _PrintableQrDialogState extends State<_PrintableQrDialog> {
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
               : const Icon(Icons.download_rounded),
-          label: const Text('Nagy felbontású PNG letöltése'),
+          label: const Text('Nyomtatható plakát letöltése (PNG)'),
         ),
       ],
     );

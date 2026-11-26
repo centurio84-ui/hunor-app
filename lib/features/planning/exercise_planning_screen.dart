@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../api/supabase_rescue_platform_api.dart';
 import '../../models/member.dart';
 import '../../services/app_store.dart';
+import '../event_quiz/event_quiz_admin_screen.dart';
 import 'container_3d_planner_tab.dart';
 import 'planning_board.dart';
 import 'planning_injects_board.dart';
@@ -72,6 +73,25 @@ class ExercisePlanningScreen extends StatelessWidget {
                 tooltip: 'Vissza a csapatportálra',
                 onPressed: onReturnToPortal,
               ),
+        actions: [
+          if (store.isAuthenticated && !store.isGuest)
+            Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: TextButton.icon(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => EventQuizAdminScreen(
+                        onReturnToPortal: onReturnToPortal,
+                      ),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.qr_code_2_rounded, size: 18),
+                label: const Text('Rendezvény kvízek'),
+              ),
+            ),
+        ],
       ),
       body: body,
     );
