@@ -1312,7 +1312,7 @@ class _QuizEventFormDialogState extends State<_QuizEventFormDialog> {
 }
 
 // =============================================================================
-// PRINTABLE QR POSTER DIALOG (USING RepaintBoundary + qr_flutter + MAD MASCOT)
+// PRINTABLE QR POSTER DIALOG (RESCUE TEAM ILLUSTRATED POSTER TEMPLATE)
 // =============================================================================
 
 class _PrintableQrPosterDialog extends StatefulWidget {
@@ -1326,15 +1326,28 @@ class _PrintableQrPosterDialog extends StatefulWidget {
 }
 
 class _PrintableQrPosterDialogState extends State<_PrintableQrPosterDialog> {
+  static const String _bgAssetPath = 'assets/images/quiz_poster_bg.jpg';
+
   final GlobalKey _posterBoundaryKey = GlobalKey();
   bool _exporting = false;
+  bool _bgPrecached = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_bgPrecached) {
+      _bgPrecached = true;
+      precacheImage(const AssetImage(_bgAssetPath), context);
+    }
+  }
 
   Future<void> _downloadPosterPng() async {
     if (_exporting) return;
     setState(() => _exporting = true);
     try {
+      await precacheImage(const AssetImage(_bgAssetPath), context);
       // Allow a frame settle so RepaintBoundary has painted all assets cleanly
-      await Future<void>.delayed(const Duration(milliseconds: 60));
+      await Future<void>.delayed(const Duration(milliseconds: 80));
 
       final boundary = _posterBoundaryKey.currentContext?.findRenderObject()
           as RenderRepaintBoundary?;
@@ -1375,6 +1388,90 @@ class _PrintableQrPosterDialogState extends State<_PrintableQrPosterDialog> {
     }
   }
 
+  Widget _buildDynamicPosterTitle(String rawTitle) {
+    final cleaned = rawTitle.trim().toUpperCase();
+    final words = cleaned.isEmpty
+        ? <String>['VÉSZHELYZETI', 'KVÍZ']
+        : cleaned.split(RegExp(r'\s+'));
+
+    final hasTrailingYear =
+        words.length >= 2 && RegExp(r'^\d{4}$').hasMatch(words.last);
+
+    // Split words cleanly across 1 or 2 lines like "BARCS ADVENTI" / "VÁSÁR 2026"
+    late final List<String> line1Words;
+    late final List<String> line2Words;
+    if (words.length <= 2) {
+      line1Words = words;
+      line2Words = const [];
+    } else if (words.length == 3) {
+      line1Words = words.sublist(0, 2);
+      line2Words = words.sublist(2);
+    } else {
+      final splitAt = (words.length / 2).ceil();
+      line1Words = words.sublist(0, splitAt);
+      line2Words = words.sublist(splitAt);
+    }
+
+    const baseStyle = TextStyle(
+      fontSize: 33,
+      fontWeight: FontWeight.w900,
+      height: 1.08,
+      letterSpacing: 0.9,
+      shadows: [
+        Shadow(
+          color: Color(0xE6040911),
+          offset: Offset(0, 3),
+          blurRadius: 10,
+        ),
+        Shadow(
+          color: Color(0x99000000),
+          offset: Offset(0, 1),
+          blurRadius: 3,
+        ),
+      ],
+    );
+
+    Color colorForWord(int globalIndex) {
+      if (hasTrailingYear && globalIndex == words.length - 1) {
+        return const Color(0xFFF3C35F); // Warm metallic gold for year
+      }
+      if (words.length >= 2 && globalIndex == 1) {
+        return const Color(0xFFEF5B16); // Vibrant rescue orange accent
+      }
+      return Colors.white;
+    }
+
+    Widget buildLine(List<String> lineWords, int startIndex) {
+      return FittedBox(
+        fit: BoxFit.scaleDown,
+        child: RichText(
+          textAlign: TextAlign.center,
+          text: TextSpan(
+            style: baseStyle,
+            children: [
+              for (var i = 0; i < lineWords.length; i++)
+                TextSpan(
+                  text: i == 0 ? lineWords[i] : ' ${lineWords[i]}',
+                  style: TextStyle(color: colorForWord(startIndex + i)),
+                ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        buildLine(line1Words, 0),
+        if (line2Words.isNotEmpty) ...[
+          const SizedBox(height: 2),
+          buildLine(line2Words, line1Words.length),
+        ],
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final url = widget.event.qrDeepLink;
@@ -1385,165 +1482,462 @@ class _PrintableQrPosterDialogState extends State<_PrintableQrPosterDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Print-ready card captured via RepaintBoundary
-            RepaintBoundary(
-              key: _posterBoundaryKey,
-              child: Container(
-                width: 420,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: const Color(0xFFCBD5E1), width: 2),
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // Quiz Poster Header
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 18,
-                        vertical: 14,
+            // 3:4 high-res illustrated poster captured via RepaintBoundary
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x77000000),
+                    blurRadius: 24,
+                    offset: Offset(0, 10),
+                  ),
+                ],
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: RepaintBoundary(
+                key: _posterBoundaryKey,
+                child: SizedBox(
+                  width: 448,
+                  height: 600,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      // 1. Clean reusable illustrated rescue team background
+                      Image.asset(
+                        _bgAssetPath,
+                        width: 448,
+                        height: 600,
+                        fit: BoxFit.cover,
+                        filterQuality: FilterQuality.high,
                       ),
-                      color: const Color(0xFFB42530),
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.quiz_rounded,
-                            color: Colors.white,
-                            size: 28,
-                          ),
-                          SizedBox(width: 10),
-                          Flexible(
-                            child: Text(
-                              'VÉSZHELYZETI KVÍZ',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: 1.4,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
 
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(22, 18, 22, 20),
-                      child: Column(
-                        children: [
-                          // Event Title
-                          Text(
-                            widget.event.title,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: Color(0xFF0F172A),
-                              fontSize: 22,
-                              fontWeight: FontWeight.w900,
-                              height: 1.2,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-
-                          // MAD Mascot + Callout
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Image.asset(
-                                'assets/images/mad_chief.png',
-                                height: 96,
-                                fit: BoxFit.contain,
-                                errorBuilder: (_, __, ___) => const Icon(
-                                  Icons.engineering_rounded,
-                                  size: 64,
-                                  color: Color(0xFFEA580C),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Flexible(
-                                child: Container(
-                                  padding: const EdgeInsets.all(10),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFFFFBEB),
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
-                                      color: const Color(0xFFF59E0B),
-                                      width: 1.5,
-                                    ),
-                                  ),
-                                  child: const Text(
-                                    'Olvasd be, töltsd ki a kvízt, és legyél felkészültebb!',
-                                    textAlign: TextAlign.left,
-                                    style: TextStyle(
-                                      color: Color(0xFF78350F),
-                                      fontSize: 13.5,
-                                      fontWeight: FontWeight.w800,
-                                      height: 1.3,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 14),
-
-                          // Large High-Res QR Code
-                          Container(
-                            padding: const EdgeInsets.all(12),
+                      // Subtle top & bottom readability vignette (preserves heroes & stripes)
+                      Positioned(
+                        left: 0,
+                        right: 0,
+                        top: 18,
+                        height: 170,
+                        child: IgnorePointer(
+                          child: DecoratedBox(
                             decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(
-                                color: const Color(0xFF0F172A),
-                                width: 2.5,
-                              ),
-                            ),
-                            child: QrImageView(
-                              data: url,
-                              version: QrVersions.auto,
-                              errorCorrectionLevel: QrErrorCorrectLevel.H,
-                              size: 240,
-                              backgroundColor: Colors.white,
-                              eyeStyle: const QrEyeStyle(
-                                eyeShape: QrEyeShape.square,
-                                color: Color(0xFF0F172A),
-                              ),
-                              dataModuleStyle: const QrDataModuleStyle(
-                                dataModuleShape: QrDataModuleShape.square,
-                                color: Color(0xFF0F172A),
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  const Color(0xFF0D1622).withValues(alpha: 0.45),
+                                  const Color(0xFF0D1622).withValues(alpha: 0.18),
+                                  Colors.transparent,
+                                ],
                               ),
                             ),
                           ),
-                          const SizedBox(height: 12),
-
-                          Text(
-                            '${widget.event.questionCount} gyors kérdés azonnali magyarázattal – regisztráció nélkül!',
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: Color(0xFFB42530),
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            url,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: Color(0xFF475569),
-                              fontSize: 10.5,
-                              fontFamily: 'monospace',
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
-                    ),
-                  ],
+
+                      // 2. Top Orange Pill Badge: [?] VÉSZHELYZETI KVÍZ
+                      Positioned(
+                        top: 36,
+                        left: 0,
+                        right: 0,
+                        child: Center(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [
+                                  Color(0xFFD94A12),
+                                  Color(0xFFEA580C),
+                                  Color(0xFFD94A12),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(999),
+                              border: Border.all(
+                                color: const Color(0xFFFFB07A).withValues(alpha: 0.55),
+                                width: 1.1,
+                              ),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Color(0x99000000),
+                                  blurRadius: 10,
+                                  offset: Offset(0, 3),
+                                ),
+                                BoxShadow(
+                                  color: Color(0x55EA580C),
+                                  blurRadius: 14,
+                                ),
+                              ],
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.quiz_rounded,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  'VÉSZHELYZETI KVÍZ',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 14.5,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 1.1,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      // 3. Dynamic Multi-Tone Event Title + Glowing Laser Flare
+                      Positioned(
+                        top: 78,
+                        left: 24,
+                        right: 24,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            ConstrainedBox(
+                              constraints: const BoxConstraints(maxHeight: 82),
+                              child: _buildDynamicPosterTitle(widget.event.title),
+                            ),
+                            const SizedBox(height: 10),
+                            // Glowing orange-gold horizontal laser flare
+                            SizedBox(
+                              width: 250,
+                              height: 6,
+                              child: Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  Container(
+                                    height: 2.2,
+                                    decoration: const BoxDecoration(
+                                      gradient: LinearGradient(
+                                        colors: [
+                                          Colors.transparent,
+                                          Color(0xFFEA580C),
+                                          Color(0xFFFDE68A),
+                                          Color(0xFFEA580C),
+                                          Colors.transparent,
+                                        ],
+                                        stops: [0.0, 0.25, 0.5, 0.75, 1.0],
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Color(0xCCF59E0B),
+                                          blurRadius: 10,
+                                          spreadRadius: 1,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Container(
+                                    width: 44,
+                                    height: 3.5,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFFFFBEB),
+                                      borderRadius: BorderRadius.circular(999),
+                                      boxShadow: const [
+                                        BoxShadow(
+                                          color: Color(0xFFFBBF24),
+                                          blurRadius: 8,
+                                          spreadRadius: 1,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // 4. Right-Side Dark Frosted Callout Card (with orange left tab)
+                      Positioned(
+                        top: 208,
+                        right: 22,
+                        width: 222,
+                        child: Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            // Left orange accent shoulder
+                            Positioned(
+                              left: -4,
+                              top: 8,
+                              bottom: 22,
+                              width: 10,
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFEA580C),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                              ),
+                            ),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(11),
+                              child: BackdropFilter(
+                                filter: ui.ImageFilter.blur(
+                                  sigmaX: 5,
+                                  sigmaY: 5,
+                                ),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 14,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        Color(0xDD111B27),
+                                        Color(0xCC1B2634),
+                                      ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(11),
+                                    border: Border.all(
+                                      color: Colors.white.withValues(alpha: 0.26),
+                                      width: 1.1,
+                                    ),
+                                    boxShadow: const [
+                                      BoxShadow(
+                                        color: Color(0x88000000),
+                                        blurRadius: 14,
+                                        offset: Offset(0, 6),
+                                      ),
+                                    ],
+                                  ),
+                                  child: RichText(
+                                    textAlign: TextAlign.center,
+                                    text: const TextSpan(
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w800,
+                                        height: 1.32,
+                                        color: Colors.white,
+                                        shadows: [
+                                          Shadow(
+                                            color: Color(0xAA000000),
+                                            offset: Offset(0, 1),
+                                            blurRadius: 3,
+                                          ),
+                                        ],
+                                      ),
+                                      children: [
+                                        TextSpan(
+                                          text:
+                                              'Olvasd be a QR-kódot,\ntöltsd ki a kvízt, és\n',
+                                        ),
+                                        TextSpan(
+                                          text: 'tegyél egy próbát!',
+                                          style: TextStyle(
+                                            color: Color(0xFFF5B841),
+                                            fontWeight: FontWeight.w900,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // 5. Glowing White/Orange QR Card + Bottom Camera Pill
+                      Positioned(
+                        top: 332,
+                        right: 34,
+                        width: 192,
+                        height: 202,
+                        child: Stack(
+                          clipBehavior: Clip.none,
+                          alignment: Alignment.topCenter,
+                          children: [
+                            Container(
+                              width: 188,
+                              height: 188,
+                              padding: const EdgeInsets.fromLTRB(12, 12, 12, 16),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: const Color(0xFFF97316),
+                                  width: 3.2,
+                                ),
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: Color(0xAAEA580C),
+                                    blurRadius: 18,
+                                    spreadRadius: 1,
+                                  ),
+                                  BoxShadow(
+                                    color: Color(0xAA000000),
+                                    blurRadius: 14,
+                                    offset: Offset(0, 6),
+                                  ),
+                                ],
+                              ),
+                              child: Center(
+                                child: QrImageView(
+                                  data: url,
+                                  version: QrVersions.auto,
+                                  errorCorrectionLevel: QrErrorCorrectLevel.M,
+                                  padding: const EdgeInsets.all(2),
+                                  backgroundColor: Colors.white,
+                                  eyeStyle: const QrEyeStyle(
+                                    eyeShape: QrEyeShape.square,
+                                    color: Color(0xFF0B111A),
+                                  ),
+                                  dataModuleStyle: const QrDataModuleStyle(
+                                    dataModuleShape: QrDataModuleShape.square,
+                                    color: Color(0xFF0B111A),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              bottom: 2,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 11,
+                                  vertical: 4.5,
+                                ),
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    colors: [
+                                      Color(0xFFD94A12),
+                                      Color(0xFFEA580C),
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(999),
+                                  border: Border.all(
+                                    color: const Color(0xFFFFC08E)
+                                        .withValues(alpha: 0.6),
+                                    width: 0.9,
+                                  ),
+                                  boxShadow: const [
+                                    BoxShadow(
+                                      color: Color(0x99000000),
+                                      blurRadius: 6,
+                                      offset: Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.smartphone_rounded,
+                                      color: Colors.white,
+                                      size: 12,
+                                    ),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      'IRÁNYÍTSD RÁ A KAMERÁD!',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 8.6,
+                                        fontWeight: FontWeight.w900,
+                                        letterSpacing: 0.4,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // 6. Bottom Feature Strip & Deep-Link URL (above bottom hazard bar)
+                      Positioned(
+                        left: 18,
+                        right: 18,
+                        bottom: 24,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: RichText(
+                                textAlign: TextAlign.center,
+                                text: TextSpan(
+                                  style: const TextStyle(
+                                    fontSize: 12.6,
+                                    fontWeight: FontWeight.w900,
+                                    color: Colors.white,
+                                    shadows: [
+                                      Shadow(
+                                        color: Color(0xDD000000),
+                                        offset: Offset(0, 1.5),
+                                        blurRadius: 4,
+                                      ),
+                                    ],
+                                  ),
+                                  children: [
+                                    TextSpan(
+                                      text:
+                                          '${widget.event.questionCount} gyors kérdés',
+                                    ),
+                                    const TextSpan(
+                                      text: ' • ',
+                                      style: TextStyle(
+                                        color: Color(0xFFF5B841),
+                                      ),
+                                    ),
+                                    const TextSpan(
+                                      text: 'Azonnali',
+                                      style: TextStyle(
+                                        color: Color(0xFFF59E0B),
+                                      ),
+                                    ),
+                                    const TextSpan(text: ' magyarázat'),
+                                    const TextSpan(
+                                      text: ' • ',
+                                      style: TextStyle(
+                                        color: Color(0xFFF5B841),
+                                      ),
+                                    ),
+                                    const TextSpan(
+                                      text: 'Regisztráció nélkül',
+                                      style: TextStyle(
+                                        color: Color(0xFFEF5B16),
+                                      ),
+                                    ),
+                                    const TextSpan(text: '!'),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 5),
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                url,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: Color(0xFF8CA0B6),
+                                  fontSize: 9.8,
+                                  fontFamily: 'monospace',
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.2,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
