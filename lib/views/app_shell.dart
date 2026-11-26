@@ -352,7 +352,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
                   style: TextStyle(fontWeight: FontWeight.w700),
                 ),
                 subtitle: const Text(
-                  'QR plakát, 5 kategória & nyereménykezelés',
+                  'QR plakát, 5 témakör & élő statisztika',
                   style: TextStyle(fontSize: 11, color: HunorColors.muted),
                 ),
                 selected: index == 10,

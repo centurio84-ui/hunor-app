@@ -254,6 +254,7 @@ class _EventQuizAdminScreenState extends State<EventQuizAdminScreen> {
       _EventStatusFilter.inactive => _events.where((e) => !e.isActive).toList(),
     };
 
+    final anyRewardConfigured = _events.any((e) => e.hasConfiguredReward);
     final totalStarted =
         _events.fold<int>(0, (sum, e) => sum + e.startedCount);
     final totalCompleted =
@@ -315,11 +316,12 @@ class _EventQuizAdminScreenState extends State<EventQuizAdminScreen> {
           ),
           const SizedBox(height: 18),
 
-          // Live Aggregated Event Statistics (5 counters)
+          // Live Aggregated Event Statistics (only show reward counters if at least one event configured a reward)
           LayoutBuilder(
             builder: (context, constraints) {
+              final tileCount = anyRewardConfigured ? 5 : 3;
               final cols = constraints.maxWidth >= 960
-                  ? 5
+                  ? tileCount
                   : (constraints.maxWidth >= 640 ? 3 : 2);
               final itemWidth =
                   (constraints.maxWidth - (cols - 1) * 10) / cols;
@@ -354,24 +356,26 @@ class _EventQuizAdminScreenState extends State<EventQuizAdminScreen> {
                       accent: const Color(0xFFF59E0B),
                     ),
                   ),
-                  SizedBox(
-                    width: itemWidth,
-                    child: _SummaryMetricTile(
-                      label: 'Nyertesek',
-                      value: '$totalWinners',
-                      icon: Icons.emoji_events_outlined,
-                      accent: const Color(0xFFA78BFA),
+                  if (anyRewardConfigured) ...[
+                    SizedBox(
+                      width: itemWidth,
+                      child: _SummaryMetricTile(
+                        label: 'Nyertesek',
+                        value: '$totalWinners',
+                        icon: Icons.emoji_events_outlined,
+                        accent: const Color(0xFFA78BFA),
+                      ),
                     ),
-                  ),
-                  SizedBox(
-                    width: itemWidth,
-                    child: _SummaryMetricTile(
-                      label: 'Nyeremény beváltása',
-                      value: '$totalRedeemed',
-                      icon: Icons.redeem_rounded,
-                      accent: const Color(0xFFF43F5E),
+                    SizedBox(
+                      width: itemWidth,
+                      child: _SummaryMetricTile(
+                        label: 'Nyeremény beváltása',
+                        value: '$totalRedeemed',
+                        icon: Icons.redeem_rounded,
+                        accent: const Color(0xFFF43F5E),
+                      ),
                     ),
-                  ),
+                  ],
                 ],
               );
             },
@@ -631,9 +635,9 @@ class _EventQuizAdminScreenState extends State<EventQuizAdminScreen> {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        ev.rewardEnabled
+                        ev.hasConfiguredReward
                             ? 'Kérdésszám: ${ev.questionCount} db • Nyeremény: ${ev.rewardName} (min. ${ev.minScore} pont) • Személyzeti PIN: ${ev.staffPin}'
-                            : 'Kérdésszám: ${ev.questionCount} db • Nyeremény: kikapcsolva',
+                            : 'Kérdésszám: ${ev.questionCount} db',
                         style: const TextStyle(
                           fontSize: 12,
                           color: HunorColors.muted,
@@ -695,16 +699,18 @@ class _EventQuizAdminScreenState extends State<EventQuizAdminScreen> {
                   '${ev.abandonedCount}',
                   const Color(0xFFF59E0B),
                 ),
-                _pillMetric(
-                  'Nyertesek',
-                  '${ev.winnersCount}',
-                  const Color(0xFFA78BFA),
-                ),
-                _pillMetric(
-                  'Nyeremény beváltása',
-                  '${ev.redeemedCount}',
-                  const Color(0xFFF43F5E),
-                ),
+                if (ev.hasConfiguredReward) ...[
+                  _pillMetric(
+                    'Nyertesek',
+                    '${ev.winnersCount}',
+                    const Color(0xFFA78BFA),
+                  ),
+                  _pillMetric(
+                    'Nyeremény beváltása',
+                    '${ev.redeemedCount}',
+                    const Color(0xFFF43F5E),
+                  ),
+                ],
               ],
             ),
             const Divider(height: 24),
@@ -906,13 +912,13 @@ class _QuizEventFormDialogState extends State<_QuizEventFormDialog> {
     _qCount = TextEditingController(text: '${src?.questionCount ?? 10}');
     _minScore = TextEditingController(text: '${src?.minScore ?? 8}');
     _rewardName = TextEditingController(
-      text: src?.rewardName ?? 'Ajándék nyeremény',
+      text: src != null && src.hasConfiguredReward ? src.rewardName : '',
     );
     _staffPin = TextEditingController(text: src?.staffPin ?? '1234');
     _selectedCategories = src != null && src.selectedCategories.isNotEmpty
         ? src.selectedCategories.toSet()
         : {'altalanos'};
-    _rewardEnabled = src?.rewardEnabled ?? true;
+    _rewardEnabled = src?.hasConfiguredReward ?? false;
     _isActive = e?.isActive ?? true;
     _slugManuallyEdited = e != null;
   }
@@ -1201,11 +1207,11 @@ class _QuizEventFormDialogState extends State<_QuizEventFormDialog> {
                   contentPadding: EdgeInsets.zero,
                   value: _rewardEnabled,
                   title: const Text(
-                    'Nyeremény engedélyezése',
+                    'Kuponos díjazás bekapcsolása (opcionális)',
                     style: TextStyle(fontWeight: FontWeight.w800),
                   ),
                   subtitle: const Text(
-                    'Ki- és bekapcsolható: ha aktív, a sikeres kitöltők beváltható nyereménykódot kapnak.',
+                    'Alapból kikapcsolva. Csak akkor kapcsold be, ha beváltható tételt szeretnél adni.',
                     style: TextStyle(fontSize: 12),
                   ),
                   onChanged: (v) => setState(() => _rewardEnabled = v),
@@ -1216,7 +1222,7 @@ class _QuizEventFormDialogState extends State<_QuizEventFormDialog> {
                     controller: _rewardName,
                     decoration: const InputDecoration(
                       labelText: 'Nyeremény megnevezése (szabadon begépelhető) *',
-                      hintText: 'pl. egy üdítő, egy strandbelépő, ajándékcsomag',
+                      hintText: 'pl. egy üdítő, egy strandbelépő...',
                     ),
                     validator: (v) =>
                         (_rewardEnabled && (v == null || v.trim().isEmpty))
@@ -1469,12 +1475,10 @@ class _PrintableQrPosterDialogState extends State<_PrintableQrPosterDialog> {
                                       width: 1.5,
                                     ),
                                   ),
-                                  child: Text(
-                                    widget.event.rewardEnabled
-                                        ? 'Olvasd be, töltsd ki a kvízt, és nyereményed: ${widget.event.rewardName}!'
-                                        : 'Olvasd be a QR-kódot, töltsd ki a kvízt, és tedd próbára a tudásodat!',
+                                  child: const Text(
+                                    'Olvasd be, töltsd ki a kvízt, és legyél felkészültebb!',
                                     textAlign: TextAlign.left,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       color: Color(0xFF78350F),
                                       fontSize: 13.5,
                                       fontWeight: FontWeight.w800,
@@ -1517,9 +1521,7 @@ class _PrintableQrPosterDialogState extends State<_PrintableQrPosterDialog> {
                           const SizedBox(height: 12),
 
                           Text(
-                            widget.event.rewardEnabled
-                                ? 'Minimum ${widget.event.minScore} / ${widget.event.questionCount} helyes válasz esetén nyeremény: ${widget.event.rewardName}!'
-                                : '${widget.event.questionCount} gyors kérdés azonnali magyarázattal – regisztráció nélkül!',
+                            '${widget.event.questionCount} gyors kérdés azonnali magyarázattal – regisztráció nélkül!',
                             textAlign: TextAlign.center,
                             style: const TextStyle(
                               color: Color(0xFFB42530),

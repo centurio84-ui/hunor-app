@@ -53,7 +53,7 @@ class AdminPage extends StatelessWidget {
                 style: TextStyle(fontWeight: FontWeight.w800),
               ),
               subtitle: const Text(
-                '5 témakör, élő statisztika, nyeremény beváltása és nyomtatható QR plakát',
+                '5 témakör, élő statisztika és nyomtatható QR plakát',
                 style: TextStyle(color: HunorColors.muted, fontSize: 12),
               ),
               trailing: const Icon(Icons.chevron_right, color: HunorColors.muted),

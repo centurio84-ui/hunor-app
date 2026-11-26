@@ -146,7 +146,7 @@ class EventQuizRepository {
         }
       }
 
-      final bool won = event.rewardEnabled && score >= event.minScore;
+      final bool won = event.hasConfiguredReward && score >= event.minScore;
       String? rewardCode;
       final completedIso = DateTime.now().toUtc().toIso8601String();
 
@@ -450,7 +450,7 @@ class EventQuizRepository {
         final sc = (s['score'] as num?)?.toInt() ?? 0;
         final hasCode =
             s['reward_code'] != null && s['reward_code'].toString().isNotEmpty;
-        if (hasCode || (ev.rewardEnabled && sc >= ev.minScore)) {
+        if (ev.hasConfiguredReward && (hasCode || sc >= ev.minScore)) {
           winners++;
         }
       }
@@ -480,8 +480,8 @@ class EventQuizRepository {
   }) async {
     final cats =
         selectedCategories.isEmpty ? const ['altalanos'] : selectedCategories;
-    final cleanRewardName =
-        rewardName.trim().isEmpty ? 'Ajándék nyeremény' : rewardName.trim();
+    final effectiveEnabled = rewardEnabled && rewardName.trim().isNotEmpty;
+    final cleanRewardName = effectiveEnabled ? rewardName.trim() : '';
     final row = await _client
         .from('quiz_events')
         .insert({
@@ -491,7 +491,7 @@ class EventQuizRepository {
           'is_active': isActive,
           'question_count': questionCount,
           'min_score': minScore,
-          'reward_enabled': rewardEnabled,
+          'reward_enabled': effectiveEnabled,
           'reward_name': cleanRewardName,
           'staff_pin': staffPin.trim().isEmpty ? '1234' : staffPin.trim(),
         })
@@ -514,8 +514,8 @@ class EventQuizRepository {
   }) async {
     final cats =
         selectedCategories.isEmpty ? const ['altalanos'] : selectedCategories;
-    final cleanRewardName =
-        rewardName.trim().isEmpty ? 'Ajándék nyeremény' : rewardName.trim();
+    final effectiveEnabled = rewardEnabled && rewardName.trim().isNotEmpty;
+    final cleanRewardName = effectiveEnabled ? rewardName.trim() : '';
     final row = await _client
         .from('quiz_events')
         .update({
@@ -525,7 +525,7 @@ class EventQuizRepository {
           'is_active': isActive,
           'question_count': questionCount,
           'min_score': minScore,
-          'reward_enabled': rewardEnabled,
+          'reward_enabled': effectiveEnabled,
           'reward_name': cleanRewardName,
           'staff_pin': staffPin.trim().isEmpty ? '1234' : staffPin.trim(),
         })

@@ -47,8 +47,8 @@ class QuizEvent {
     required this.questionCount,
     required this.minScore,
     required this.createdAt,
-    this.rewardEnabled = true,
-    this.rewardName = 'Ajándék nyeremény',
+    this.rewardEnabled = false,
+    this.rewardName = '',
     this.staffPin = '1234',
     this.startedCount = 0,
     this.completedCount = 0,
@@ -67,6 +67,10 @@ class QuizEvent {
   final String rewardName;
   final String staffPin;
   final DateTime createdAt;
+
+  /// True ONLY when the organizer explicitly enabled a reward AND entered its name.
+  bool get hasConfiguredReward =>
+      rewardEnabled && rewardName.trim().isNotEmpty;
 
   // Live statistics from quiz_event_submissions
   final int startedCount;
@@ -117,6 +121,10 @@ class QuizEvent {
         : <String>[];
 
     final rawRewardName = (json['reward_name'] ?? '').toString().trim();
+    final cleanedRewardName =
+        rawRewardName == 'Ajándék nyeremény' ? '' : rawRewardName;
+    final parsedRewardEnabled =
+        json['reward_enabled'] == true && cleanedRewardName.isNotEmpty;
 
     return QuizEvent(
       id: (json['id'] ?? '').toString(),
@@ -127,9 +135,8 @@ class QuizEvent {
       isActive: json['is_active'] != false,
       questionCount: (json['question_count'] as num?)?.toInt() ?? 10,
       minScore: (json['min_score'] as num?)?.toInt() ?? 8,
-      rewardEnabled: json['reward_enabled'] != false,
-      rewardName:
-          rawRewardName.isEmpty ? 'Ajándék nyeremény' : rawRewardName,
+      rewardEnabled: parsedRewardEnabled,
+      rewardName: parsedRewardEnabled ? cleanedRewardName : '',
       staffPin: (json['staff_pin'] ?? '1234').toString(),
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'].toString()) ?? DateTime.now()

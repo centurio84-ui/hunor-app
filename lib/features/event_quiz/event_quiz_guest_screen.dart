@@ -769,9 +769,9 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          ev.rewardEnabled
+                          ev.hasConfiguredReward
                               ? 'Válaszolj helyesen legalább ${ev.minScore} kérdésre a ${ev.questionCount}-ből! Nyeremény: ${ev.rewardName}'
-                              : 'Tedd próbára a tudásodat ${ev.questionCount} gyakorlati kérdéssel, azonnali magyarázattal!',
+                              : 'Tedd próbára a tudásodat ${ev.questionCount} gyakorlati kérdéssel, és legyél felkészültebb!',
                           style: const TextStyle(
                             fontSize: 13,
                             height: 1.38,
@@ -817,7 +817,7 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: ev.rewardEnabled
+                  child: ev.hasConfiguredReward
                       ? _infoTile(
                           Icons.card_giftcard_rounded,
                           'Min. ${ev.minScore} pont',
@@ -1210,7 +1210,7 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
     final sub = _submission;
     final score = sub?.score ?? _score;
     final total = _questions.isNotEmpty ? _questions.length : ev.questionCount;
-    final won = ev.rewardEnabled &&
+    final won = ev.hasConfiguredReward &&
         score >= ev.minScore &&
         (sub?.rewardCode?.isNotEmpty ?? false);
     final isRedeemed = sub?.isRedeemed == true;
@@ -1278,8 +1278,8 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
             ),
             const SizedBox(height: 6),
             Text(
-              ev.rewardEnabled
-                  ? 'Elért pontszám: $score / $total pont (nyereményhatár: ${ev.minScore} pont)'
+              ev.hasConfiguredReward
+                  ? 'Elért pontszám: $score / $total pont (minimum: ${ev.minScore} pont)'
                   : 'Elért pontszám: $score / $total helyes válasz (${total > 0 ? ((score / total) * 100).round() : 0}%)',
               textAlign: TextAlign.center,
               style: const TextStyle(
@@ -1419,7 +1419,7 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
                 child: Column(
                   children: [
                     Text(
-                      ev.rewardEnabled
+                      ev.hasConfiguredReward
                           ? 'A nyereményhez (${ev.rewardName}) legalább ${ev.minScore} helyes válasz szükséges. Köszönjük, hogy velünk játszottál!'
                           : 'Gratulálunk a kvíz teljesítéséhez! A megszerzett tudás valódi vészhelyzetben életet menthet.',
                       textAlign: TextAlign.center,
