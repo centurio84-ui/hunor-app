@@ -18,3 +18,9 @@ Future<String> getDeviceHashImpl() async {
 }
 
 bool downloadPngBytesImpl(Uint8List bytes, String fileName) => false;
+
+Future<bool> showBrowserNotificationImpl({
+  required String title,
+  required String body,
+}) async =>
+    false;

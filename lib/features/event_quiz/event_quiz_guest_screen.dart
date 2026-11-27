@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -33,6 +35,12 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
   late final EventQuizRepository _repo =
       widget.repository ?? EventQuizRepository(Supabase.instance.client);
 
+  final TextEditingController _nameController = TextEditingController();
+  final Stopwatch _playStopwatch = Stopwatch();
+  Timer? _clockTicker;
+  String? _nameError;
+  int _lastDurationMs = 0;
+
   _GuestStage _stage = _GuestStage.loading;
   String? _errorMessage;
   String _deviceHash = '';
@@ -53,6 +61,33 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
   void initState() {
     super.initState();
     _bootstrap();
+  }
+
+  @override
+  void dispose() {
+    _clockTicker?.cancel();
+    _playStopwatch.stop();
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  void _startStopwatchTicker() {
+    _clockTicker?.cancel();
+    _playStopwatch
+      ..reset()
+      ..start();
+    _clockTicker = Timer.periodic(const Duration(milliseconds: 250), (_) {
+      if (mounted && _stage == _GuestStage.playing) {
+        setState(() {});
+      }
+    });
+  }
+
+  void _stopStopwatchTicker() {
+    _playStopwatch.stop();
+    _clockTicker?.cancel();
+    _clockTicker = null;
+    _lastDurationMs = _playStopwatch.elapsedMilliseconds;
   }
 
   Future<void> _bootstrap() async {
@@ -81,14 +116,17 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
       final ev = state.event;
       final sub = state.submission;
 
-      // Invalid slug or inactive event -> show Hungarian inactive screen + standard quiz button
+      if (sub?.participantName != null && _nameController.text.trim().isEmpty) {
+        _nameController.text = sub!.participantName!;
+      }
+
       if (ev == null || !ev.isActive) {
         _event = ev;
         _submission = sub;
-        // If already completed before deactivation, still allow viewing saved result/coupon
         if (ev != null && sub != null && sub.isCompleted) {
           setState(() {
             _score = sub.score ?? 0;
+            _lastDurationMs = sub.effectiveDurationMs ?? 0;
             _alreadyCompletedLock = true;
             _stage = _GuestStage.result;
           });
@@ -101,10 +139,10 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
       _event = ev;
       _submission = sub;
 
-      // One-attempt device lock: if already completed on this device, show saved result & coupon!
       if (sub != null && sub.isCompleted) {
         setState(() {
           _score = sub.score ?? 0;
+          _lastDurationMs = sub.effectiveDurationMs ?? 0;
           _alreadyCompletedLock = true;
           _stage = _GuestStage.result;
         });
@@ -125,27 +163,46 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
   }
 
   Future<void> _enterStandardPublicIntro() async {
+    _stopStopwatchTicker();
     setState(() {
       _isStandardPublicMode = true;
       _event = null;
       _submission = null;
       _alreadyCompletedLock = false;
+      _nameError = null;
       _stage = _GuestStage.intro;
     });
   }
 
   Future<void> _onStartQuiz() async {
     if (_busy) return;
-    setState(() => _busy = true);
+
+    if (!_isStandardPublicMode) {
+      final ev = _event;
+      if (ev != null && ev.requireParticipantName) {
+        final enteredName = _nameController.text.trim();
+        if (enteredName.length < 2) {
+          setState(() {
+            _nameError = 'Kérjük, add meg a nevedet (legalább 2 karakter) a kvíz indításához!';
+          });
+          return;
+        }
+      }
+    }
+
+    setState(() {
+      _busy = true;
+      _nameError = null;
+    });
 
     try {
       if (_isStandardPublicMode) {
-        // Standard public quiz: 10 random questions across ALL 5 categories (98 total questions)
         final loaded = await _repo.loadRandomizedQuestions(
           categories: null,
           count: 10,
         );
         if (!mounted) return;
+        _startStopwatchTicker();
         setState(() {
           _questions = loaded;
           _currentIndex = 0;
@@ -164,10 +221,18 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
         return;
       }
 
-      // Upsert started_at = now() for drop-off telemetry
+      final enteredName = _nameController.text.trim();
+
+      // Load questions first so network latency doesn't inflate the player's speed timer
+      final loaded = await _repo.loadRandomizedQuestions(
+        categories: ev.selectedCategories,
+        count: ev.questionCount,
+      );
+
       final sub = await _repo.startQuiz(
         eventId: ev.id,
         deviceHash: _deviceHash,
+        participantName: enteredName.isEmpty ? null : enteredName,
       );
 
       if (sub.isCompleted) {
@@ -175,6 +240,7 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
         setState(() {
           _submission = sub;
           _score = sub.score ?? 0;
+          _lastDurationMs = sub.effectiveDurationMs ?? 0;
           _alreadyCompletedLock = true;
           _busy = false;
           _stage = _GuestStage.result;
@@ -182,13 +248,8 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
         return;
       }
 
-      // Event quiz: filter questions where category = ANY(event.selected_categories)
-      final loaded = await _repo.loadRandomizedQuestions(
-        categories: ev.selectedCategories,
-        count: ev.questionCount,
-      );
-
       if (!mounted) return;
+      _startStopwatchTicker();
       setState(() {
         _submission = sub;
         _questions = loaded;
@@ -212,6 +273,10 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
     if (_answered || _busy) return;
     final q = _questions[_currentIndex];
     final isCorrect = choiceIdx == q.correctIndex;
+    // If this was the final question, freeze stopwatch right when the last answer is locked in!
+    if (_currentIndex + 1 == _questions.length) {
+      _stopStopwatchTicker();
+    }
     setState(() {
       _selectedChoice = choiceIdx;
       _answered = true;
@@ -230,6 +295,10 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
       return;
     }
 
+    if (_playStopwatch.isRunning) {
+      _stopStopwatchTicker();
+    }
+
     if (_isStandardPublicMode) {
       setState(() => _stage = _GuestStage.result);
       return;
@@ -239,15 +308,23 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
     if (ev == null) return;
     setState(() => _busy = true);
     try {
+      final enteredName = _nameController.text.trim();
+      final durationMs = _lastDurationMs > 0
+          ? _lastDurationMs
+          : _playStopwatch.elapsedMilliseconds.clamp(1000, 3600000);
+
       final completedSub = await _repo.completeQuiz(
         event: ev,
         deviceHash: _deviceHash,
         score: _score,
+        participantName: enteredName.isEmpty ? null : enteredName,
+        durationMs: durationMs,
       );
       if (!mounted) return;
       setState(() {
         _submission = completedSub;
         _score = completedSub.score ?? _score;
+        _lastDurationMs = completedSub.effectiveDurationMs ?? durationMs;
         _alreadyCompletedLock = false;
         _busy = false;
         _stage = _GuestStage.result;
@@ -402,8 +479,10 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
           id: sub.id,
           eventId: sub.eventId,
           deviceHash: sub.deviceHash,
+          participantName: sub.participantName,
           startedAt: sub.startedAt,
           completedAt: sub.completedAt,
+          durationMs: sub.durationMs,
           score: sub.score,
           rewardCode: sub.rewardCode,
           isRedeemed: true,
@@ -743,7 +822,7 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
           children: [
             Row(
               children: [
-                _buildMascotAvatar(height: 105),
+                _buildMascotAvatar(height: 100),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Container(
@@ -771,7 +850,7 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
                         Text(
                           ev.hasConfiguredReward
                               ? 'Válaszolj helyesen legalább ${ev.minScore} kérdésre a ${ev.questionCount}-ből! Nyeremény: ${ev.rewardName}'
-                              : 'Tedd próbára a tudásodat ${ev.questionCount} gyakorlati kérdéssel, és legyél felkészültebb!',
+                              : 'Tedd próbára a tudásodat ${ev.questionCount} gyakorlati kérdéssel – a pontszám és a gyorsaság is számít!',
                           style: const TextStyle(
                             fontSize: 13,
                             height: 1.38,
@@ -785,12 +864,12 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 16),
             Text(
               ev.title,
               textAlign: TextAlign.center,
               style: const TextStyle(
-                fontSize: 25,
+                fontSize: 24,
                 fontWeight: FontWeight.w900,
                 color: Colors.white,
               ),
@@ -805,7 +884,7 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
                   _categoryPill(quizCategoryLabel(cat)),
               ],
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 18),
             Row(
               children: [
                 Expanded(
@@ -824,9 +903,9 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
                           ev.rewardName,
                         )
                       : _infoTile(
-                          Icons.fact_check_outlined,
-                          'Azonnali',
-                          'Kiértékelés',
+                          Icons.timer_outlined,
+                          'Időre megy',
+                          'Gyorsaság számít',
                         ),
                 ),
                 const SizedBox(width: 10),
@@ -839,7 +918,90 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 18),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFF0F1A2C),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: _nameError != null
+                      ? HunorColors.red
+                      : const Color(0xFF38BDF8).withValues(alpha: 0.45),
+                  width: 1.4,
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.person_outline_rounded,
+                        size: 18,
+                        color: Color(0xFF38BDF8),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        ev.requireParticipantName
+                            ? 'Kitöltő neve (kötelező) *'
+                            : 'Kitöltő neve / beceneve',
+                        style: const TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFFBAE6FD),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _nameController,
+                    maxLength: 50,
+                    textCapitalization: TextCapitalization.words,
+                    textInputAction: TextInputAction.done,
+                    onSubmitted: (_) => _onStartQuiz(),
+                    onChanged: (_) {
+                      if (_nameError != null) {
+                        setState(() => _nameError = null);
+                      }
+                    },
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: 'pl. Kovács Péter',
+                      hintStyle: const TextStyle(color: Colors.white38),
+                      counterText: '',
+                      filled: true,
+                      fillColor: const Color(0xFF17253B),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Colors.white24),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Colors.white24),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(
+                          color: Color(0xFF38BDF8),
+                          width: 1.6,
+                        ),
+                      ),
+                      errorText: _nameError,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 18),
             SizedBox(
               height: 54,
               child: FilledButton.icon(
@@ -935,6 +1097,9 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
 
     final q = _questions[_currentIndex];
     final total = _questions.length;
+    final elapsedMs = _playStopwatch.isRunning
+        ? _playStopwatch.elapsedMilliseconds
+        : _lastDurationMs;
 
     return SingleChildScrollView(
       child: Container(
@@ -947,8 +1112,11 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 8,
+              runSpacing: 6,
               children: [
                 Text(
                   'Kérdés ${_currentIndex + 1} / $total',
@@ -957,21 +1125,62 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
                     color: Color(0xFF38BDF8),
                   ),
                 ),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF0F1A2C),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Text(
-                    'Pontszám: $_score / $total',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFFFBBF24),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0F1A2C),
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(color: Colors.white12),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.timer_outlined,
+                            size: 14,
+                            color: Color(0xFF7DD3FC),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            formatQuizDurationMs(
+                              elapsedMs < 100 ? 100 : elapsedMs,
+                            ),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              fontFamily: 'monospace',
+                              color: Color(0xFFBAE6FD),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0F1A2C),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        'Pontszám: $_score / $total',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFFFBBF24),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -1144,7 +1353,6 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
   }
 
   Widget _buildResultCard() {
-    // Standard Public Quiz result (repeatable practice mode)
     if (_isStandardPublicMode) {
       final total = _questions.isEmpty ? 10 : _questions.length;
       final pct = total > 0 ? ((_score / total) * 100).round() : 0;
@@ -1172,10 +1380,10 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
               ),
               const SizedBox(height: 6),
               Text(
-                'Elért eredmény: $_score / $total helyes válasz ($pct%)',
+                'Elért eredmény: $_score / $total helyes válasz ($pct%) • Idő: ${formatQuizDurationMs(_lastDurationMs)}',
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                  fontSize: 16,
+                  fontSize: 15,
                   fontWeight: FontWeight.w700,
                   color: Color(0xFFFBBF24),
                 ),
@@ -1205,11 +1413,16 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
       );
     }
 
-    // Event Quiz result (with one-attempt lock + optional configurable reward & Staff PIN redemption)
     final ev = _event!;
     final sub = _submission;
     final score = sub?.score ?? _score;
     final total = _questions.isNotEmpty ? _questions.length : ev.questionCount;
+    final playerName = sub?.participantName ??
+        (_nameController.text.trim().isNotEmpty
+            ? _nameController.text.trim()
+            : null);
+    final durationText =
+        formatQuizDurationMs(sub?.effectiveDurationMs ?? _lastDurationMs);
     final won = ev.hasConfiguredReward &&
         score >= ev.minScore &&
         (sub?.rewardCode?.isNotEmpty ?? false);
@@ -1263,15 +1476,15 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
                   ],
                 ),
               ),
-            Center(child: _buildMascotAvatar(height: 130)),
+            Center(child: _buildMascotAvatar(height: 125)),
             const SizedBox(height: 10),
             Text(
               won
-                  ? '🎉 Gratulálunk! Nyereményed: ${ev.rewardName}'
-                  : 'Köszönjük a részvételt!',
+                  ? '🎉 Gratulálunk${playerName != null ? ', $playerName' : ''}! Nyereményed: ${ev.rewardName}'
+                  : 'Köszönjük a részvételt${playerName != null ? ', $playerName' : ''}!',
               textAlign: TextAlign.center,
               style: const TextStyle(
-                fontSize: 24,
+                fontSize: 23,
                 fontWeight: FontWeight.w900,
                 color: Colors.white,
               ),
@@ -1279,13 +1492,13 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
             const SizedBox(height: 6),
             Text(
               ev.hasConfiguredReward
-                  ? 'Elért pontszám: $score / $total pont (minimum: ${ev.minScore} pont)'
-                  : 'Elért pontszám: $score / $total helyes válasz (${total > 0 ? ((score / total) * 100).round() : 0}%)',
+                  ? 'Elért pontszám: $score / $total pont (min. ${ev.minScore}) • Idő: $durationText'
+                  : 'Elért pontszám: $score / $total helyes válasz (${total > 0 ? ((score / total) * 100).round() : 0}%) • Idő: $durationText',
               textAlign: TextAlign.center,
               style: const TextStyle(
-                fontSize: 15,
+                fontSize: 14.5,
                 fontWeight: FontWeight.w700,
-                color: Colors.white70,
+                color: Color(0xFFFBBF24),
               ),
             ),
             const SizedBox(height: 20),
@@ -1421,7 +1634,7 @@ class _EventQuizGuestScreenState extends State<EventQuizGuestScreen> {
                     Text(
                       ev.hasConfiguredReward
                           ? 'A nyereményhez (${ev.rewardName}) legalább ${ev.minScore} helyes válasz szükséges. Köszönjük, hogy velünk játszottál!'
-                          : 'Gratulálunk a kvíz teljesítéséhez! A megszerzett tudás valódi vészhelyzetben életet menthet.',
+                          : 'Gratulálunk a kvíz teljesítéséhez! Eredményed és kitöltési időd ($durationText) rögzítésre került.',
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         fontSize: 13.5,

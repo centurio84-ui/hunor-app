@@ -12,6 +12,13 @@ Future<String> getDeterministicDeviceHash() => platform.getDeviceHashImpl();
 bool downloadPngBytes(Uint8List bytes, String fileName) =>
     platform.downloadPngBytesImpl(bytes, fileName);
 
+/// Triggers a browser desktop/system Notification on Web if permitted.
+Future<bool> showBrowserLeaderNotification({
+  required String title,
+  required String body,
+}) =>
+    platform.showBrowserNotificationImpl(title: title, body: body);
+
 String computeDeterministicHexHash(String input) {
   final bytes = utf8.encode(input);
   // 256-bit deterministic multi-lane FNV-1a mix (no external native dependency needed)

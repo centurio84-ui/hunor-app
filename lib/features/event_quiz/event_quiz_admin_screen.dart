@@ -9,6 +9,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../services/app_store.dart';
+import '../../services/local_notification_service.dart';
 import '../../theme/hunor_theme.dart';
 import 'device_hash_helper.dart';
 import 'event_quiz_models.dart';
@@ -38,8 +39,12 @@ class _EventQuizAdminScreenState extends State<EventQuizAdminScreen> {
   String? _error;
   List<QuizEvent> _events = [];
   List<QuizCategoryStat> _categoryStats = [];
+  List<QuizHourlyNotification> _hourlyNotifications = [];
+  final Set<String> _seenNotificationIds = <String>{};
+  bool _initialNotifsSeeded = false;
   _EventStatusFilter _statusFilter = _EventStatusFilter.all;
   Timer? _pollTimer;
+  Timer? _hourlyCheckTimer;
   RealtimeChannel? _realtimeChannel;
 
   @override
@@ -50,6 +55,10 @@ class _EventQuizAdminScreenState extends State<EventQuizAdminScreen> {
     _pollTimer = Timer.periodic(
       const Duration(seconds: 8),
       (_) => _loadAll(silent: true),
+    );
+    _hourlyCheckTimer = Timer.periodic(
+      const Duration(seconds: 55),
+      (_) => _checkHourlyLeaderDigest(forceNow: false),
     );
   }
 
@@ -63,13 +72,99 @@ class _EventQuizAdminScreenState extends State<EventQuizAdminScreen> {
             table: 'quiz_event_submissions',
             callback: (_) => _loadAll(silent: true),
           )
+          .onPostgresChanges(
+            event: PostgresChangeEvent.insert,
+            schema: 'public',
+            table: 'quiz_event_hourly_notifications',
+            callback: (payload) {
+              final rec = payload.newRecord;
+              if (rec.isNotEmpty) {
+                _handleIncomingHourlyNotification(
+                  QuizHourlyNotification.fromJson(
+                    Map<String, dynamic>.from(rec),
+                  ),
+                );
+              }
+            },
+          )
           .subscribe();
+    } catch (_) {}
+  }
+
+  Future<void> _handleIncomingHourlyNotification(
+    QuizHourlyNotification notif,
+  ) async {
+    if (notif.id.isEmpty || _seenNotificationIds.contains(notif.id)) return;
+    _seenNotificationIds.add(notif.id);
+
+    if (mounted) {
+      setState(() {
+        _hourlyNotifications = [
+          notif,
+          ..._hourlyNotifications.where((n) => n.id != notif.id),
+        ].take(20).toList();
+      });
+
+      try {
+        context.read<AppStore?>()?.triggerNotificationChime();
+      } catch (_) {}
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: const Duration(seconds: 10),
+          backgroundColor: const Color(0xFF0F172A),
+          content: Text(
+            notif.summaryText,
+            style: const TextStyle(
+              color: Color(0xFFFDE68A),
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+      );
+    }
+
+    unawaited(
+      showBrowserLeaderNotification(
+        title: '🏆 Óránkénti Kvíz Ranglista',
+        body: notif.summaryText,
+      ),
+    );
+    unawaited(
+      LocalNotificationService.instance.showUnreadChatNotification(
+        unreadCount: 1,
+        title: '🏆 Óránkénti Kvíz Ranglista',
+        body: notif.summaryText,
+      ),
+    );
+  }
+
+  Future<void> _checkHourlyLeaderDigest({required bool forceNow}) async {
+    try {
+      final res = await _repo.syncAndFetchHourlyNotifications(
+        forceNow: forceNow,
+      );
+      if (!_initialNotifsSeeded) {
+        _initialNotifsSeeded = true;
+        for (final n in res.recent) {
+          _seenNotificationIds.add(n.id);
+        }
+      }
+      for (final emitted in res.newlyEmitted) {
+        await _handleIncomingHourlyNotification(emitted);
+      }
+      if (mounted && res.recent.isNotEmpty) {
+        setState(() {
+          _hourlyNotifications = res.recent;
+        });
+      }
     } catch (_) {}
   }
 
   @override
   void dispose() {
     _pollTimer?.cancel();
+    _hourlyCheckTimer?.cancel();
     if (_realtimeChannel != null) {
       try {
         Supabase.instance.client.removeChannel(_realtimeChannel!);
@@ -89,13 +184,28 @@ class _EventQuizAdminScreenState extends State<EventQuizAdminScreen> {
       final results = await Future.wait([
         _repo.listEventsWithMetrics(),
         _repo.fetchCategoryStats(),
+        _repo.syncAndFetchHourlyNotifications(forceNow: false),
       ]);
       if (!mounted) return;
+      final notifBundle = results[2] as ({
+        List<QuizHourlyNotification> recent,
+        List<QuizHourlyNotification> newlyEmitted,
+      });
+      if (!_initialNotifsSeeded) {
+        _initialNotifsSeeded = true;
+        for (final n in notifBundle.recent) {
+          _seenNotificationIds.add(n.id);
+        }
+      }
       setState(() {
         _events = results[0] as List<QuizEvent>;
         _categoryStats = results[1] as List<QuizCategoryStat>;
+        _hourlyNotifications = notifBundle.recent;
         _loading = false;
       });
+      for (final emitted in notifBundle.newlyEmitted) {
+        await _handleIncomingHourlyNotification(emitted);
+      }
     } catch (e) {
       if (!mounted) return;
       if (!silent) {
@@ -296,15 +406,31 @@ class _EventQuizAdminScreenState extends State<EventQuizAdminScreen> {
                   ),
                 ],
               ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
                 children: [
+                  OutlinedButton.icon(
+                    onPressed: () async {
+                      await showBrowserLeaderNotification(
+                        title: '🏆 Óránkénti Kvíz Értesítések aktiválva',
+                        body:
+                            'Minden egész órában jelezni fogjuk, ki töltötte ki legjobban és leggyorsabban a kvízt!',
+                      );
+                      await _checkHourlyLeaderDigest(forceNow: true);
+                    },
+                    icon: const Icon(
+                      Icons.notifications_active_outlined,
+                      size: 18,
+                      color: Color(0xFFFBBF24),
+                    ),
+                    label: const Text('Azonnali ranglista-értesítés'),
+                  ),
                   OutlinedButton.icon(
                     onPressed: _loading ? null : _loadAll,
                     icon: const Icon(Icons.refresh, size: 18),
                     label: const Text('Frissítés'),
                   ),
-                  const SizedBox(width: 10),
                   FilledButton.icon(
                     onPressed: () => _openCreateOrEditDialog(),
                     icon: const Icon(Icons.add),
@@ -465,6 +591,11 @@ class _EventQuizAdminScreenState extends State<EventQuizAdminScreen> {
             ),
           ),
           const SizedBox(height: 16),
+
+          if (_hourlyNotifications.isNotEmpty) ...[
+            _buildHourlyDigestBanner(_hourlyNotifications.first),
+            const SizedBox(height: 14),
+          ],
 
           if (_loading)
             const Padding(
@@ -635,9 +766,13 @@ class _EventQuizAdminScreenState extends State<EventQuizAdminScreen> {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        ev.hasConfiguredReward
-                            ? 'Kérdésszám: ${ev.questionCount} db • Nyeremény: ${ev.rewardName} (min. ${ev.minScore} pont) • Személyzeti PIN: ${ev.staffPin}'
-                            : 'Kérdésszám: ${ev.questionCount} db',
+                        [
+                          'Kérdésszám: ${ev.questionCount} db',
+                          if (ev.requireParticipantName) 'Név megadása: kötelező',
+                          if (ev.hourlyLeaderNotify) 'Óránkénti értesítés: BE',
+                          if (ev.hasConfiguredReward)
+                            'Nyeremény: ${ev.rewardName} (min. ${ev.minScore} pont) • PIN: ${ev.staffPin}',
+                        ].join(' • '),
                         style: const TextStyle(
                           fontSize: 12,
                           color: HunorColors.muted,
@@ -713,6 +848,10 @@ class _EventQuizAdminScreenState extends State<EventQuizAdminScreen> {
                 ],
               ],
             ),
+            if (ev.topLeaders.isNotEmpty) ...[
+              const SizedBox(height: 14),
+              _buildEventLeaderboardPanel(ev),
+            ],
             const Divider(height: 24),
             Wrap(
               spacing: 8,
@@ -796,6 +935,205 @@ class _EventQuizAdminScreenState extends State<EventQuizAdminScreen> {
               color: color,
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHourlyDigestBanner(QuizHourlyNotification latest) {
+    final localTime = latest.createdAt.toLocal();
+    final hh = localTime.hour.toString().padLeft(2, '0');
+    final mm = localTime.minute.toString().padLeft(2, '0');
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFF78350F).withValues(alpha: 0.45),
+            HunorColors.surface,
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: const Color(0xFFF59E0B).withValues(alpha: 0.55),
+          width: 1.3,
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(
+            Icons.emoji_events_rounded,
+            color: Color(0xFFFBBF24),
+            size: 24,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'ÓRÁNKÉNTI RANGLISTA ÉRTESÍTÉS ($hh:$mm)',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.0,
+                    color: Color(0xFFFBBF24),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  latest.summaryText,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEventLeaderboardPanel(QuizEvent ev) {
+    final top = ev.topLeaders.take(5).toList();
+    final hourLeader = ev.lastHourLeader;
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.22),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(0xFFFBBF24).withValues(alpha: 0.3),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 10,
+            runSpacing: 6,
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.workspace_premium_rounded,
+                    size: 18,
+                    color: Color(0xFFFBBF24),
+                  ),
+                  SizedBox(width: 6),
+                  Text(
+                    'Legjobb & leggyorsabb kitöltők (pontszám + idő)',
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFFFDE68A),
+                    ),
+                  ),
+                ],
+              ),
+              if (hourLeader != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 9,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0284C7).withValues(alpha: 0.22),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(
+                      color: const Color(0xFF38BDF8).withValues(alpha: 0.45),
+                    ),
+                  ),
+                  child: Text(
+                    'Elmúlt 1 óra 1. hely: ${hourLeader.participantName} (${hourLeader.score}/${ev.questionCount} • ${hourLeader.formattedDuration})',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFFBAE6FD),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          for (var i = 0; i < top.length; i++)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 3),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 26,
+                    child: Text(
+                      i == 0
+                          ? '🥇'
+                          : i == 1
+                              ? '🥈'
+                              : i == 2
+                                  ? '🥉'
+                                  : '${i + 1}.',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Text(
+                      top[i].participantName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight:
+                            i == 0 ? FontWeight.w900 : FontWeight.w600,
+                        color: i == 0
+                            ? const Color(0xFFFDE68A)
+                            : Colors.white,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '${top[i].score} / ${ev.questionCount} pont',
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF4ADE80),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white10,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      '⏱ ${top[i].formattedDuration}',
+                      style: const TextStyle(
+                        fontSize: 11.5,
+                        fontFamily: 'monospace',
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFFBAE6FD),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
         ],
       ),
     );
@@ -888,6 +1226,8 @@ class _QuizEventFormDialogState extends State<_QuizEventFormDialog> {
   late final TextEditingController _rewardName;
   late final TextEditingController _staffPin;
   late final Set<String> _selectedCategories;
+  late bool _requireParticipantName;
+  late bool _hourlyLeaderNotify;
   late bool _rewardEnabled;
   late bool _isActive;
   bool _slugManuallyEdited = false;
@@ -918,6 +1258,8 @@ class _QuizEventFormDialogState extends State<_QuizEventFormDialog> {
     _selectedCategories = src != null && src.selectedCategories.isNotEmpty
         ? src.selectedCategories.toSet()
         : {'altalanos'};
+    _requireParticipantName = src?.requireParticipantName ?? true;
+    _hourlyLeaderNotify = src?.hourlyLeaderNotify ?? true;
     _rewardEnabled = src?.hasConfiguredReward ?? false;
     _isActive = e?.isActive ?? true;
     _slugManuallyEdited = e != null;
@@ -1021,6 +1363,8 @@ class _QuizEventFormDialogState extends State<_QuizEventFormDialog> {
           minScore: minScore,
           rewardEnabled: _rewardEnabled,
           rewardName: _rewardName.text.trim(),
+          requireParticipantName: _requireParticipantName,
+          hourlyLeaderNotify: _hourlyLeaderNotify,
           staffPin: _staffPin.text.trim(),
           isActive: _isActive,
         );
@@ -1034,6 +1378,8 @@ class _QuizEventFormDialogState extends State<_QuizEventFormDialog> {
           minScore: minScore,
           rewardEnabled: _rewardEnabled,
           rewardName: _rewardName.text.trim(),
+          requireParticipantName: _requireParticipantName,
+          hourlyLeaderNotify: _hourlyLeaderNotify,
           staffPin: _staffPin.text.trim(),
           isActive: _isActive,
         );
@@ -1202,6 +1548,33 @@ class _QuizEventFormDialogState extends State<_QuizEventFormDialog> {
                   },
                 ),
                 const SizedBox(height: 12),
+                const Divider(),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  value: _requireParticipantName,
+                  title: const Text(
+                    'Kitöltő nevének bekérése (kötelező)',
+                    style: TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                  subtitle: const Text(
+                    'A kvíz indítása előtt meg kell adnia a nevét annak, aki kitölti.',
+                    style: TextStyle(fontSize: 12),
+                  ),
+                  onChanged: (v) => setState(() => _requireParticipantName = v),
+                ),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  value: _hourlyLeaderNotify,
+                  title: const Text(
+                    'Óránkénti legjobb & leggyorsabb értesítés adminnak',
+                    style: TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                  subtitle: const Text(
+                    'Minden órában jelzi az adminnak, ki érte el a legtöbb pontot a leggyorsabb idő alatt.',
+                    style: TextStyle(fontSize: 12),
+                  ),
+                  onChanged: (v) => setState(() => _hourlyLeaderNotify = v),
+                ),
                 const Divider(),
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,

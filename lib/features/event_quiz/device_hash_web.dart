@@ -45,6 +45,17 @@ extension type _JsBlob._(JSObject _) implements JSObject {
   external factory _JsBlob(JSArray<JSAny> parts, _BlobPropertyBag options);
 }
 
+@JS('Notification')
+extension type _WebNotification._(JSObject _) implements JSObject {
+  external factory _WebNotification(String title, _WebNotifOptions options);
+  external static String get permission;
+  external static JSPromise<JSString> requestPermission();
+}
+
+extension type _WebNotifOptions._(JSObject _) implements JSObject {
+  external factory _WebNotifOptions({String body, String icon, String tag});
+}
+
 extension type _BlobPropertyBag._(JSObject _) implements JSObject {
   external factory _BlobPropertyBag({String type});
 }
@@ -94,6 +105,31 @@ bool downloadPngBytesImpl(Uint8List bytes, String fileName) {
         _revokeObjectUrl(url);
       } catch (_) {}
     });
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
+Future<bool> showBrowserNotificationImpl({
+  required String title,
+  required String body,
+}) async {
+  try {
+    var perm = _WebNotification.permission;
+    if (perm == 'default') {
+      final res = await _WebNotification.requestPermission().toDart;
+      perm = res.toDart;
+    }
+    if (perm != 'granted') return false;
+    _WebNotification(
+      title,
+      _WebNotifOptions(
+        body: body,
+        icon: '/hunor-app-icon.svg',
+        tag: 'hunor-quiz-hourly-leader',
+      ),
+    );
     return true;
   } catch (_) {
     return false;

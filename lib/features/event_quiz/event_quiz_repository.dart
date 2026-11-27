@@ -49,7 +49,6 @@ class EventQuizRepository {
 
       return (event: event, submission: sub);
     } catch (_) {
-      // Fallback to RPC if table grants were not yet refreshed
       final res = await _client.rpc(
         'get_public_quiz_event_state',
         params: {
@@ -73,12 +72,18 @@ class EventQuizRepository {
     }
   }
 
-  /// Upserts a row with `started_at = now()` on `(event_id, device_hash)` to track opens vs. completions.
-  /// If a row already exists (e.g. already started or already completed), preserves it.
+  /// Upserts a row with `started_at = now()` and `participant_name` on `(event_id, device_hash)`.
+  /// If an incomplete row existed from an earlier visit, resets `started_at` to `now()` so completion speed is accurate!
   Future<QuizEventSubmission> startQuiz({
     required String eventId,
     required String deviceHash,
+    String? participantName,
   }) async {
+    final cleanName = participantName?.trim();
+    final effectiveName =
+        (cleanName != null && cleanName.isNotEmpty) ? cleanName : null;
+    final nowIso = DateTime.now().toUtc().toIso8601String();
+
     try {
       final existing = await _client
           .from('quiz_event_submissions')
@@ -88,31 +93,80 @@ class EventQuizRepository {
           .maybeSingle();
 
       if (existing != null) {
-        return QuizEventSubmission.fromJson(
+        final existingSub = QuizEventSubmission.fromJson(
           Map<String, dynamic>.from(existing),
         );
+        if (existingSub.isCompleted) {
+          return existingSub;
+        }
+        // Incomplete earlier attempt -> refresh started_at & participant_name for accurate speed timing
+        final payload = <String, dynamic>{
+          'started_at': nowIso,
+          if (effectiveName != null) 'participant_name': effectiveName,
+        };
+        try {
+          final updated = await _client
+              .from('quiz_event_submissions')
+              .update(payload)
+              .eq('id', existingSub.id)
+              .select()
+              .single();
+          return QuizEventSubmission.fromJson(
+            Map<String, dynamic>.from(updated),
+          );
+        } catch (_) {
+          // Fallback if participant_name column was not yet migrated
+          final updated = await _client
+              .from('quiz_event_submissions')
+              .update({'started_at': nowIso})
+              .eq('id', existingSub.id)
+              .select()
+              .single();
+          return QuizEventSubmission.fromJson(
+            Map<String, dynamic>.from(updated),
+          );
+        }
       }
 
-      final inserted = await _client
-          .from('quiz_event_submissions')
-          .upsert(
-            {
-              'event_id': eventId,
-              'device_hash': deviceHash,
-              'started_at': DateTime.now().toUtc().toIso8601String(),
-            },
-            onConflict: 'event_id,device_hash',
-          )
-          .select()
-          .single();
+      try {
+        final inserted = await _client
+            .from('quiz_event_submissions')
+            .upsert(
+              {
+                'event_id': eventId,
+                'device_hash': deviceHash,
+                'started_at': nowIso,
+                if (effectiveName != null) 'participant_name': effectiveName,
+              },
+              onConflict: 'event_id,device_hash',
+            )
+            .select()
+            .single();
 
-      return QuizEventSubmission.fromJson(Map<String, dynamic>.from(inserted));
+        return QuizEventSubmission.fromJson(Map<String, dynamic>.from(inserted));
+      } catch (_) {
+        final inserted = await _client
+            .from('quiz_event_submissions')
+            .upsert(
+              {
+                'event_id': eventId,
+                'device_hash': deviceHash,
+                'started_at': nowIso,
+              },
+              onConflict: 'event_id,device_hash',
+            )
+            .select()
+            .single();
+
+        return QuizEventSubmission.fromJson(Map<String, dynamic>.from(inserted));
+      }
     } catch (_) {
       final res = await _client.rpc(
         'start_quiz_event_submission',
         params: {
           'p_event_id': eventId,
           'p_device_hash': deviceHash,
+          if (effectiveName != null) 'p_participant_name': effectiveName,
         },
       );
       return QuizEventSubmission.fromJson(
@@ -121,13 +175,18 @@ class EventQuizRepository {
     }
   }
 
-  /// Marks submission completed (`completed_at = now()`, `score`), and if `score >= event.minScore`
-  /// generates a unique coupon code (e.g. `HUNOR-742`) saved in `reward_code`.
+  /// Marks submission completed (`completed_at = now()`, `score`, `participant_name`, `duration_ms`).
   Future<QuizEventSubmission> completeQuiz({
     required QuizEvent event,
     required String deviceHash,
     required int score,
+    String? participantName,
+    int? durationMs,
   }) async {
+    final cleanName = participantName?.trim();
+    final effectiveName =
+        (cleanName != null && cleanName.isNotEmpty) ? cleanName : null;
+
     try {
       final existingRow = await _client
           .from('quiz_event_submissions')
@@ -136,58 +195,111 @@ class EventQuizRepository {
           .eq('device_hash', deviceHash)
           .maybeSingle();
 
+      DateTime? startedAt;
       if (existingRow != null) {
         final existingSub = QuizEventSubmission.fromJson(
           Map<String, dynamic>.from(existingRow),
         );
-        // One-attempt lock: never overwrite an already completed result!
         if (existingSub.isCompleted) {
           return existingSub;
         }
+        startedAt = existingSub.startedAt;
       }
+
+      final completedNow = DateTime.now().toUtc();
+      final completedIso = completedNow.toIso8601String();
+      final computedMs = durationMs ??
+          (startedAt != null
+              ? completedNow
+                  .difference(startedAt.toUtc())
+                  .inMilliseconds
+                  .clamp(1000, 3600000)
+              : null);
 
       final bool won = event.hasConfiguredReward && score >= event.minScore;
       String? rewardCode;
-      final completedIso = DateTime.now().toUtc().toIso8601String();
 
       for (var attempt = 0; attempt < 15; attempt++) {
         rewardCode = won ? _generateRewardCode(attempt) : null;
         try {
           if (existingRow != null) {
-            final updated = await _client
-                .from('quiz_event_submissions')
-                .update({
-                  'completed_at': completedIso,
-                  'score': score,
-                  'reward_code': rewardCode,
-                })
-                .eq('id', existingRow['id'].toString())
-                .select()
-                .single();
-            return QuizEventSubmission.fromJson(
-              Map<String, dynamic>.from(updated),
-            );
+            Map<String, dynamic> updated;
+            try {
+              updated = Map<String, dynamic>.from(
+                await _client
+                    .from('quiz_event_submissions')
+                    .update({
+                      'completed_at': completedIso,
+                      'score': score,
+                      'reward_code': rewardCode,
+                      if (effectiveName != null)
+                        'participant_name': effectiveName,
+                      if (computedMs != null) 'duration_ms': computedMs,
+                    })
+                    .eq('id', existingRow['id'].toString())
+                    .select()
+                    .single(),
+              );
+            } catch (innerErr) {
+              final msg = innerErr.toString().toLowerCase();
+              if (won && msg.contains('reward_code')) rethrow;
+              updated = Map<String, dynamic>.from(
+                await _client
+                    .from('quiz_event_submissions')
+                    .update({
+                      'completed_at': completedIso,
+                      'score': score,
+                      'reward_code': rewardCode,
+                    })
+                    .eq('id', existingRow['id'].toString())
+                    .select()
+                    .single(),
+              );
+            }
+            return QuizEventSubmission.fromJson(updated);
           } else {
-            final inserted = await _client
-                .from('quiz_event_submissions')
-                .insert({
-                  'event_id': event.id,
-                  'device_hash': deviceHash,
-                  'started_at': completedIso,
-                  'completed_at': completedIso,
-                  'score': score,
-                  'reward_code': rewardCode,
-                })
-                .select()
-                .single();
-            return QuizEventSubmission.fromJson(
-              Map<String, dynamic>.from(inserted),
-            );
+            Map<String, dynamic> inserted;
+            try {
+              inserted = Map<String, dynamic>.from(
+                await _client
+                    .from('quiz_event_submissions')
+                    .insert({
+                      'event_id': event.id,
+                      'device_hash': deviceHash,
+                      'started_at': completedIso,
+                      'completed_at': completedIso,
+                      'score': score,
+                      'reward_code': rewardCode,
+                      if (effectiveName != null)
+                        'participant_name': effectiveName,
+                      if (computedMs != null) 'duration_ms': computedMs,
+                    })
+                    .select()
+                    .single(),
+              );
+            } catch (innerErr) {
+              final msg = innerErr.toString().toLowerCase();
+              if (won && msg.contains('reward_code')) rethrow;
+              inserted = Map<String, dynamic>.from(
+                await _client
+                    .from('quiz_event_submissions')
+                    .insert({
+                      'event_id': event.id,
+                      'device_hash': deviceHash,
+                      'started_at': completedIso,
+                      'completed_at': completedIso,
+                      'score': score,
+                      'reward_code': rewardCode,
+                    })
+                    .select()
+                    .single(),
+              );
+            }
+            return QuizEventSubmission.fromJson(inserted);
           }
         } catch (err) {
           final msg = err.toString().toLowerCase();
           if (won && msg.contains('reward_code')) {
-            // Rare collision on reward_code — retry with a fresh code
             continue;
           }
           rethrow;
@@ -201,6 +313,8 @@ class EventQuizRepository {
           'p_event_id': event.id,
           'p_device_hash': deviceHash,
           'p_score': score,
+          if (effectiveName != null) 'p_participant_name': effectiveName,
+          if (durationMs != null) 'p_duration_ms': durationMs,
         },
       );
       return QuizEventSubmission.fromJson(
@@ -212,7 +326,7 @@ class EventQuizRepository {
   /// Generates a clean, memorable reward coupon code (e.g. `KUPON-742`).
   String _generateRewardCode(int attempt) {
     if (attempt < 6) {
-      final numPart = 100 + _rng.nextInt(900); // 100..999 -> e.g. KUPON-742
+      final numPart = 100 + _rng.nextInt(900);
       return 'KUPON-$numPart';
     }
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -223,7 +337,7 @@ class EventQuizRepository {
     return 'KUPON-$suffix';
   }
 
-  /// Validates the 4-digit `event.staff_pin` and marks `is_redeemed = true` in Supabase.
+  /// Validates `event.staff_pin` and marks `is_redeemed = true` in Supabase.
   Future<({bool ok, String? error})> redeemPrize({
     required QuizEvent event,
     required QuizEventSubmission submission,
@@ -236,7 +350,6 @@ class EventQuizRepository {
     }
 
     try {
-      // Fetch latest staff_pin from quiz_events so live PIN updates take effect immediately
       String expectedPin = event.staffPin;
       final freshEvent = await _client
           .from('quiz_events')
@@ -278,9 +391,6 @@ class EventQuizRepository {
   // CATEGORY-FILTERED QUESTION LOADING (5 CATEGORIES / 98 QUESTIONS)
   // ===========================================================================
 
-  /// Loads randomized questions:
-  /// - Standard public quiz (`categories == null || categories.isEmpty`): across all 5 categories (98 questions).
-  /// - Event quiz (`categories` non-empty): where `category = ANY(event.selected_categories)`.
   Future<List<QuizQuestionItem>> loadRandomizedQuestions({
     List<String>? categories,
     int count = 10,
@@ -292,7 +402,6 @@ class EventQuizRepository {
 
     List<QuizQuestionItem> pool = [];
 
-    // 1. Primary source: Supabase `quiz_questions` table
     try {
       final dynamic rows = (filterCats != null && filterCats.isNotEmpty)
           ? await _client
@@ -310,7 +419,6 @@ class EventQuizRepository {
       }
     } catch (_) {}
 
-    // 2. Fallback: Bundled 98-question 5-category seed asset (`assets/quiz/quiz_questions_seed_98.json`)
     if (pool.isEmpty) {
       final allSeed = await _loadBundledSeed98();
       if (filterCats != null && filterCats.isNotEmpty) {
@@ -326,7 +434,6 @@ class EventQuizRepository {
     return picked.map(_shuffleOptions).toList();
   }
 
-  /// Queries distinct `category` values and question counts from `quiz_questions`.
   Future<List<QuizCategoryStat>> fetchCategoryStats() async {
     final Map<String, int> counts = {};
 
@@ -400,7 +507,7 @@ class EventQuizRepository {
   }
 
   // ===========================================================================
-  // ORGANIZER ADMIN EVENT MANAGER FLOW
+  // ORGANIZER ADMIN EVENT MANAGER FLOW & HOURLY LEADER NOTIFICATIONS
   // ===========================================================================
 
   Future<List<QuizEvent>> listEventsWithMetrics() async {
@@ -415,15 +522,20 @@ class EventQuizRepository {
     ];
     if (events.isEmpty) return const [];
 
-    final subRows = await _client
-        .from('quiz_event_submissions')
-        .select(
-          'id,event_id,started_at,completed_at,score,reward_code,is_redeemed',
-        );
+    List<dynamic> subRows;
+    try {
+      subRows = await _client.from('quiz_event_submissions').select(
+            'id,event_id,participant_name,started_at,completed_at,duration_ms,score,reward_code,is_redeemed',
+          );
+    } catch (_) {
+      subRows = await _client.from('quiz_event_submissions').select(
+            'id,event_id,started_at,completed_at,score,reward_code,is_redeemed',
+          );
+    }
 
     final Map<String, List<Map<String, dynamic>>> subsByEvent = {};
     for (final raw in subRows) {
-      final m = Map<String, dynamic>.from(raw);
+      final m = Map<String, dynamic>.from(raw as Map);
       final evId = (m['event_id'] ?? '').toString();
       (subsByEvent[evId] ??= []).add(m);
     }
@@ -443,6 +555,11 @@ class EventQuizRepository {
     var winners = 0;
     var redeemed = 0;
 
+    final nowUtc = DateTime.now().toUtc();
+    final oneHourAgo = nowUtc.subtract(const Duration(hours: 1));
+    final List<QuizLeaderEntry> allCompleted = [];
+    final List<QuizLeaderEntry> recentHourCompleted = [];
+
     for (final s in submissions) {
       started++;
       if (s['completed_at'] != null) {
@@ -453,18 +570,96 @@ class EventQuizRepository {
         if (ev.hasConfiguredReward && (hasCode || sc >= ev.minScore)) {
           winners++;
         }
+
+        final compAt =
+            DateTime.tryParse(s['completed_at'].toString())?.toUtc() ?? nowUtc;
+        final startAt =
+            DateTime.tryParse((s['started_at'] ?? '').toString())?.toUtc() ??
+                compAt;
+        final rawDur = (s['duration_ms'] as num?)?.toInt();
+        final durMs = (rawDur != null && rawDur > 0)
+            ? rawDur
+            : compAt.difference(startAt).inMilliseconds.clamp(1000, 3600000);
+        final rawName = s['participant_name']?.toString().trim();
+        final name = (rawName != null && rawName.isNotEmpty)
+            ? rawName
+            : 'Névtelen kitöltő';
+
+        final entry = QuizLeaderEntry(
+          submissionId: (s['id'] ?? '').toString(),
+          participantName: name,
+          score: sc,
+          durationMs: durMs,
+          completedAt: compAt,
+        );
+        allCompleted.add(entry);
+        if (compAt.isAfter(oneHourAgo)) {
+          recentHourCompleted.add(entry);
+        }
       }
       if (s['is_redeemed'] == true) {
         redeemed++;
       }
     }
 
+    int compareLeaders(QuizLeaderEntry a, QuizLeaderEntry b) {
+      final scoreCmp = b.score.compareTo(a.score); // Higher score first
+      if (scoreCmp != 0) return scoreCmp;
+      final durCmp = a.durationMs.compareTo(b.durationMs); // Faster time first
+      if (durCmp != 0) return durCmp;
+      return a.completedAt.compareTo(b.completedAt); // Earlier completion first
+    }
+
+    allCompleted.sort(compareLeaders);
+    recentHourCompleted.sort(compareLeaders);
+
     return ev.copyWithMetrics(
       startedCount: started,
       completedCount: completed,
       winnersCount: winners,
       redeemedCount: redeemed,
+      topLeaders: allCompleted.take(10).toList(),
+      lastHourLeader:
+          recentHourCompleted.isNotEmpty ? recentHourCompleted.first : null,
+      lastHourCompletions: recentHourCompleted.length,
     );
+  }
+
+  /// Checks & emits hourly leader notifications (for completed clock hours, or on-demand if `forceNow == true`),
+  /// and returns the latest notifications list.
+  Future<({List<QuizHourlyNotification> recent, List<QuizHourlyNotification> newlyEmitted})>
+      syncAndFetchHourlyNotifications({bool forceNow = false}) async {
+    final List<QuizHourlyNotification> newlyEmitted = [];
+    try {
+      final dynamic emittedRes = await _client.rpc(
+        'check_and_emit_quiz_hourly_leaders',
+        params: {'p_force_current_hour': forceNow},
+      );
+      if (emittedRes is List) {
+        for (final item in emittedRes) {
+          if (item is Map) {
+            newlyEmitted.add(
+              QuizHourlyNotification.fromJson(Map<String, dynamic>.from(item)),
+            );
+          }
+        }
+      }
+    } catch (_) {}
+
+    List<QuizHourlyNotification> recent = const [];
+    try {
+      final rows = await _client
+          .from('quiz_event_hourly_notifications')
+          .select()
+          .order('created_at', ascending: false)
+          .limit(20);
+      recent = [
+        for (final r in rows)
+          QuizHourlyNotification.fromJson(Map<String, dynamic>.from(r)),
+      ];
+    } catch (_) {}
+
+    return (recent: recent, newlyEmitted: newlyEmitted);
   }
 
   Future<QuizEvent> createEvent({
@@ -475,6 +670,8 @@ class EventQuizRepository {
     required int minScore,
     required bool rewardEnabled,
     required String rewardName,
+    required bool requireParticipantName,
+    required bool hourlyLeaderNotify,
     required String staffPin,
     bool isActive = true,
   }) async {
@@ -482,22 +679,31 @@ class EventQuizRepository {
         selectedCategories.isEmpty ? const ['altalanos'] : selectedCategories;
     final effectiveEnabled = rewardEnabled && rewardName.trim().isNotEmpty;
     final cleanRewardName = effectiveEnabled ? rewardName.trim() : '';
-    final row = await _client
-        .from('quiz_events')
-        .insert({
-          'slug': slug.trim().toLowerCase(),
-          'title': title.trim(),
-          'selected_categories': cats,
-          'is_active': isActive,
-          'question_count': questionCount,
-          'min_score': minScore,
-          'reward_enabled': effectiveEnabled,
-          'reward_name': cleanRewardName,
-          'staff_pin': staffPin.trim().isEmpty ? '1234' : staffPin.trim(),
-        })
-        .select()
-        .single();
-    return QuizEvent.fromJson(Map<String, dynamic>.from(row));
+    final payload = <String, dynamic>{
+      'slug': slug.trim().toLowerCase(),
+      'title': title.trim(),
+      'selected_categories': cats,
+      'is_active': isActive,
+      'question_count': questionCount,
+      'min_score': minScore,
+      'reward_enabled': effectiveEnabled,
+      'reward_name': cleanRewardName,
+      'require_participant_name': requireParticipantName,
+      'hourly_leader_notify': hourlyLeaderNotify,
+      'staff_pin': staffPin.trim().isEmpty ? '1234' : staffPin.trim(),
+    };
+    try {
+      final row =
+          await _client.from('quiz_events').insert(payload).select().single();
+      return QuizEvent.fromJson(Map<String, dynamic>.from(row));
+    } catch (_) {
+      payload
+        ..remove('require_participant_name')
+        ..remove('hourly_leader_notify');
+      final row =
+          await _client.from('quiz_events').insert(payload).select().single();
+      return QuizEvent.fromJson(Map<String, dynamic>.from(row));
+    }
   }
 
   Future<QuizEvent> updateEvent({
@@ -509,6 +715,8 @@ class EventQuizRepository {
     required int minScore,
     required bool rewardEnabled,
     required String rewardName,
+    required bool requireParticipantName,
+    required bool hourlyLeaderNotify,
     required String staffPin,
     required bool isActive,
   }) async {
@@ -516,23 +724,39 @@ class EventQuizRepository {
         selectedCategories.isEmpty ? const ['altalanos'] : selectedCategories;
     final effectiveEnabled = rewardEnabled && rewardName.trim().isNotEmpty;
     final cleanRewardName = effectiveEnabled ? rewardName.trim() : '';
-    final row = await _client
-        .from('quiz_events')
-        .update({
-          'slug': slug.trim().toLowerCase(),
-          'title': title.trim(),
-          'selected_categories': cats,
-          'is_active': isActive,
-          'question_count': questionCount,
-          'min_score': minScore,
-          'reward_enabled': effectiveEnabled,
-          'reward_name': cleanRewardName,
-          'staff_pin': staffPin.trim().isEmpty ? '1234' : staffPin.trim(),
-        })
-        .eq('id', id)
-        .select()
-        .single();
-    return QuizEvent.fromJson(Map<String, dynamic>.from(row));
+    final payload = <String, dynamic>{
+      'slug': slug.trim().toLowerCase(),
+      'title': title.trim(),
+      'selected_categories': cats,
+      'is_active': isActive,
+      'question_count': questionCount,
+      'min_score': minScore,
+      'reward_enabled': effectiveEnabled,
+      'reward_name': cleanRewardName,
+      'require_participant_name': requireParticipantName,
+      'hourly_leader_notify': hourlyLeaderNotify,
+      'staff_pin': staffPin.trim().isEmpty ? '1234' : staffPin.trim(),
+    };
+    try {
+      final row = await _client
+          .from('quiz_events')
+          .update(payload)
+          .eq('id', id)
+          .select()
+          .single();
+      return QuizEvent.fromJson(Map<String, dynamic>.from(row));
+    } catch (_) {
+      payload
+        ..remove('require_participant_name')
+        ..remove('hourly_leader_notify');
+      final row = await _client
+          .from('quiz_events')
+          .update(payload)
+          .eq('id', id)
+          .select()
+          .single();
+      return QuizEvent.fromJson(Map<String, dynamic>.from(row));
+    }
   }
 
   Future<void> toggleEventActive(String id, bool isActive) async {
@@ -550,7 +774,6 @@ class EventQuizRepository {
 
     if (deleted.isNotEmpty) return;
 
-    // Fallback to SECURITY DEFINER RPC if direct table RLS returned 0 rows
     final ok = await _client.rpc(
       'delete_quiz_event',
       params: {'p_event_id': id},

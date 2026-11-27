@@ -3,9 +3,14 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../features/event_quiz/device_hash_helper.dart';
 import '../features/event_quiz/event_quiz_admin_screen.dart';
+import '../features/event_quiz/event_quiz_models.dart';
+import '../features/event_quiz/event_quiz_repository.dart';
 import '../models/member.dart';
 import '../services/app_store.dart';
+import '../services/local_notification_service.dart';
 import '../theme/hunor_theme.dart';
 import 'alerts_page.dart';
 import 'availability_dialog.dart';
@@ -28,6 +33,11 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
   Timer? _timer;
+  Timer? _quizHourlyTimer;
+  RealtimeChannel? _quizHourlyChannel;
+  final Set<String> _seenQuizHourlyIds = <String>{};
+  bool _quizHourlySeeded = false;
+
   @override
   void initState() {
     super.initState();
@@ -36,6 +46,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
       try {
         await Permission.notification.request();
       } catch (_) {}
+      _startAdminQuizHourlyWatcher();
     });
     if (kReleaseMode) {
       _timer = Timer.periodic(const Duration(seconds: 30), (_) {
@@ -43,7 +54,107 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
       });
     }
   }
-  @override void dispose(){_timer?.cancel();WidgetsBinding.instance.removeObserver(this);super.dispose();}
+
+  void _startAdminQuizHourlyWatcher() {
+    _quizHourlyTimer = Timer.periodic(
+      const Duration(seconds: 55),
+      (_) => _pollAdminQuizHourly(),
+    );
+    Future<void>.delayed(
+      const Duration(seconds: 5),
+      _pollAdminQuizHourly,
+    );
+    try {
+      _quizHourlyChannel = Supabase.instance.client
+          .channel('app_shell_quiz_hourly_leaders')
+          .onPostgresChanges(
+            event: PostgresChangeEvent.insert,
+            schema: 'public',
+            table: 'quiz_event_hourly_notifications',
+            callback: (payload) {
+              if (!mounted) return;
+              final store = context.read<AppStore>();
+              if (!store.isAdmin || store.isGuest) return;
+              if (index == 10) return; // EventQuizAdminScreen handles it directly when open
+              final rec = payload.newRecord;
+              if (rec.isNotEmpty) {
+                _deliverAdminQuizHourly(
+                  QuizHourlyNotification.fromJson(
+                    Map<String, dynamic>.from(rec),
+                  ),
+                );
+              }
+            },
+          )
+          .subscribe();
+    } catch (_) {}
+  }
+
+  Future<void> _pollAdminQuizHourly() async {
+    if (!mounted) return;
+    final store = context.read<AppStore>();
+    if (!store.isAdmin || store.isGuest) return;
+    if (index == 10) return;
+    try {
+      final repo = EventQuizRepository(Supabase.instance.client);
+      final res = await repo.syncAndFetchHourlyNotifications(forceNow: false);
+      if (!_quizHourlySeeded) {
+        _quizHourlySeeded = true;
+        for (final n in res.recent) {
+          _seenQuizHourlyIds.add(n.id);
+        }
+      }
+      for (final emitted in res.newlyEmitted) {
+        _deliverAdminQuizHourly(emitted);
+      }
+    } catch (_) {}
+  }
+
+  void _deliverAdminQuizHourly(QuizHourlyNotification notif) {
+    if (notif.id.isEmpty || _seenQuizHourlyIds.contains(notif.id)) return;
+    _seenQuizHourlyIds.add(notif.id);
+    if (!mounted) return;
+    context.read<AppStore>().triggerNotificationChime();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        duration: const Duration(seconds: 10),
+        backgroundColor: const Color(0xFF0F172A),
+        content: Text(
+          notif.summaryText,
+          style: const TextStyle(
+            color: Color(0xFFFDE68A),
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ),
+    );
+    unawaited(
+      showBrowserLeaderNotification(
+        title: '🏆 Óránkénti Kvíz Ranglista',
+        body: notif.summaryText,
+      ),
+    );
+    unawaited(
+      LocalNotificationService.instance.showUnreadChatNotification(
+        unreadCount: 1,
+        title: '🏆 Óránkénti Kvíz Ranglista',
+        body: notif.summaryText,
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _quizHourlyTimer?.cancel();
+    if (_quizHourlyChannel != null) {
+      try {
+        Supabase.instance.client.removeChannel(_quizHourlyChannel!);
+      } catch (_) {}
+    }
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
   @override void didChangeAppLifecycleState(AppLifecycleState state){if(state==AppLifecycleState.resumed)context.read<AppStore>().syncPendingResponses();}
   int index = 0;
 

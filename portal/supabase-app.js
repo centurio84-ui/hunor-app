@@ -4584,6 +4584,40 @@ knowledgeOpenRoute=async route=>{
  knowledgeView=HunorBackgroundView.mount({root:content.querySelector('#knowledgeBackgroundBody'),adapter});history.replaceState(null,'','#'+route);return true;
 };
 
+// Hourly Event Quiz Leader & Speed Notification watcher for logged-in admins across the whole portal
+let qzHourlySeen=new Set(),qzHourlySeeded=false,qzHourlyChannel=null;
+function qzDeliverHourlyLeader(rec){
+ if(!rec?.id||qzHourlySeen.has(rec.id))return;
+ qzHourlySeen.add(rec.id);
+ if(!user?.isAdmin)return;
+ const text=rec.summary_text||'Új óránkénti rendezvénykvíz ranglista-összesítő érkezett.';
+ notify(text);
+ try{
+  if('Notification'in window&&Notification.permission==='granted'){
+   new Notification('🏆 Óránkénti Kvíz Ranglista',{body:text,icon:'/hunor-app-icon.svg',tag:'hunor-quiz-hourly-'+rec.id});
+  }
+ }catch{}
+}
+async function qzHourlyTick(){
+ if(!user?.id||guest||!user.isAdmin)return;
+ try{
+  if(!qzHourlySeeded){
+   const {data:existing}=await sb.from('quiz_event_hourly_notifications').select('id').order('created_at',{ascending:false}).limit(25);
+   (existing||[]).forEach(r=>qzHourlySeen.add(r.id));
+   qzHourlySeeded=true;
+  }
+  const {data:emitted}=await sb.rpc('check_and_emit_quiz_hourly_leaders',{p_force_current_hour:false});
+  if(Array.isArray(emitted))emitted.forEach(qzDeliverHourlyLeader);
+ }catch{}
+}
+setInterval(qzHourlyTick,55000);
+setTimeout(qzHourlyTick,6000);
+try{
+ qzHourlyChannel=sb.channel('portal-quiz-hourly-leaders').on('postgres_changes',{event:'INSERT',schema:'public',table:'quiz_event_hourly_notifications'},payload=>{
+  if(payload?.new)qzDeliverHourlyLeader(payload.new);
+ }).subscribe();
+}catch{}
+
 })();
 
 
