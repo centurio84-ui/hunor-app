@@ -1540,12 +1540,12 @@
     "category": "Túlélési alapismeretek",
     "question": "Mi a legfontosabb szabály a vadonban való eltévedés megelőzésére?",
     "choices": [
-      "Soha ne indulj el feltérképezetlen helyre térkép/telefon, feltöltött akkumulátor és útiterv nélkül, és mindig szólj valakinek, hova mész!",
+      "Soha ne indulj el feltérképezetlen helyre térkép/telefon, feltöltött akkumulátor és útiterv nélkül, és mindig szólj valakinek, hova mész.",
       "Fuss vakon amíg el nem érsz egy várost.",
       "Csak éjszaka közlekedj."
     ],
     "correctIndex": 0,
-    "explanation": "Soha ne indulj el feltérképezetlen helyre térkép/telefon, feltöltött akkumulátor és útiterv nélkül, és mindig szólj valakinek, hova mész!",
+    "explanation": "Soha ne indulj el feltérképezetlen helyre térkép/telefon, feltöltött akkumulátor és útiterv nélkül, és mindig szólj valakinek, hova mész.",
     "source": "https://www.nps.gov/anch/planyourvisit/outdoor-gear-checklist.htm",
     "modes": [
       "public",
@@ -1664,7 +1664,7 @@
       "Hamis"
     ],
     "correctIndex": 0,
-    "explanation": "Tényleg szagtalan és láthatatlan, ezért elengedhetetlen a CO-érzékelő",
+    "explanation": "Tényleg szagtalan és láthatatlan, ezért elengedhetetlen a CO-érzékelő.",
     "source": "https://www.nhs.uk/conditions/carbon-monoxide-poisoning/",
     "modes": [
       "public",
@@ -1735,7 +1735,7 @@
       "Hamis"
     ],
     "correctIndex": 0,
-    "explanation": "A túlmelegedő lítium-ion akkumulátor kigyulladhat vagy felrobbanhat",
+    "explanation": "A túlmelegedő lítium-ion akkumulátor kigyulladhat vagy felrobbanhat.",
     "source": "https://www.sja.org.uk/first-aid-advice/",
     "modes": [
       "public",
@@ -1801,7 +1801,7 @@
     "id": "EV-MYTHS-011",
     "topic": "myths",
     "category": "Katasztrófavédelmi mítoszok",
-    "question": "Igaz vagy Hamis? Ha valakinek elered az orra a vér, hátra kell hajtania a fejét, hogy elálljon.",
+    "question": "Igaz vagy Hamis? Ha valakinek elered az orra vére, hátra kell hajtania a fejét, hogy elálljon.",
     "choices": [
       "Igaz",
       "Hamis"
@@ -1924,7 +1924,7 @@
       "Hamis"
     ],
     "correctIndex": 1,
-    "explanation": "A villanykapcsoló apró szikrát vethet, ami berobbanthatja a gázzal teli helyiséget",
+    "explanation": "A villanykapcsoló apró szikrát vethet, ami berobbanthatja a gázzal teli helyiséget.",
     "source": "https://www.sja.org.uk/first-aid-advice/",
     "modes": [
       "public",
@@ -2038,9 +2038,9 @@
     "category": "HUNOR és USAR",
     "question": "Mit jelent a HUNOR név angol feloldása?",
     "choices": [
-      "Hungária Országos RTV – tévéműsor-készítés",
+      "Hungária Országos RTV – tévéműsor-készítés.",
       "Hungarian National Organisation for Rescue Services – hivatásos mentőszervezet kutató-mentő feladatokkal.",
-      "Hivatásos Katasztrófavédelmi Helyszíni Osztály – autószerelés"
+      "Hivatásos Katasztrófavédelmi Helyszíni Osztály – autószerelés."
     ],
     "correctIndex": 1,
     "explanation": "A magyar megnevezés nem az angol mozaikszó betű szerinti feloldása.",
@@ -2068,7 +2068,7 @@
       "Underground Security and Radar"
     ],
     "correctIndex": 0,
-    "explanation": "Urban Search and Rescue (Városi Kutató-Mentő)",
+    "explanation": "Urban Search and Rescue (Városi Kutató-Mentő).",
     "source": "https://insarag.org/methodology/insarag-guidelines/",
     "modes": [
       "public",
@@ -2310,7 +2310,7 @@
     "choices": [
       "Helyben kell kérniük mindennap ebédet a lakosságtól.",
       "Hogy tartós műveleteket végezzen anélkül, hogy a katasztrófa sújtotta terület szűkös erőforrásait terhelné.",
-      "Csak egy hátizsák váltruhával utaznak."
+      "Csak egy hátizsák váltóruhával utaznak."
     ],
     "correctIndex": 1,
     "explanation": "Az önellátás az ellátásra, táborra, energiára és működésre is kiterjed; a követelmények kategóriafüggők.",
@@ -3316,7 +3316,7 @@
     "id": "TRAFFIC-005",
     "question": "Hogyan nevezik a közismert kék-sárga baleseti nyomtatványt?",
     "choices": [
-      "Európai baleseti bejelentő, közismert nevén kék-sárga bejelentő.",
+      "Európai baleseti bejelentő (kék-sárga bejelentő)",
       "Zöldkártya",
       "Forgalmi engedély",
       "Vezetői engedély"
