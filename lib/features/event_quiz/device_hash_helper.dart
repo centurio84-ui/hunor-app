@@ -12,6 +12,23 @@ Future<String> getDeterministicDeviceHash() => platform.getDeviceHashImpl();
 bool downloadPngBytes(Uint8List bytes, String fileName) =>
     platform.downloadPngBytesImpl(bytes, fileName);
 
+/// Shares poster PNG + clickable URL + caption via Web Share API (mobile/desktop browsers).
+/// Returns `'shared'`, `'cancelled'`, or `'unsupported'`.
+Future<String> sharePosterWithLink({
+  required Uint8List pngBytes,
+  required String fileName,
+  required String title,
+  required String text,
+  required String url,
+}) =>
+    platform.sharePosterWithLinkImpl(
+      pngBytes: pngBytes,
+      fileName: fileName,
+      title: title,
+      text: text,
+      url: url,
+    );
+
 /// Triggers a browser desktop/system Notification on Web if permitted.
 Future<bool> showBrowserLeaderNotification({
   required String title,

@@ -45,6 +45,30 @@ extension type _JsBlob._(JSObject _) implements JSObject {
   external factory _JsBlob(JSArray<JSAny> parts, _BlobPropertyBag options);
 }
 
+@JS('File')
+extension type _JsFile._(JSObject _) implements JSObject {
+  external factory _JsFile(
+    JSArray<JSAny> bits,
+    String name,
+    _BlobPropertyBag options,
+  );
+}
+
+extension type _ShareData._(JSObject _) implements JSObject {
+  external factory _ShareData({
+    String? title,
+    String? text,
+    String? url,
+    JSArray<_JsFile>? files,
+  });
+}
+
+@JS('window.navigator.canShare')
+external bool? _navCanShare(_ShareData? data);
+
+@JS('window.navigator.share')
+external JSPromise<JSAny?> _navShare(_ShareData data);
+
 @JS('Notification')
 extension type _WebNotification._(JSObject _) implements JSObject {
   external factory _WebNotification(String title, _WebNotifOptions options);
@@ -108,6 +132,51 @@ bool downloadPngBytesImpl(Uint8List bytes, String fileName) {
     return true;
   } catch (_) {
     return false;
+  }
+}
+
+Future<String> sharePosterWithLinkImpl({
+  required Uint8List pngBytes,
+  required String fileName,
+  required String title,
+  required String text,
+  required String url,
+}) async {
+  try {
+    final jsBytes = pngBytes.toJS;
+    final file = _JsFile(
+      [jsBytes].toJS,
+      fileName,
+      _BlobPropertyBag(type: 'image/png'),
+    );
+    final withFileData = _ShareData(
+      title: title,
+      text: text,
+      files: [file].toJS,
+    );
+    var canShareFiles = false;
+    try {
+      canShareFiles = _navCanShare(withFileData) == true;
+    } catch (_) {}
+
+    if (canShareFiles) {
+      await _navShare(withFileData).toDart;
+      return 'shared';
+    }
+
+    final linkOnlyData = _ShareData(
+      title: title,
+      text: text,
+      url: url,
+    );
+    await _navShare(linkOnlyData).toDart;
+    return 'shared';
+  } catch (e) {
+    final err = e.toString();
+    if (err.contains('AbortError') || err.contains('NotAllowedError')) {
+      return 'cancelled';
+    }
+    return 'unsupported';
   }
 }
 

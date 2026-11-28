@@ -19,6 +19,15 @@ Future<String> getDeviceHashImpl() async {
 
 bool downloadPngBytesImpl(Uint8List bytes, String fileName) => false;
 
+Future<String> sharePosterWithLinkImpl({
+  required Uint8List pngBytes,
+  required String fileName,
+  required String title,
+  required String text,
+  required String url,
+}) async =>
+    'unsupported';
+
 Future<bool> showBrowserNotificationImpl({
   required String title,
   required String body,

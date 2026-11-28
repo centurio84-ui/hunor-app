@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="hu">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#0B132B">
+  <title>Vészhelyzeti kvíz — Tedd próbára a tudásod!</title>
+  <meta name="description" content="Kattints és töltsd ki a Vészhelyzeti kvízt! Gyors kérdések, azonnali szakmai magyarázat, regisztráció nélkül.">
+
+  <!-- Open Graph / Facebook / Messenger / Viber / WhatsApp clickable card -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Vészhelyzeti kvíz">
+  <meta property="og:title" content="🔥 Vészhelyzeti kvíz – Kattints és tedd próbára a tudásod!">
+  <meta property="og:description" content="Olvasd el a kérdéseket, válaszolj minél pontosabban és gyorsabban – azonnali magyarázattal, regisztráció nélkül!">
+  <meta property="og:image" content="https://hun01usar.hu/quiz-social-card.jpg">
+  <meta property="og:image:type" content="image/jpeg">
+  <meta property="og:image:width" content="896">
+  <meta property="og:image:height" content="1200">
+  <meta property="og:locale" content="hu_HU">
+
+  <!-- Twitter / X Large Image Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="🔥 Vészhelyzeti kvíz – Kattints és tedd próbára a tudásod!">
+  <meta name="twitter:description" content="Gyors kérdések, azonnali szakmai magyarázat, regisztráció nélkül!">
+  <meta name="twitter:image" content="https://hun01usar.hu/quiz-social-card.jpg">
+
+  <script>
+    (function () {
+      try {
+        var s = new URLSearchParams(location.search);
+        var h = location.hash || '';
+        var m = h.match(/^#\/?quiz\?(.*)$/i);
+        var ev = s.get('event') || (m ? new URLSearchParams(m[1]).get('event') : null);
+        if (ev && ev.trim()) {
+          location.replace('/planning/?mode=quiz&event=' + encodeURIComponent(ev.trim()));
+        } else {
+          location.replace('/planning/?mode=quiz');
+        }
+      } catch (e) {
+        location.replace('/planning/?mode=quiz');
+      }
+    })();
+  </script>
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: #0B132B;
+      color: #ffffff;
+      font-family: system-ui, -apple-system, sans-serif;
+      text-align: center;
+      padding: 24px;
+    }
+    a {
+      display: inline-block;
+      margin-top: 14px;
+      padding: 12px 22px;
+      border-radius: 999px;
+      background: #EA580C;
+      color: #ffffff;
+      font-weight: 800;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div>
+    <h1>Vészhelyzeti kvíz betöltése…</h1>
+    <p>Ha nem indul el automatikusan, kattints az alábbi gombra:</p>
+    <a id="fallbackLink" href="/planning/?mode=quiz">KVÍZ INDÍTÁSA →</a>
+  </div>
+  <script>
+    (function () {
+      var ev = new URLSearchParams(location.search).get('event');
+      if (ev) {
+        document.getElementById('fallbackLink').href =
+          '/planning/?mode=quiz&event=' + encodeURIComponent(ev.trim());
+      }
+    })();
+  </script>
+</body>
+</html>
