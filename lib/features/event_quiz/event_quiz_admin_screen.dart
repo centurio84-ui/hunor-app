@@ -305,10 +305,13 @@ class _EventQuizAdminScreenState extends State<EventQuizAdminScreen> {
     }
   }
 
-  void _openQrPosterDialog(QuizEvent ev) {
+  void _openQrPosterDialog(QuizEvent ev, {required bool isOnlineMode}) {
     showDialog<void>(
       context: context,
-      builder: (_) => _PrintableQrPosterDialog(event: ev),
+      builder: (_) => _PrintableQrPosterDialog(
+        event: ev,
+        isOnlineMode: isOnlineMode,
+      ),
     );
   }
 
@@ -859,23 +862,21 @@ class _EventQuizAdminScreenState extends State<EventQuizAdminScreen> {
               runSpacing: 8,
               alignment: WrapAlignment.end,
               children: [
-                OutlinedButton.icon(
-                  onPressed: () async {
-                    await Clipboard.setData(ClipboardData(text: ev.qrDeepLink));
-                    if (!mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Kvíz link vágólapra másolva!'),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.copy, size: 16),
-                  label: const Text('Link másolása'),
-                ),
                 FilledButton.tonalIcon(
-                  onPressed: () => _openQrPosterDialog(ev),
-                  icon: const Icon(Icons.qr_code_2_rounded, size: 18),
-                  label: const Text('Poszter & Közösségi megosztás'),
+                  onPressed: () =>
+                      _openQrPosterDialog(ev, isOnlineMode: false),
+                  icon: const Icon(Icons.print_rounded, size: 18),
+                  label: const Text('Nyomtatható poszter'),
+                ),
+                FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFF0284C7),
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: () =>
+                      _openQrPosterDialog(ev, isOnlineMode: true),
+                  icon: const Icon(Icons.share_rounded, size: 17),
+                  label: const Text('Online megosztás (QR + link)'),
                 ),
                 OutlinedButton.icon(
                   onPressed: () => _openCreateOrEditDialog(templateFrom: ev),
@@ -1690,9 +1691,13 @@ class _QuizEventFormDialogState extends State<_QuizEventFormDialog> {
 // =============================================================================
 
 class _PrintableQrPosterDialog extends StatefulWidget {
-  const _PrintableQrPosterDialog({required this.event});
+  const _PrintableQrPosterDialog({
+    required this.event,
+    required this.isOnlineMode,
+  });
 
   final QuizEvent event;
+  final bool isOnlineMode;
 
   @override
   State<_PrintableQrPosterDialog> createState() =>
@@ -1706,6 +1711,7 @@ class _PrintableQrPosterDialogState extends State<_PrintableQrPosterDialog> {
   bool _exporting = false;
   bool _sharing = false;
   bool _bgPrecached = false;
+  late bool _onlineMode = widget.isOnlineMode;
 
   @override
   void didChangeDependencies() {
@@ -1961,16 +1967,38 @@ class _PrintableQrPosterDialogState extends State<_PrintableQrPosterDialog> {
     final url = widget.event.qrDeepLink;
 
     return AlertDialog(
-      title: Text('Poszter & Közösségi megosztás – ${widget.event.title}'),
+      title: Text(
+        _onlineMode
+            ? 'Online megosztás (QR + link) – ${widget.event.title}'
+            : 'Nyomtatható poszter – ${widget.event.title}',
+      ),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // 3:4 high-res illustrated poster (clickable in live preview -> opens the quiz directly!)
+            // Clean 2-way switcher at the top so the user can also flip between Print vs Online anytime
+            SegmentedButton<bool>(
+              segments: const [
+                ButtonSegment<bool>(
+                  value: false,
+                  icon: Icon(Icons.print_rounded, size: 18),
+                  label: Text('Nyomtatható poszter'),
+                ),
+                ButtonSegment<bool>(
+                  value: true,
+                  icon: Icon(Icons.share_rounded, size: 18),
+                  label: Text('Online (QR + link)'),
+                ),
+              ],
+              selected: {_onlineMode},
+              onSelectionChanged: (s) => setState(() => _onlineMode = s.first),
+            ),
+            const SizedBox(height: 14),
             MouseRegion(
-              cursor: SystemMouseCursors.click,
+              cursor:
+                  _onlineMode ? SystemMouseCursors.click : MouseCursor.defer,
               child: GestureDetector(
-                onTap: _openQuizLinkDirectly,
+                onTap: _onlineMode ? _openQuizLinkDirectly : null,
                 child: Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(14),
@@ -2204,8 +2232,8 @@ class _PrintableQrPosterDialogState extends State<_PrintableQrPosterDialog> {
                                   ),
                                   child: RichText(
                                     textAlign: TextAlign.center,
-                                    text: const TextSpan(
-                                      style: TextStyle(
+                                    text: TextSpan(
+                                      style: const TextStyle(
                                         fontSize: 15,
                                         fontWeight: FontWeight.w800,
                                         height: 1.32,
@@ -2220,12 +2248,15 @@ class _PrintableQrPosterDialogState extends State<_PrintableQrPosterDialog> {
                                       ),
                                       children: [
                                         TextSpan(
-                                          text:
-                                              'Olvasd be a QR-kódot,\ntöltsd ki a kvízt, és\n',
+                                          text: _onlineMode
+                                              ? 'Olvasd be a QR-kódot,\nvagy kattints a linkre,\n'
+                                              : 'Olvasd be a QR-kódot,\ntöltsd ki a kvízt, és\n',
                                         ),
                                         TextSpan(
-                                          text: 'tegyél egy próbát!',
-                                          style: TextStyle(
+                                          text: _onlineMode
+                                              ? 'és töltsd ki a kvízt!'
+                                              : 'tegyél egy próbát!',
+                                          style: const TextStyle(
                                             color: Color(0xFFF5B841),
                                             fontWeight: FontWeight.w900,
                                           ),
@@ -2346,11 +2377,11 @@ class _PrintableQrPosterDialogState extends State<_PrintableQrPosterDialog> {
                         ),
                       ),
 
-                      // 6. Bottom Feature Strip & Clickable Link Pill (above bottom hazard bar)
+                      // 6. Bottom Feature Strip (+ Online Link Pill ONLY in Online Mode!)
                       Positioned(
                         left: 16,
                         right: 16,
-                        bottom: 19,
+                        bottom: _onlineMode ? 19 : 25,
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -2360,7 +2391,7 @@ class _PrintableQrPosterDialogState extends State<_PrintableQrPosterDialog> {
                                 textAlign: TextAlign.center,
                                 text: TextSpan(
                                   style: const TextStyle(
-                                    fontSize: 12.4,
+                                    fontSize: 12.6,
                                     fontWeight: FontWeight.w900,
                                     color: Colors.white,
                                     shadows: [
@@ -2406,54 +2437,62 @@ class _PrintableQrPosterDialogState extends State<_PrintableQrPosterDialog> {
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 5),
-                            FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 11,
-                                  vertical: 3.5,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xCC0F172A),
-                                  borderRadius: BorderRadius.circular(999),
-                                  border: Border.all(
-                                    color: const Color(0xFF38BDF8)
-                                        .withValues(alpha: 0.55),
-                                    width: 1,
+                            if (_onlineMode) ...[
+                              const SizedBox(height: 5),
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 11,
+                                    vertical: 3.5,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xD90F172A),
+                                    borderRadius: BorderRadius.circular(999),
+                                    border: Border.all(
+                                      color: const Color(0xFF38BDF8)
+                                          .withValues(alpha: 0.65),
+                                      width: 1.1,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.link_rounded,
+                                        size: 13,
+                                        color: Color(0xFF38BDF8),
+                                      ),
+                                      const SizedBox(width: 5),
+                                      Text(
+                                        url,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 9.8,
+                                          fontFamily: 'monospace',
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(
-                                      Icons.touch_app_rounded,
-                                      size: 12,
-                                      color: Color(0xFF38BDF8),
-                                    ),
-                                    const SizedBox(width: 5),
-                                    const Text(
-                                      'ONLINE LINK: ',
-                                      style: TextStyle(
-                                        color: Color(0xFF38BDF8),
-                                        fontSize: 9.2,
-                                        fontWeight: FontWeight.w900,
-                                        letterSpacing: 0.4,
-                                      ),
-                                    ),
-                                    Text(
-                                      url.replaceFirst('https://', ''),
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 9.6,
-                                        fontFamily: 'monospace',
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                  ],
+                              ),
+                            ] else ...[
+                              const SizedBox(height: 5),
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  url,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    color: Color(0xFF8CA0B6),
+                                    fontSize: 9.8,
+                                    fontFamily: 'monospace',
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                               ),
-                            ),
+                            ],
                           ],
                         ),
                       ),
@@ -2464,130 +2503,95 @@ class _PrintableQrPosterDialogState extends State<_PrintableQrPosterDialog> {
                 ),
               ),
             ),
-            const SizedBox(height: 14),
-            // Ready-to-share clickable social media link & caption box
-            SizedBox(
-              width: 448,
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: HunorColors.surface,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: const Color(0xFF38BDF8).withValues(alpha: 0.4),
+            if (_onlineMode) ...[
+              const SizedBox(height: 12),
+              SizedBox(
+                width: 448,
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: HunorColors.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: const Color(0xFF38BDF8).withValues(alpha: 0.4),
+                    ),
                   ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const Row(
-                      children: [
-                        Icon(
-                          Icons.share_rounded,
-                          size: 16,
-                          color: Color(0xFF38BDF8),
-                        ),
-                        SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            'Közösségi média (Facebook / Messenger / Viber) kattintható link:',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFFBAE6FD),
-                            ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      InkWell(
+                        onTap: _openQuizLinkDirectly,
+                        borderRadius: BorderRadius.circular(8),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.link_rounded,
+                                size: 17,
+                                color: Color(0xFF38BDF8),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  url,
+                                  style: const TextStyle(
+                                    fontSize: 12.5,
+                                    fontFamily: 'monospace',
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF38BDF8),
+                                    decoration: TextDecoration.underline,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    InkWell(
-                      onTap: _openQuizLinkDirectly,
-                      borderRadius: BorderRadius.circular(8),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.black26,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.white12),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.open_in_new_rounded,
-                              size: 15,
-                              color: Color(0xFFFBBF24),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                url,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontFamily: 'monospace',
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFF38BDF8),
-                                  decoration: TextDecoration.underline,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        FilledButton.tonalIcon(
-                          onPressed: (_sharing || _exporting)
-                              ? null
-                              : _copyPosterImageForFacebook,
-                          icon: const Icon(Icons.image_outlined, size: 16),
-                          label: const Text('1. Poszterkép másolása (1 db)'),
-                        ),
-                        OutlinedButton.icon(
-                          onPressed: () async {
-                            await Clipboard.setData(
-                              ClipboardData(
-                                text: widget.event.socialPostCaption,
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: FilledButton.tonalIcon(
+                              onPressed: (_sharing || _exporting)
+                                  ? null
+                                  : _copyPosterImageForFacebook,
+                              icon: const Icon(Icons.image_outlined, size: 16),
+                              label: const Text('Kép másolása'),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () async {
+                                await Clipboard.setData(
+                                  ClipboardData(
+                                    text: widget.event.socialPostCaption,
+                                  ),
+                                );
+                                if (!context.mounted) return;
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      '✓ Link + posztszöveg vágólapra másolva!',
+                                    ),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(
+                                Icons.content_copy_rounded,
+                                size: 15,
                               ),
-                            );
-                            if (!context.mounted) return;
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  '✓ Kész posztszöveg + kattintható link vágólapra másolva!',
-                                ),
-                              ),
-                            );
-                          },
-                          icon: const Icon(Icons.content_copy_rounded, size: 15),
-                          label: const Text('2. Posztszöveg + link másolása'),
-                        ),
-                        OutlinedButton.icon(
-                          onPressed: () async {
-                            final fbShare = Uri.parse(
-                              'https://www.facebook.com/sharer/sharer.php?u=${Uri.encodeComponent(url)}',
-                            );
-                            await launchUrl(
-                              fbShare,
-                              mode: LaunchMode.externalApplication,
-                            );
-                          },
-                          icon: const Icon(Icons.facebook_rounded, size: 17),
-                          label: const Text('Kattintható Facebook kártya'),
-                        ),
-                      ],
-                    ),
-                  ],
+                              label: const Text('Link másolása'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
+            ],
           ],
         ),
       ),
@@ -2596,28 +2600,37 @@ class _PrintableQrPosterDialogState extends State<_PrintableQrPosterDialog> {
           onPressed: () => Navigator.pop(context),
           child: const Text('Bezárás'),
         ),
-        FilledButton.tonalIcon(
-          onPressed: (_sharing || _exporting) ? null : _shareSocialWithLink,
-          icon: _sharing
-              ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Icon(Icons.ios_share_rounded),
-          label: const Text('Megosztás (kép + link)'),
-        ),
-        FilledButton.icon(
-          onPressed: (_exporting || _sharing) ? null : _downloadPosterPng,
-          icon: _exporting
-              ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Icon(Icons.download_rounded),
-          label: const Text('Poszter PNG letöltése'),
-        ),
+        if (_onlineMode)
+          FilledButton.icon(
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF0284C7),
+              foregroundColor: Colors.white,
+            ),
+            onPressed: (_sharing || _exporting) ? null : _shareSocialWithLink,
+            icon: _sharing
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Icon(Icons.share_rounded),
+            label: const Text('Online megosztás'),
+          )
+        else
+          FilledButton.icon(
+            onPressed: (_exporting || _sharing) ? null : _downloadPosterPng,
+            icon: _exporting
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.print_rounded),
+            label: const Text('Nyomtatható poszter letöltése (PNG)'),
+          ),
       ],
     );
   }
