@@ -184,13 +184,15 @@ class QuizEvent {
   double get dropOffRatePercent =>
       startedCount <= 0 ? 0.0 : (abandonedCount / startedCount) * 100.0;
 
-  /// Clean path URL (no `#` fragment) so Facebook/Messenger/Viber/WhatsApp render a clickable OG preview card AND QR scanners open directly!
-  String get qrDeepLink => 'https://hun01usar.hu/quiz?event=$slug';
+  /// Clean short URL (`/q/<slug>`) proxied to `quiz-share`:
+  /// - When posted to Facebook / Messenger / Viber, renders the FULL event poster as a giant clickable image card!
+  /// - When clicked or QR-scanned by a visitor, opens the quiz immediately!
+  String get qrDeepLink => 'https://hun01usar.hu/q/$slug';
 
   String get socialPostCaption =>
       '🔥 ${title.toUpperCase()} – VÉSZHELYZETI KVÍZ!\n'
-      'Tedd próbára a tudásod $questionCount gyors kérdéssel – azonnali magyarázattal!\n'
-      '👉 Kattints ide a kvíz indításához: $qrDeepLink';
+      'Kattints a képre, és tedd próbára a tudásod $questionCount gyors kérdéssel!\n'
+      '$qrDeepLink';
 
   QuizEvent copyWithMetrics({
     required int startedCount,

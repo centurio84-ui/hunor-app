@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:math';
+import 'dart:typed_data';
 
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -763,6 +764,31 @@ class EventQuizRepository {
     await _client
         .from('quiz_events')
         .update({'is_active': isActive}).eq('id', id);
+  }
+
+  /// Uploads the rendered event poster PNG to public `quiz-posters/<slug>.png` so Facebook's
+  /// crawler (`facebookexternalhit`) displays the exact event poster as a clickable card!
+  Future<String?> uploadPublicPosterImage({
+    required String slug,
+    required Uint8List pngBytes,
+  }) async {
+    final cleanSlug = slug.trim().toLowerCase();
+    if (cleanSlug.isEmpty) return null;
+    final objectPath = '$cleanSlug.png';
+    try {
+      await _client.storage.from('quiz-posters').uploadBinary(
+            objectPath,
+            pngBytes,
+            fileOptions: const FileOptions(
+              contentType: 'image/png',
+              upsert: true,
+              cacheControl: '60',
+            ),
+          );
+      return _client.storage.from('quiz-posters').getPublicUrl(objectPath);
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<void> deleteEvent(String id) async {

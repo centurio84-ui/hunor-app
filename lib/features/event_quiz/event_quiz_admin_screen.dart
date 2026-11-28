@@ -310,6 +310,7 @@ class _EventQuizAdminScreenState extends State<EventQuizAdminScreen> {
       context: context,
       builder: (_) => _PrintableQrPosterDialog(
         event: ev,
+        repository: _repo,
         isOnlineMode: isOnlineMode,
       ),
     );
@@ -1693,10 +1694,12 @@ class _QuizEventFormDialogState extends State<_QuizEventFormDialog> {
 class _PrintableQrPosterDialog extends StatefulWidget {
   const _PrintableQrPosterDialog({
     required this.event,
+    required this.repository,
     required this.isOnlineMode,
   });
 
   final QuizEvent event;
+  final EventQuizRepository repository;
   final bool isOnlineMode;
 
   @override
@@ -1711,7 +1714,31 @@ class _PrintableQrPosterDialogState extends State<_PrintableQrPosterDialog> {
   bool _exporting = false;
   bool _sharing = false;
   bool _bgPrecached = false;
+  bool _cloudSynced = false;
   late bool _onlineMode = widget.isOnlineMode;
+
+  @override
+  void initState() {
+    super.initState();
+    // Automatically publish the rendered poster to public Storage so Facebook renders the full clickable poster card!
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future<void>.delayed(const Duration(milliseconds: 350), _syncPosterToCloudSilently);
+    });
+  }
+
+  Future<void> _syncPosterToCloudSilently() async {
+    if (!mounted || _cloudSynced) return;
+    try {
+      final pngBytes = await _capturePosterPngBytes(pixelRatio: 2.5);
+      final uploaded = await widget.repository.uploadPublicPosterImage(
+        slug: widget.event.slug,
+        pngBytes: pngBytes,
+      );
+      if (uploaded != null && mounted) {
+        setState(() => _cloudSynced = true);
+      }
+    } catch (_) {}
+  }
 
   @override
   void didChangeDependencies() {
@@ -1722,7 +1749,7 @@ class _PrintableQrPosterDialogState extends State<_PrintableQrPosterDialog> {
     }
   }
 
-  Future<Uint8List> _capturePosterPngBytes() async {
+  Future<Uint8List> _capturePosterPngBytes({double pixelRatio = 3.5}) async {
     await precacheImage(const AssetImage(_bgAssetPath), context);
     await Future<void>.delayed(const Duration(milliseconds: 80));
 
@@ -1732,13 +1759,50 @@ class _PrintableQrPosterDialogState extends State<_PrintableQrPosterDialog> {
       throw StateError('A plakát előnézet nem érhető el.');
     }
 
-    final ui.Image image = await boundary.toImage(pixelRatio: 3.5);
+    final ui.Image image = await boundary.toImage(pixelRatio: pixelRatio);
     final ByteData? byteData =
         await image.toByteData(format: ui.ImageByteFormat.png);
     if (byteData == null) {
       throw StateError('A PNG képfájl előállítása nem sikerült.');
     }
     return byteData.buffer.asUint8List();
+  }
+
+  Future<void> _shareClickableCardToFacebook() async {
+    if (_sharing || _exporting) return;
+    setState(() => _sharing = true);
+    try {
+      if (!_cloudSynced) {
+        final pngBytes = await _capturePosterPngBytes(pixelRatio: 2.5);
+        await widget.repository.uploadPublicPosterImage(
+          slug: widget.event.slug,
+          pngBytes: pngBytes,
+        );
+        _cloudSynced = true;
+      }
+      final url = widget.event.qrDeepLink;
+      await Clipboard.setData(ClipboardData(text: url));
+      final fbShare = Uri.parse(
+        'https://www.facebook.com/sharer/sharer.php?u=${Uri.encodeComponent(url)}&quote=${Uri.encodeComponent('${widget.event.title} – Kattints a poszterre és töltsd ki a Vészhelyzeti kvízt!')}',
+      );
+      await launchUrl(fbShare, mode: LaunchMode.externalApplication);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          duration: Duration(seconds: 6),
+          content: Text(
+            '✓ Facebook megosztó megnyitva! A poszterkép egyetlen nagy KATTINTHATÓ kártyaként jelenik meg (a link a vágólapra is került)!',
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Facebook megosztási hiba: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _sharing = false);
+    }
   }
 
   Future<void> _downloadPosterPng() async {
@@ -1804,67 +1868,6 @@ class _PrintableQrPosterDialogState extends State<_PrintableQrPosterDialog> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Képmásolási hiba: $e')),
-      );
-    } finally {
-      if (mounted) setState(() => _sharing = false);
-    }
-  }
-
-  Future<void> _shareSocialWithLink() async {
-    if (_sharing || _exporting) return;
-    setState(() => _sharing = true);
-    try {
-      final pngBytes = await _capturePosterPngBytes();
-      final caption = widget.event.socialPostCaption;
-
-      final status = await sharePosterWithLink(
-        pngBytes: pngBytes,
-        fileName: 'veszhelyzeti-kviz-${widget.event.slug}.png',
-        title: '${widget.event.title} – Vészhelyzeti kvíz',
-        text: caption,
-        url: widget.event.qrDeepLink,
-      );
-
-      if (!mounted) return;
-      if (status == 'shared') {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✓ Poszter + kattintható kvízlink megosztva!'),
-          ),
-        );
-      } else if (status == 'unsupported') {
-        final copiedImg = await copySinglePosterImageToClipboard(pngBytes);
-        if (!mounted) return;
-        if (copiedImg) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              duration: Duration(seconds: 7),
-              content: Text(
-                '✓ A poszterkép (1 db) a vágólapra került! Illeszd be Facebookra (Ctrl+V / Cmd+V), majd kattints a „Posztszöveg + link másolása” gombra a szöveghez!',
-              ),
-            ),
-          );
-        } else {
-          await Clipboard.setData(ClipboardData(text: caption));
-          downloadPngBytes(
-            pngBytes,
-            'veszhelyzeti-kviz-${widget.event.slug}.png',
-          );
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              duration: Duration(seconds: 6),
-              content: Text(
-                '✓ A poszter PNG letöltődött, a kattintható posztszöveg pedig a vágólapra került!',
-              ),
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Megosztási hiba: $e')),
       );
     } finally {
       if (mounted) setState(() => _sharing = false);
@@ -2549,40 +2552,52 @@ class _PrintableQrPosterDialogState extends State<_PrintableQrPosterDialog> {
                         ),
                       ),
                       const SizedBox(height: 8),
+                      const Text(
+                        '💡 Facebookra: kattints a „Facebookra posztolás” gombra (vagy csak másold be a linket külön kép feltöltése nélkül) – így a teljes poszterkép KATTINTHATÓ lesz a Facebookon!',
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          height: 1.35,
+                          color: Color(0xFFBAE6FD),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
                       Row(
                         children: [
                           Expanded(
-                            child: FilledButton.tonalIcon(
-                              onPressed: (_sharing || _exporting)
-                                  ? null
-                                  : _copyPosterImageForFacebook,
-                              icon: const Icon(Icons.image_outlined, size: 16),
-                              label: const Text('Kép másolása'),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
                             child: OutlinedButton.icon(
                               onPressed: () async {
+                                if (!_cloudSynced) {
+                                  await _syncPosterToCloudSilently();
+                                }
                                 await Clipboard.setData(
-                                  ClipboardData(
-                                    text: widget.event.socialPostCaption,
-                                  ),
+                                  ClipboardData(text: url),
                                 );
                                 if (!context.mounted) return;
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
+                                    duration: Duration(seconds: 6),
                                     content: Text(
-                                      '✓ Link + posztszöveg vágólapra másolva!',
+                                      '✓ Kattintható poszter-link vágólapra másolva! Illeszd be Facebookra (kép feltöltése nélkül), és a poszter kattintható kártyaként jelenik meg!',
                                     ),
                                   ),
                                 );
                               },
                               icon: const Icon(
-                                Icons.content_copy_rounded,
-                                size: 15,
+                                Icons.link_rounded,
+                                size: 16,
                               ),
-                              label: const Text('Link másolása'),
+                              label: const Text('Kattintható link másolása'),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: (_sharing || _exporting)
+                                  ? null
+                                  : _copyPosterImageForFacebook,
+                              icon: const Icon(Icons.image_outlined, size: 16),
+                              label: const Text('Csak kép másolása'),
                             ),
                           ),
                         ],
@@ -2603,10 +2618,11 @@ class _PrintableQrPosterDialogState extends State<_PrintableQrPosterDialog> {
         if (_onlineMode)
           FilledButton.icon(
             style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFF0284C7),
+              backgroundColor: const Color(0xFF1877F2),
               foregroundColor: Colors.white,
             ),
-            onPressed: (_sharing || _exporting) ? null : _shareSocialWithLink,
+            onPressed:
+                (_sharing || _exporting) ? null : _shareClickableCardToFacebook,
             icon: _sharing
                 ? const SizedBox(
                     width: 16,
@@ -2616,8 +2632,8 @@ class _PrintableQrPosterDialogState extends State<_PrintableQrPosterDialog> {
                       color: Colors.white,
                     ),
                   )
-                : const Icon(Icons.share_rounded),
-            label: const Text('Online megosztás'),
+                : const Icon(Icons.facebook_rounded),
+            label: const Text('Facebookra posztolás (kattintható poszter)'),
           )
         else
           FilledButton.icon(

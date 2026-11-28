@@ -103,6 +103,18 @@ force = true
   [redirects.headers]
 
 [[redirects]]
+from = "/q/*"
+to = "https://embicteneumubwlqqfik.supabase.co/functions/v1/quiz-share?event=:splat"
+status = 200
+force = true
+
+  [redirects.query]
+
+  [redirects.conditions]
+
+  [redirects.headers]
+
+[[redirects]]
 from = "/api/public-quiz/*"
 to = "https://embicteneumubwlqqfik.supabase.co/functions/v1/hunor-public-quiz/:splat"
 status = 200
