@@ -69,6 +69,17 @@ external bool? _navCanShare(_ShareData? data);
 @JS('window.navigator.share')
 external JSPromise<JSAny?> _navShare(_ShareData data);
 
+@JS('ClipboardItem')
+extension type _JsClipboardItem._(JSObject _) implements JSObject {
+  external factory _JsClipboardItem(JSObject items);
+}
+
+@JS('Object.fromEntries')
+external JSObject _objectFromEntries(JSArray<JSArray<JSAny>> entries);
+
+@JS('window.navigator.clipboard.write')
+external JSPromise<JSAny?> _clipboardWrite(JSArray<_JsClipboardItem> data);
+
 @JS('Notification')
 extension type _WebNotification._(JSObject _) implements JSObject {
   external factory _WebNotification(String title, _WebNotifOptions options);
@@ -129,6 +140,20 @@ bool downloadPngBytesImpl(Uint8List bytes, String fileName) {
         _revokeObjectUrl(url);
       } catch (_) {}
     });
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
+Future<bool> copyPosterImageToClipboardImpl(Uint8List pngBytes) async {
+  try {
+    final jsBytes = pngBytes.toJS;
+    final blob = _JsBlob([jsBytes].toJS, _BlobPropertyBag(type: 'image/png'));
+    final pair = <JSAny>['image/png'.toJS, blob].toJS;
+    final dict = _objectFromEntries([pair].toJS);
+    final item = _JsClipboardItem(dict);
+    await _clipboardWrite([item].toJS).toDart;
     return true;
   } catch (_) {
     return false;

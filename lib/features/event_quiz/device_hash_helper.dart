@@ -12,6 +12,11 @@ Future<String> getDeterministicDeviceHash() => platform.getDeviceHashImpl();
 bool downloadPngBytes(Uint8List bytes, String fileName) =>
     platform.downloadPngBytesImpl(bytes, fileName);
 
+/// Copies a single clean PNG image (`image/png` ONLY, without `text/html`) to the system clipboard
+/// so pasting into Facebook / Messenger attaches exactly ONE poster image instead of two!
+Future<bool> copySinglePosterImageToClipboard(Uint8List pngBytes) =>
+    platform.copyPosterImageToClipboardImpl(pngBytes);
+
 /// Shares poster PNG + clickable URL + caption via Web Share API (mobile/desktop browsers).
 /// Returns `'shared'`, `'cancelled'`, or `'unsupported'`.
 Future<String> sharePosterWithLink({

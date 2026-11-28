@@ -1765,14 +1765,51 @@ class _PrintableQrPosterDialogState extends State<_PrintableQrPosterDialog> {
     }
   }
 
+  Future<void> _copyPosterImageForFacebook() async {
+    if (_sharing || _exporting) return;
+    setState(() => _sharing = true);
+    try {
+      final pngBytes = await _capturePosterPngBytes();
+      final copied = await copySinglePosterImageToClipboard(pngBytes);
+      if (!mounted) return;
+      if (copied) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            duration: Duration(seconds: 6),
+            content: Text(
+              '✓ Poszterkép vágólapra másolva (1 db tiszta PNG)! Facebookon nyomj Beillesztést (Ctrl+V / Cmd+V) – nem fog duplikálódni!',
+            ),
+          ),
+        );
+      } else {
+        downloadPngBytes(
+          pngBytes,
+          'veszhelyzeti-kviz-${widget.event.slug}.png',
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'A böngésző nem engedélyezte a kép vágólapra írását, ezért letöltöttük PNG-ben.',
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Képmásolási hiba: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _sharing = false);
+    }
+  }
+
   Future<void> _shareSocialWithLink() async {
     if (_sharing || _exporting) return;
     setState(() => _sharing = true);
     try {
       final pngBytes = await _capturePosterPngBytes();
       final caption = widget.event.socialPostCaption;
-      // Always copy the clickable post caption + URL to clipboard so the user can also paste it right into Facebook/Instagram!
-      await Clipboard.setData(ClipboardData(text: caption));
 
       final status = await sharePosterWithLink(
         pngBytes: pngBytes,
@@ -1786,25 +1823,37 @@ class _PrintableQrPosterDialogState extends State<_PrintableQrPosterDialog> {
       if (status == 'shared') {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text(
-              '✓ Poszter + kattintható kvízlink megosztva (a posztszöveg a vágólapra is került)!',
-            ),
+            content: Text('✓ Poszter + kattintható kvízlink megosztva!'),
           ),
         );
       } else if (status == 'unsupported') {
-        // Desktop browser without Web Share API -> download PNG + copy clickable post text & open Facebook sharer option
-        downloadPngBytes(
-          pngBytes,
-          'veszhelyzeti-kviz-${widget.event.slug}.png',
-        );
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            duration: Duration(seconds: 6),
-            content: Text(
-              '✓ A poszter PNG letöltődött, a kattintható közösségi médiás posztszöveg és link pedig a vágólapra került – csak illeszd be (Ctrl+V / Cmd+V)!',
+        final copiedImg = await copySinglePosterImageToClipboard(pngBytes);
+        if (!mounted) return;
+        if (copiedImg) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              duration: Duration(seconds: 7),
+              content: Text(
+                '✓ A poszterkép (1 db) a vágólapra került! Illeszd be Facebookra (Ctrl+V / Cmd+V), majd kattints a „Posztszöveg + link másolása” gombra a szöveghez!',
+              ),
             ),
-          ),
-        );
+          );
+        } else {
+          await Clipboard.setData(ClipboardData(text: caption));
+          downloadPngBytes(
+            pngBytes,
+            'veszhelyzeti-kviz-${widget.event.slug}.png',
+          );
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              duration: Duration(seconds: 6),
+              content: Text(
+                '✓ A poszter PNG letöltődött, a kattintható posztszöveg pedig a vágólapra került!',
+              ),
+            ),
+          );
+        }
       }
     } catch (e) {
       if (!mounted) return;
@@ -2494,6 +2543,13 @@ class _PrintableQrPosterDialogState extends State<_PrintableQrPosterDialog> {
                       spacing: 8,
                       runSpacing: 8,
                       children: [
+                        FilledButton.tonalIcon(
+                          onPressed: (_sharing || _exporting)
+                              ? null
+                              : _copyPosterImageForFacebook,
+                          icon: const Icon(Icons.image_outlined, size: 16),
+                          label: const Text('1. Poszterkép másolása (1 db)'),
+                        ),
                         OutlinedButton.icon(
                           onPressed: () async {
                             await Clipboard.setData(
@@ -2511,7 +2567,7 @@ class _PrintableQrPosterDialogState extends State<_PrintableQrPosterDialog> {
                             );
                           },
                           icon: const Icon(Icons.content_copy_rounded, size: 15),
-                          label: const Text('Posztszöveg + link másolása'),
+                          label: const Text('2. Posztszöveg + link másolása'),
                         ),
                         OutlinedButton.icon(
                           onPressed: () async {
@@ -2524,7 +2580,7 @@ class _PrintableQrPosterDialogState extends State<_PrintableQrPosterDialog> {
                             );
                           },
                           icon: const Icon(Icons.facebook_rounded, size: 17),
-                          label: const Text('Facebook megosztás'),
+                          label: const Text('Kattintható Facebook kártya'),
                         ),
                       ],
                     ),

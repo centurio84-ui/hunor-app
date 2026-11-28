@@ -19,6 +19,8 @@ Future<String> getDeviceHashImpl() async {
 
 bool downloadPngBytesImpl(Uint8List bytes, String fileName) => false;
 
+Future<bool> copyPosterImageToClipboardImpl(Uint8List pngBytes) async => false;
+
 Future<String> sharePosterWithLinkImpl({
   required Uint8List pngBytes,
   required String fileName,
